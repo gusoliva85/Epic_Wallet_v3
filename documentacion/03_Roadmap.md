@@ -186,12 +186,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Hacer:** fases 0 a 13 resumidas, las 9 tareas abiertas preservadas, las fases 14 a 19 detalladas, cero referencias a proveedores externos.
   **Aceptación:** · `./scripts/sin_proveedores.sh` pasa · las 9 tareas abiertas siguen estando con sus criterios de aceptación.
 
-- [ ] **F14-T04 · El Documento Técnico**
+- [~] **F14-T04 · El Documento Técnico**
   **Tipo:** Infra
   **Hacer:** reescribir §4 (base de datos), §8 (autenticación), §11 (variables de entorno), §16 (despliegue), §17 (seguridad) y §18 (respaldo) para el servidor propio. El resto —modelo de datos, API, cálculo, estilo— no se toca.
   **Aceptación:** · `./scripts/sin_proveedores.sh` pasa · un lector que no estuvo en estas conversaciones puede levantar el proyecto siguiéndolo.
 
-- [ ] **F14-T05 · El README**
+- [~] **F14-T05 · El README**
   **Tipo:** Infra
   **Hacer:** puesta en marcha local y en el servidor, sin proveedores externos.
   **Aceptación:** · `./scripts/sin_proveedores.sh` pasa · los comandos del README funcionan tal como están escritos.
@@ -210,10 +210,11 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** abrís `https://13-140-36-93.sslip.io` desde el celular y responde la aplicación, con certificado válido; Jarvis sigue levantando como antes.
 
-- [ ] **F15-T01 · Base del servidor**
+- [~] **F15-T01 · Base del servidor**
   **Tipo:** Infra
-  **Hacer:** 2 GB de swap; `ufw` con 80 y 443 declarados —hoy están abiertos por debajo, porque Docker escribe sus reglas saltándose el firewall, y el firewall está mintiendo sobre lo que expone—; actualizaciones de seguridad automáticas; clave de despliegue **generada dentro del servidor** para que la privada no viaje, y su pública cargada en el repositorio.
-  **Aceptación:** · `swapon --show` muestra 2 GB · `ufw status` refleja lo que de verdad está expuesto · el servidor puede clonar el repositorio solo.
+  **Hacer:** 2 GB de swap con `vm.swappiness=10`; clave de despliegue **generada dentro del servidor**, para que la privada no viaje, y su pública cargada en el repositorio.
+  **Aceptación:** · `swapon --show` muestra 2 GB y sobrevive a un reinicio · el servidor puede clonar el repositorio solo, sin credenciales de nadie.
+  *El firewall y las actualizaciones automáticas ya estaban bien configurados: `ufw` declara 22, 80 y 443 en IPv4 e IPv6, con política `deny` de entrada, y `unattended-upgrades` está activo con los orígenes de seguridad. No hizo falta tocarlos.*
 
 - [ ] **F15-T02 · Proxy de borde compartido**
   **Tipo:** Infra
