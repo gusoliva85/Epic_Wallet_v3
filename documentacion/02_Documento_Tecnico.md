@@ -34,13 +34,13 @@ Regla de precedencia: si este documento contradice al general en una decisión f
 
 | Componente | Elección | Por qué |
 |---|---|---|
-| Lenguaje | **Python 3.12** | Pedido del proyecto. Runtime soportado por Vercel. |
-| Framework web | **FastAPI** | Async, validación con Pydantic incluida, OpenAPI automática, ASGI nativo en Vercel. Más liviano que Flask para una API pura. |
+| Lenguaje | **Python 3.12** | Pedido del proyecto. |
+| Framework web | **FastAPI** | Async, validación con Pydantic incluida, OpenAPI automática, ASGI nativo. Más liviano que Flask para una API pura. |
 | Validación | **Pydantic v2** | Esquemas de entrada y salida, errores claros, serialización rápida. |
 | Acceso a datos | **SQLAlchemy 2.0** (Core + ORM) | Permite el mismo código contra SQLite y Postgres. Consultas parametrizadas por defecto. |
 | Driver Postgres | **psycopg 3** (binary) | Driver recomendado para SQLAlchemy 2.0. |
 | Migraciones | **Alembic** | Versionado del esquema, reversible. |
-| Autenticación | **Supabase Auth** + verificación de JWT con JWKS (ES256) | No almacenamos hashes propios ni secretos de firma. Ver sección 8. |
+| Autenticación | **Propia** · bcrypt + JWT ES256 con par de claves del proyecto | Sin proveedor externo. Ver sección 8. |
 | HTTP cliente | **httpx** | Para el proveedor de cotizaciones (async). |
 | Fechas | **zoneinfo** (`America/Argentina/Buenos_Aires`) | Sin dependencias externas. |
 | Testing | **pytest** + **pytest-asyncio** + **httpx.AsyncClient** | Tests de lógica y de endpoints. |
@@ -63,13 +63,17 @@ Regla de precedencia: si este documento contradice al general en una decisión f
 
 | Componente | Elección |
 |---|---|
-| Hosting del frontend | **Vercel** (estático con CDN) |
-| Hosting de la API | **Vercel Python Serverless Functions** (`/api`), mismo proyecto y dominio |
-| Base de datos | **Supabase Postgres** — un solo proyecto, un solo esquema (`public`) |
-| Autenticación | **Supabase Auth** |
-| Base de datos local de desarrollo | El mismo esquema `public` de Supabase. **SQLite** sólo para los tests de cálculo |
-| Repositorio y CI | **GitHub** + integración de Vercel (preview por rama, producción en `main`) |
-| Backups | Supabase (automáticos) + exportación manual desde la app |
+| Servidor | **VPS propio** (Contabo, `13.140.36.93`), Debian/Ubuntu con Docker |
+| Proxy y TLS | **Caddy**, dueño del 80 y el 443, certificado de Let's Encrypt renovado solo |
+| Dirección | `https://13-140-36-93.sslip.io` — DNS público que resuelve a la IP, sin registro ni vencimiento |
+| Hosting del frontend | Estáticos servidos por Caddy desde `web/` |
+| Hosting de la API | **FastAPI sobre uvicorn**, en contenedor, sin puerto expuesto al exterior |
+| Base de datos | **Postgres 17** en contenedor, volumen propio, un solo esquema (`public`) |
+| Autenticación | **Propia**, en FastAPI. JWT ES256 con par de claves del proyecto |
+| Base de datos local de desarrollo | Postgres en contenedor. **SQLite** sólo para los tests de cálculo |
+| Repositorio | **GitHub**. El servidor se actualiza con `git pull` y `docker compose up -d --build` |
+| Backups | **`pg_dump` nuestro**, diario, verificado, copiado fuera del servidor y con restauración probada |
+| Convivencia | Comparte el servidor con Jarvis, detrás del mismo Caddy. Bases, redes y volúmenes separados |
 
 ---
 
@@ -79,7 +83,7 @@ Tres decisiones se apartan de lo propuesto en `01_Documento_General.md`. Quedan 
 
 ### 4.1 SQLite no es la base de producción
 
-El documento general dice "se utilizará SQLite en la primera versión" (sección 31). La elección de infraestructura (Vercel + Supabase) lo impide: **las funciones serverless de Vercel tienen un sistema de archivos efímero y de sólo lectura**, así que un archivo SQLite no puede persistir entre invocaciones. La base de producción es **Postgres en Supabase**.
+El documento general dice "se utilizará SQLite en la primera versión" (sección 31). La base de producción es **Postgres**, por una razón que no es de comodidad: **el aislamiento entre cuentas se apoya en Row Level Security** (§6.5), y SQLite no tiene políticas de seguridad por fila ni roles. Cambiar de motor significaría mover esa barrera del motor a la aplicación, que es exactamente donde no la queremos. A eso se suman `numeric(14,2)` para los importes y las zonas horarias, que SQLite tampoco resuelve.
 
 Qué se conserva:
 
@@ -89,29 +93,25 @@ Qué se conserva:
 
 Riesgo conocido y cómo se mitiga: SQLite y Postgres no se comportan igual en tipos, `ON CONFLICT`, ordenamiento de texto y zonas horarias. Para evitar bugs que sólo aparecen en producción, **el desarrollo normal usa Postgres**, y SQLite se usa sólo para los tests unitarios. Los tests de integración corren contra Postgres.
 
-### 4.1.1 Un solo proyecto de Supabase, un solo esquema
+### 4.1.1 Un solo esquema
 
-La cuenta de Supabase admite **un único proyecto**, y el proyecto trabaja contra **un único esquema: `public`**.
+El proyecto trabaja contra **un único esquema: `public`**.
 
-La versión anterior de este documento definía dos esquemas (`public` para producción y `dev` para desarrollo) y una variable `DB_SCHEMA` para elegir. Esa separación se quitó en la revisión del 07/10/2026: para una aplicación de pocos usuarios conocidos costaba más de lo que protegía —dos juegos de migraciones, un comparador de esquemas, una prueba de paridad y varias guardias de arranque—, todo para cuidar un entorno de pruebas que en la práctica era el único que se usaba.
+Una versión anterior de este documento definía dos esquemas (`public` para producción y `dev` para desarrollo) y una variable `DB_SCHEMA` para elegir. Esa separación se quitó en la revisión del 07/10/2026: para una aplicación de pocos usuarios conocidos costaba más de lo que protegía —dos juegos de migraciones, un comparador de esquemas, una prueba de paridad y varias guardias de arranque—, todo para cuidar un entorno de pruebas que en la práctica era el único que se usaba.
 
 `DB_SCHEMA` sigue existiendo como variable, con **`public` por defecto**, para no atar el código a un nombre de esquema. Nadie necesita definirla.
 
 **Qué se pierde y cómo se cubre.** Al no haber un esquema de pruebas, una migración equivocada toca los datos reales. El reemplazo es un procedimiento, no una barrera técnica:
 
-1. **Respaldo antes de cada migración.** Supabase hace respaldos automáticos; además `GET /api/export` (F11-T02) permite bajarse todo.
+1. **Respaldo antes de cada migración**, con `scripts/respaldo.sh`, que además verifica el archivo que acaba de escribir (§18). Y `GET /api/export` permite bajarse todo desde la aplicación.
 2. **Toda migración tiene su `downgrade` escrito y probado** antes de aplicarse.
 3. **`migrations/env.py` exige que el esquema esté declarado explícitamente** al migrar. Migrar es la operación destructiva: que pida ser explícita está bien.
 
-Qué más implica tener un solo proyecto:
-
-- **Supabase Auth es única por proyecto.** Con pocos usuarios es irrelevante.
-- **Si el proyecto se pausa** por inactividad (el plan gratuito pausa a los 7 días sin uso), se pausa todo.
-- El respaldo automático de Supabase cubre la instancia completa.
+Con la base en un servidor propio, el punto 1 dejó de depender de nadie: el respaldo es un archivo que podemos abrir, verificar y restaurar, y el procedimiento de restauración está probado de verdad (§18).
 
 ### 4.2 Sin plantillas de servidor
 
-El documento general proponía "componentes HTML reutilizables" servidos por el backend. Con Vercel el frontend se sirve estático desde el CDN y la API va aparte. Los componentes se componen **en el cliente** con funciones que devuelven HTML (exactamente como el mockup). Beneficio: el frontend carga desde el CDN sin arrancar una función Python.
+El documento general proponía "componentes HTML reutilizables" servidos por el backend. Acá el frontend se sirve estático desde el proxy y la API va aparte. Los componentes se componen **en el cliente** con funciones que devuelven HTML (exactamente como el mockup). Beneficio: la pantalla se pinta sin esperar a Python.
 
 ### 4.3 Gráficos con SVG propio en lugar de Chart.js
 
@@ -141,10 +141,10 @@ La especificación completa de cada gráfico está en la sección 14.
                 │ fetch + Authorization: Bearer <JWT>
                 ▼
 ┌───────────────────────────────────────────────────────────────┐
-│  VERCEL — misma URL, mismo dominio                            │
+│  CADDY — misma URL, mismo dominio, TLS automático             │
 │                                                               │
-│  /            → estáticos servidos por el CDN                 │
-│  /api/*       → función Python (FastAPI, ASGI)                │
+│  /            → estáticos de web/, servidos por el proxy      │
+│  /api/*       → FastAPI sobre uvicorn, en contenedor          │
 │                                                               │
 │  ┌─ routers/   validan entrada y devuelven respuestas         │
 │  ├─ services/  reglas de negocio y cálculos                   │
@@ -154,10 +154,10 @@ La especificación completa de cada gráfico está en la sección 14.
                 │ psycopg 3 (pool) + verificación de JWT
                 ▼
 ┌───────────────────────────────────────────────────────────────┐
-│  SUPABASE                                                     │
-│    Postgres  (tablas + RLS por usuario)                       │
-│    Auth      (GoTrue: usuarios, contraseñas, JWT)             │
-│    Backups   (automáticos del plan)                           │
+│  POSTGRES 17 — contenedor propio, volumen propio              │
+│    tablas + RLS por usuario                                   │
+│    auth.users (identidades) + auth.uid() (nuestra)            │
+│    respaldo diario verificado, con copia fuera del servidor   │
 └───────────────────────────────────────────────────────────────┘
                 ▲
                 │ httpx (programado o manual)
@@ -183,7 +183,7 @@ Regla práctica: **todo cálculo financiero es una función pura en `services/ca
 
 ## 6. Modelo de datos
 
-Implementa las secciones 31 a 43 del documento general. DDL para Postgres (Supabase). Los `CHECK` y `UNIQUE` son parte del contrato, no opcionales.
+Implementa las secciones 31 a 43 del documento general. DDL para Postgres. Los `CHECK` y `UNIQUE` son parte del contrato, no opcionales.
 
 ### 6.1 Convenciones
 
@@ -192,12 +192,12 @@ Implementa las secciones 31 a 43 del documento general. DDL para Postgres (Supab
 - Timestamps `timestamptz`, con `default now()`. La aplicación muestra en `America/Argentina/Buenos_Aires`.
 - Todas las tablas de datos del usuario llevan `user_id uuid not null` para que RLS funcione.
 - Nombres de tablas y columnas en inglés y `snake_case`; los textos visibles van en español en el frontend.
-- Todas las tablas viven en el esquema que indica `DB_SCHEMA`, siempre `public` (§4.1.1: un solo esquema para los tres entornos). El DDL de abajo se aplica dentro de ese esquema; `auth.users` es siempre el de Supabase, compartido.
+- Todas las tablas viven en el esquema que indica `DB_SCHEMA`, siempre `public` (§4.1.1). El DDL de abajo se aplica dentro de ese esquema; `auth.users` vive en el esquema `auth`, junto a la función `auth.uid()` (§8, §16.2).
 
 ### 6.2 DDL
 
 ```sql
--- ============ PERFIL (extiende auth.users de Supabase) ============
+-- ============ PERFIL (extiende auth.users) ============
 create table profiles (
   id            uuid primary key references auth.users(id) on delete cascade,
   username      text not null unique,
@@ -407,7 +407,7 @@ La tabla `liabilities` se crea vacía y no se muestra en la interfaz. El cálcul
 | No duplicar nombre de categoría en el mismo tipo (51) | `unique (user_id, type, name)` |
 | No borrar categoría con histórico (7) | `on delete restrict` en `transactions` y `monthly_category_totals` |
 | Anti-duplicados de importación (62) | `unique (user_id, source, external_id)` |
-| R12 — Contraseñas nunca en texto plano | No almacenamos contraseñas: las gestiona Supabase Auth |
+| R12 — Contraseñas nunca en texto plano | Sólo se guarda el hash bcrypt, en `auth.users.encrypted_password` |
 
 ### 6.4 Trigger de `updated_at`
 
@@ -571,9 +571,17 @@ Esto es independiente del rendimiento de una inversión (Regla 9): la ganancia o
 
 ### 8.1 Decisión
 
-Se usa **Supabase Auth** con email y contraseña. El backend **no almacena contraseñas ni hashes**: los gestiona Supabase (bcrypt). Esto cumple la Regla 12 del documento general de la forma más segura posible y nos da hecho el registro, la confirmación de email, la recuperación de contraseña y la rotación de tokens, que de otro modo habría que construir y mantener.
+**Autenticación propia, en FastAPI.** El backend guarda el hash de la contraseña (bcrypt), firma los tokens y los verifica. No hay proveedor externo en el camino.
 
-Alternativa descartada: autenticación propia con `passlib[argon2]`, sesión en cookie firmada y envío de mails propio. Más control, pero mucha más superficie de ataque propia y bastante código para un beneficio nulo en este proyecto. **Si en algún momento se quiere migrar a auth propia**, el cambio queda contenido en `core/security.py`, la tabla `profiles` y los tres módulos de frontend de la sección 8.7.
+No fue la decisión original. La primera versión del proyecto delegaba la identidad en un servicio externo, con el argumento —correcto— de que registro, rotación de tokens y recuperación por mail ya están resueltos ahí y no valía la pena construirlos. Lo que cambió es el contexto: al mudarse a un servidor propio, sostener esa dependencia significaba o bien seguir atado al servicio que se quiso dejar, o bien autohospedar ocho contenedores para no reescribir un archivo.
+
+El costo real de hacerlo propio son seis endpoints y un módulo de frontend, porque **el diseño original ya lo había previsto**: toda la dependencia del proveedor estaba contenida en `core/security.py` y en `web/src/js/auth.js`.
+
+Qué se conserva de aquella decisión, porque era buena:
+
+- **Firma asimétrica (ES256).** La privada firma, la pública verifica. Con un secreto compartido, quien lo tenga puede fabricar sesiones; acá, quien tenga la pública sólo puede comprobarlas.
+- **bcrypt** para las contraseñas: es lo que usaba el proveedor anterior, y es lo que permite importar sus hashes sin que nadie tenga que resetear nada.
+- **Los mismos claims** (`sub`, `aud: authenticated`, `exp`, `email`), así el resto del backend no se enteró del cambio.
 
 ### 8.2 La aplicación es multiusuario
 
@@ -583,43 +591,46 @@ El documento general plantea "1 usuario, con posibilidad de ampliar a pocos usua
 - **Cada cuenta es un mundo aparte**: sus meses, categorías, movimientos, inversiones, historial laboral, alertas y preferencias. Nadie ve los datos de nadie.
 - El aislamiento no depende de que los endpoints filtren bien: **Row Level Security** lo garantiza a nivel de base (§6.5). Aunque un endpoint tuviera un bug, Postgres no devolvería filas de otro usuario.
 
-Esto no agrega complejidad al modelo de datos porque **ya estaba previsto**: todas las tablas llevan `user_id` desde el primer día (§6.1). Lo que se agrega es el ciclo de vida de la cuenta: registro, confirmación, recuperación y cambio de contraseña.
+Esto no agrega complejidad al modelo de datos porque **ya estaba previsto**: todas las tablas llevan `user_id` desde el primer día (§6.1). Lo que se agrega es el ciclo de vida de la cuenta.
 
 ### 8.3 Ciclo de vida de una cuenta
 
 ```text
 REGISTRO
   pantalla de registro (email + contraseña + repetir)
-     ↓  supabase.auth.signUp()
-  Supabase crea la fila en auth.users con email_confirmed_at = null
-     ↓  envía mail de confirmación
-  el usuario abre el enlace del mail
-     ↓  vuelve a la app con la sesión iniciada
-  el trigger de Postgres ya creó su profile y sus 21 categorías
+     ↓  POST /api/auth/signup
+  la API crea la fila en auth.users con el hash bcrypt
+     ↓  el trigger de Postgres crea su profile y sus 21 categorías
+  devuelve access_token + refresh_token
      ↓
-  dashboard de su mes actual, vacío y listo para cargar
+  tablero de su mes actual, vacío y listo para cargar
 
 INICIO DE SESIÓN
-  email + contraseña  →  signInWithPassword()  →  access_token + refresh_token
+  email + contraseña  →  POST /api/auth/login  →  access_token + refresh_token
 
-RECUPERACIÓN DE CONTRASEÑA
-  pantalla "olvidé mi contraseña" (email)
-     ↓  supabase.auth.resetPasswordForEmail(email, { redirectTo })
-  Supabase envía el mail con un enlace de un solo uso
-     ↓  el usuario abre el enlace → vuelve a /#/nueva-clave con una sesión temporal
-  pantalla de contraseña nueva (contraseña + repetir)
-     ↓  supabase.auth.updateUser({ password })
-  sesión completa, al dashboard
+RENOVACIÓN
+  POST /api/auth/refresh con el token de renovación
+     ↓  el token usado se quema y se entrega uno nuevo (rotación)
+  access_token nuevo
+
+RECUPERACIÓN DE CONTRASEÑA  (sin correo, §8.5)
+  Gustavo corre en el servidor:  python -m app.cli recuperar <email>
+     ↓  imprime un link de un solo uso, válido 30 minutos
+  el link se entrega a mano
+     ↓  abre /#/nueva-clave con el token del link
+  contraseña nueva + repetir  →  POST /api/auth/reset  →  el token se quema
 
 CAMBIO DE CONTRASEÑA ESTANDO ADENTRO
-  configuración → contraseña actual + nueva  →  updateUser({ password })
+  configuración → contraseña actual + nueva  →  POST /api/auth/cambiar-clave
 ```
+
+**No hay confirmación por correo.** Una cuenta nace utilizable. A esta escala —usuarios conocidos, cuentas creadas de a una— confirmar la dirección no protege de nada que importe.
 
 ### 8.4 Creación automática del perfil y las categorías
 
-Cuando nace una cuenta hay que darle su fila en `profiles` y sus 21 categorías iniciales (las del documento general §7.1 y §7.2). Se hace con un **trigger en Postgres sobre `auth.users`**, no desde el backend.
+Cuando nace una cuenta hay que darle su fila en `profiles` y sus 21 categorías iniciales (las del documento general §7.1 y §7.2). Se hace con un **trigger en Postgres sobre `auth.users`**, no desde el backend: así una cuenta no puede existir sin su perfil, la cree quien la cree.
 
-Por qué el trigger y no el backend: el registro ocurre contra Supabase directamente, sin pasar por nuestra API. Si el perfil se creara en el primer acceso a `/api/...`, una cuenta podría existir sin perfil en el medio, y habría que manejar ese estado en todos los endpoints. El trigger lo vuelve imposible.
+Por qué el trigger y no el backend: si el perfil se creara en el primer acceso a `/api/...`, una cuenta podría existir sin perfil en el medio, y habría que manejar ese estado en todos los endpoints. Con el trigger, una fila en `auth.users` sin su perfil es imposible — la cree el endpoint de registro, un script de importación o alguien a mano desde SQL.
 
 ```sql
 -- Se aplica en el esquema que corresponda (dev o public).
@@ -668,81 +679,78 @@ create trigger al_crear_usuario
 
 Tres detalles que importan: `security definer` para que el trigger pueda escribir saltando RLS; `set search_path = ''` para que no sea vulnerable a una tabla intrusa en otro esquema; y `username` derivado del email, con `display_name` editable después. El trigger es **idempotente en la práctica** porque `auth.users` sólo dispara un `insert` por cuenta.
 
-### 8.5 Envío de mails: hace falta un SMTP propio
+### 8.5 Sin correo saliente, a propósito
 
-> **Estado, 2026-10-27: no hay SMTP y la aplicación no manda mails.** Decisión de Gustavo al cerrar F11-T03: no se contrata nada. La consecuencia está asumida y resuelta en la interfaz —`#/recuperar` muestra «contactate con quien te dio la cuenta» en vez de un formulario, y la confirmación por correo queda desactivada—, así que el requisito de abajo pasa a ser *la receta para el día que se encienda*, no una deuda abierta. Se enciende con `RECUPERACION_POR_CORREO` en `web/src/js/recuperar.js` más los pasos de esta sección y de la 8.6.
+**La aplicación no manda mails y no va a mandarlos.** No es una deuda: es una decisión tomada a la escala del proyecto (Gustavo, 2026-11-22). Montar y mantener un SMTP —dominio verificado, remitente, plantillas, reputación— es resolver un problema que con un puñado de usuarios conocidos no existe.
 
-**Esto es un requisito, no una mejora.** El servicio de mail que Supabase trae de fábrica está pensado sólo para pruebas: limita a unos pocos mails por hora y los manda desde un dominio compartido que suele caer en spam. Con eso, la recuperación de contraseña **no funciona en la práctica**.
+Lo único que el correo resolvía era la recuperación de contraseña. Se resuelve así:
 
-Hay que configurar un **SMTP propio** en Supabase (Project Settings → Authentication → SMTP Settings). Opciones gratuitas suficientes para este proyecto:
+```bash
+docker compose exec api python -m app.cli recuperar gustavo@ejemplo.com
+→ https://13-140-36-93.sslip.io/#/nueva-clave?token=a1b2c3…   (vale 30 minutos)
+```
 
-| Proveedor | Plan gratuito | Nota |
-|---|---|---|
-| **Resend** | 3.000 mails/mes, 100/día | El más simple de configurar, **pero sin dominio verificado sólo manda a tu propia dirección** (devuelve 403 con cualquier otro destinatario): para los demás usuarios hace falta el dominio, unos 10–15 dólares al año |
-| Brevo | 300 mails/día | No pide dominio propio: alcanza con verificar una dirección como remitente individual. Es la opción sin costo si no se quiere comprar un dominio |
-| Mailgun | 100 mails/día | Pide tarjeta |
+El link se entrega a mano y abre **la pantalla de contraseña nueva que ya existe**. El token se guarda hasheado, se quema al usarse y vence solo. El documento general ya había previsto exactamente esto en §48.1: «contactate con quien te dio la cuenta».
 
-Para un proyecto de un puñado de usuarios, cualquiera alcanza de sobra. **Mientras no esté configurado**, el registro y la recuperación funcionan pero los mails pueden no llegar: la interfaz tiene que decirlo con claridad en lugar de quedarse esperando.
+Si algún día hay más usuarios y el correo vuelve a tener sentido, lo que falta es el envío: el flujo, la pantalla y el token de un solo uso ya están.
 
-También hay que personalizar las **plantillas de mail** (Authentication → Email Templates) para que digan "Epic Wallet" y estén en español: por defecto llegan en inglés y con el nombre del proyecto de Supabase.
+### 8.6 El link de recuperación
 
-### 8.6 URLs de redirección
+Un token opaco de 32 bytes al azar, guardado **hasheado** en la base junto a su vencimiento y al usuario. No es un JWT: no tiene que ser verificable sin la base, y que sea opaco significa que no revela nada si se ve de reojo.
 
-Los enlaces de confirmación y de recuperación vuelven a la aplicación, así que Supabase necesita saber a dónde puede redirigir (Authentication → URL Configuration):
-
-| Campo | Valor |
+| Regla | Valor |
 |---|---|
-| Site URL | `https://<dominio-de-produccion>` |
-| Redirect URLs | `https://<dominio-de-produccion>/**`, `https://*.vercel.app/**` (para las previews), `http://localhost:3000/**` |
+| Vigencia | 30 minutos |
+| Usos | 1 — al canjearlo se borra la fila |
+| Alcance | sólo cambiar la contraseña de ese usuario |
+| Al canjear | se invalidan todos los tokens de renovación de esa cuenta |
 
-Sin esas URLs declaradas, el enlace del mail falla con *"requested path is invalid"*. Es el error más común de esta parte.
+Lo último importa: si alguien pidió una contraseña nueva, las sesiones abiertas de antes tienen que caerse.
 
 ### 8.7 Flujo técnico de la sesión
 
 ```text
-1. El usuario carga index.html (estático, desde el CDN).
+1. El usuario carga index.html (estático, servido por el proxy).
 2. Ingresa email y contraseña.
-3. El frontend llama a Supabase Auth directamente (supabase-js, sólo el módulo de auth).
-4. Supabase devuelve access_token (JWT, ~1 h) y refresh_token.
+3. El frontend llama a POST /api/auth/login.
+4. La API verifica el hash bcrypt y devuelve access_token (JWT, 1 h) y refresh_token (30 días).
 5. El frontend guarda la sesión y la renueva sola antes de que expire.
 6. Cada llamada a /api/* envía: Authorization: Bearer <access_token>
-7. El backend verifica la firma del JWT y extrae el user_id (claim "sub").
-8. El backend abre la conexión a Postgres propagando ese token, así RLS filtra por auth.uid().
+7. El backend verifica la firma del JWT con la clave pública y extrae el user_id (claim "sub").
+8. El backend abre la transacción a nombre de ese usuario, así RLS filtra por auth.uid() (§6.5).
 ```
 
 El frontend suma tres módulos a los de la sección 10: `auth.js` (sesión), y las vistas `registro`, `recuperar` y `nueva-clave`.
 
+**Tres cosas que `auth.js` tiene que sostener solo**, y que antes venían dadas por la librería del proveedor:
+
+1. **Renovar antes de que venza**, con un margen de un minuto: una petición que sale con un token que vence en dos segundos puede llegar vencida. El temporizador no corre con la pestaña dormida, así que `token()` además fuerza la renovación al volver.
+2. **Una sola renovación en vuelo.** Dos peticiones simultáneas con el token vencido tienen que compartir la misma promesa, no pedir dos renovaciones —con rotación de tokens, la segunda llegaría con uno ya quemado.
+3. **Sincronía entre pestañas**, por el evento `storage`: cerrar sesión en una no puede dejar a la otra creyendo que sigue adentro.
+
 ### 8.8 Verificación del JWT en el backend
 
-**El proyecto firma con claves asimétricas.** Verificado contra el proyecto real en F00-T06: los tokens vienen con `alg: ES256` y la clave pública se publica en un endpoint JWKS. **No hay secreto compartido que sirva**: `SUPABASE_JWT_SECRET` queda como resto de la configuración y no se usa para verificar.
+**Firma asimétrica, ES256** (ECDSA sobre la curva P-256). La privada vive en el servidor y sólo firma; la pública sólo verifica.
 
-| Dato | Valor comprobado |
+| Dato | Valor |
 |---|---|
-| Algoritmo | `ES256` (ECDSA sobre la curva P-256) |
-| Endpoint JWKS | `{SUPABASE_URL}/auth/v1/.well-known/jwks.json` |
-| Claves publicadas | 1 · `kty: EC`, `crv: P-256`, `use: sig` |
+| Algoritmo | `ES256` |
+| Clave privada | archivo montado en el contenedor de la API, nunca en el repositorio |
+| Clave pública | variable de entorno; es la única que necesita el verificador |
 | Audiencia | `authenticated` |
-| Vigencia | 3600 s |
+| Vigencia del token de acceso | 3600 s |
+| Tolerancia de reloj | 30 s |
 
 Esto obliga a `PyJWT[crypto]`: sin el extra `crypto` (que trae `cryptography`), PyJWT falla con `MissingCryptographyError` al intentar ES256.
 
 ```python
 # api/app/core/security.py
 import jwt
-from jwt import PyJWKClient
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .config import settings
 
 bearer = HTTPBearer(auto_error=False)
-
-# Un solo cliente para todo el proceso: cachea las claves del JWKS y
-# evita ir a buscarlas en cada petición.
-_jwks = PyJWKClient(
-    f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json",
-    cache_keys=True,
-    lifespan=3600,
-)
 
 async def current_user_id(
     cred: HTTPAuthorizationCredentials | None = Depends(bearer),
@@ -750,12 +758,13 @@ async def current_user_id(
     if cred is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sesión requerida")
     try:
-        clave = _jwks.get_signing_key_from_jwt(cred.credentials)
         payload = jwt.decode(
             cred.credentials,
-            clave.key,
+            settings.JWT_PUBLIC_KEY,
             algorithms=["ES256"],
             audience="authenticated",
+            leeway=30,
+            options={"require": ["exp", "sub"]},
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sesión expirada")
@@ -766,34 +775,33 @@ async def current_user_id(
 
 Todas las rutas bajo `/api` dependen de `current_user_id`. **No existe endpoint de datos sin autenticación.** Lo único público es `/api/health`.
 
-Dos consecuencias prácticas de usar JWKS:
+La verificación es **local**: no hay viaje de red, ni caché de claves, ni dependencia de que un servicio ajeno responda. La versión anterior buscaba la clave pública en un endpoint remoto; eso desapareció junto con el proveedor, y con ello un arranque en frío más lento y un punto de falla.
 
-1. **El arranque en frío de la función tiene que buscar las claves.** Es una petición HTTPS contra Supabase la primera vez; después queda cacheada en el proceso. Si alguna vez molesta, las claves pueden precargarse al iniciar la aplicación.
-2. **Si Supabase rota la clave**, el cliente la vuelve a buscar por el `kid` del token. No hay que hacer nada, pero conviene que el caché tenga vencimiento (de ahí el `lifespan`).
+**Tolerancia de reloj de 30 segundos, y no es comodidad.** Sin eso, un token recién emitido se rechaza si el reloj del servidor está apenas atrasado: medido en su momento, **0,2 segundos de desfase bastaban** para fallar con «the token is not yet valid (iat)». En producción se vería como un 401 intermitente justo después de entrar, imposible de reproducir a voluntad.
 
-Ventaja sobre el secreto compartido: el backend sólo necesita la **clave pública**. Aunque se filtrara la configuración del servidor, nadie podría fabricar un token válido.
+Hacia afuera, un token inválido dice siempre «la sesión no es válida». **No se cuenta por qué**: «firma incorrecta» o «audiencia equivocada» le dicen a quien está probando exactamente qué le falta ajustar. El detalle va al registro.
 
 ### 8.9 Reglas de contraseña
 
-Supabase valida el mínimo del lado del servidor; la interfaz lo refuerza para dar una respuesta inmediata:
+El servidor valida el mínimo; la interfaz lo refuerza para dar una respuesta inmediata:
 
-- Mínimo **8 caracteres** (se configura en Authentication → Policies).
+- Mínimo **8 caracteres**, comprobado en el servidor y en la pantalla.
 - Se muestra un medidor de fortaleza orientativo, nunca bloqueante más allá del mínimo.
 - El campo tiene **botón de mostrar y ocultar**: escribir una contraseña a ciegas en un teléfono es la principal causa de errores de tipeo.
 - En el registro se pide **repetir** la contraseña; en el login, no.
-- Nunca se dice si un email existe o no: ante un email desconocido, la recuperación responde lo mismo que ante uno válido ("si la dirección existe, te llega un mail"). Evita que se pueda averiguar quién tiene cuenta.
+- Nunca se dice si un email existe o no. Login y registro responden igual ante un email desconocido y ante una contraseña equivocada. Evita que el formulario se convierta en un verificador de cuentas.
 
 ### 8.10 Protección contra abuso
 
 Al haber registro abierto, hay que acotar el abuso:
 
-- Supabase ya limita los intentos de login y los envíos de mail por dirección IP.
-- `scripts/` incluye una consulta para revisar cuentas creadas y sin confirmar, por si hiciera falta limpiar.
-- Si en algún momento se quiere **cerrar el registro**, se desactiva en Authentication → Providers → Email → *Allow new users to sign up*, y el frontend oculta el enlace. Es un interruptor, no un cambio de código.
+- **Límite de intentos de login por dirección IP y por cuenta**, con espera creciente. Es la única defensa real contra probar contraseñas a mano.
+- `scripts/` incluye una consulta para revisar las cuentas creadas, por si hiciera falta limpiar.
+- Para **cerrar el registro**, una variable de entorno (`REGISTRO_ABIERTO=false`) que rechaza `signup` y hace que el frontend oculte el enlace. A esta escala puede ser lo razonable: las cuentas las crea Gustavo.
 
 ### 8.11 Dónde se guarda la sesión en el cliente
 
-`localStorage` gestionado por `supabase-js`. Se evalúa la alternativa de cookie `HttpOnly` (más resistente a XSS) y se descarta para el MVP porque requiere un endpoint proxy de login en el backend. Como compensación se aplican las mitigaciones de XSS de la sección 17: Content Security Policy estricta y cero `innerHTML` con datos sin escapar.
+`localStorage`, gestionado por `auth.js` y por nadie más. Se evaluó la alternativa de cookie `HttpOnly` —más resistente a XSS— y se mantiene la decisión original: con el frontend y la API en el mismo dominio dejó de haber un impedimento técnico, pero el cambio obliga a rehacer el manejo de sesión de los seis módulos que hoy piden el token, y no es lo que está en juego en este traslado. Queda anotado como mejora posible. Como compensación se aplican las mitigaciones de XSS de la sección 17: Content Security Policy estricta y cero `innerHTML` con datos sin escapar.
 
 ---
 
@@ -904,7 +912,7 @@ Una sola llamada alimenta todo el dashboard. Evita seis peticiones en el arranqu
 
 `daily.saving_cumulative` es la serie que dibuja **la línea de ahorro sobre el gráfico de barras**, el cambio que pediste sobre el mockup.
 
-Lo que **no** es un endpoint nuestro: registro, confirmación de email, recuperación y cambio de contraseña los atiende **Supabase Auth directamente desde el navegador** (§8.3). No hay un `POST /api/register` ni un `POST /api/forgot-password`: pasar esas operaciones por nuestra API sólo agregaría un intermediario sin aportar nada, y nos obligaría a manejar los mails.
+El ciclo de vida de la cuenta vive bajo `/api/auth` y es el único grupo de endpoints **públicos** además de `/api/health`: `signup`, `login`, `refresh`, `logout`, `reset`. `cambiar-clave` sí exige sesión. El detalle está en §8.3.
 
 ### 9.3 Formato de errores
 
@@ -981,7 +989,7 @@ No se requiere tiempo real (sección 26). El endpoint de refresco tiene un lími
 
 ```text
 epic-wallet/
-├── api/                              # backend (función serverless en Vercel)
+├── api/                              # backend (FastAPI sobre uvicorn)
 │   ├── index.py                      # punto de entrada: expone `app`
 │   └── app/
 │       ├── main.py                   # creación de FastAPI, middlewares, errores
@@ -1017,7 +1025,7 @@ epic-wallet/
 │   │       ├── main.js               # arranque
 │   │       ├── router.js             # navegación por hash
 │   │       ├── api.js               # cliente HTTP + manejo de errores
-│   │       ├── auth.js               # Supabase Auth
+│   │       ├── auth.js               # sesión: login, token y renovación
 │   │       ├── state.js              # estado y caché en memoria
 │   │       ├── format.js             # fmt, fmtK, pct, fechas
 │   │       ├── charts/               # daily, six, categories, line, stack
@@ -1038,7 +1046,7 @@ epic-wallet/
 ├── .env.example
 ├── package.json                      # Tailwind CLI y scripts
 ├── pyproject.toml                    # dependencias y config de ruff/mypy
-└── vercel.json
+└── compose.yml                        # api + postgres, para el servidor
 ```
 
 ---
@@ -1048,27 +1056,32 @@ epic-wallet/
 ```ini
 # .env.example
 # --- Base de datos ---
-DATABASE_URL=postgresql+psycopg://postgres.xxxx:PASS@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
+# El host es el nombre del servicio de Postgres dentro del compose.
+DATABASE_URL=postgresql+psycopg://epic:CONTRASENA@db:5432/epic_wallet
 DB_SCHEMA=public                         # único esquema del proyecto — ver §4.1.1
-# sólo para los tests:
+# sólo para los tests de cálculo:
 # DATABASE_URL=sqlite+pysqlite:///./test.db
 # DB_SCHEMA=main
 
-# --- Supabase ---
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_ANON_KEY=eyJ...                 # pública, va al frontend
-SUPABASE_SERVICE_ROLE_KEY=eyJ...         # SECRETA, sólo backend
-SUPABASE_JWT_SECRET=...                  # SECRETA, verifica firmas
-
 # --- Autenticación ---
-# URL pública de la app, para armar los enlaces de los mails de
-# confirmación y de recuperación de contraseña (§8.6).
-PUBLIC_APP_URL=https://epic-wallet-v2.vercel.app
+# Par de claves ES256 del proyecto. La privada se monta como archivo en
+# el contenedor y NUNCA entra al repositorio; la pública puede ir en el
+# entorno, porque sólo sirve para verificar.
+JWT_PRIVATE_KEY_FILE=/run/secrets/jwt_private.pem
+JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----
+...
+-----END PUBLIC KEY-----"
+JWT_TTL_MINUTOS=60                       # vida del token de acceso
+REFRESH_TTL_DIAS=30                      # vida del token de renovación
+REGISTRO_ABIERTO=true                    # false cierra el alta de cuentas (§8.10)
+
+# URL pública, para armar los links de recuperación (§8.6).
+PUBLIC_APP_URL=https://13-140-36-93.sslip.io
 
 # --- Aplicación ---
 APP_ENV=production                       # development | preview | production
 APP_TIMEZONE=America/Argentina/Buenos_Aires
-ALLOWED_ORIGINS=https://epic-wallet-v2.vercel.app
+ALLOWED_ORIGINS=https://13-140-36-93.sslip.io
 PRICE_PROVIDER_ORDER=byma,public,manual
 PRICE_REFRESH_COOLDOWN_MINUTES=15
 LOG_LEVEL=INFO
@@ -1076,10 +1089,10 @@ LOG_LEVEL=INFO
 
 Reglas no negociables:
 
-- `SUPABASE_SERVICE_ROLE_KEY` y `SUPABASE_JWT_SECRET` **nunca** llegan al navegador ni se escriben en el repositorio.
-- El frontend sólo conoce `SUPABASE_URL` y `SUPABASE_ANON_KEY`, inyectadas en el build.
-- Se usa el **pooler** de Supabase (puerto 6543, modo transaction) porque las funciones serverless abren y cierran conexiones constantemente y agotarían el límite de conexiones directas.
-- `DB_SCHEMA` es siempre `public`, en los tres entornos (§4.1.1); `scripts/check_db.py` verifica que esté definida y que valga eso. Lo que sí exige `APP_ENV=production` explícito en la línea de comando es **migrar** (`migrations/env.py`, §16.4): es la operación destructiva del proyecto, y que pida ser consciente es deliberado.
+- **La clave privada de firma nunca sale del servidor** y nunca se escribe en el repositorio. Si se filtrara, cualquiera podría fabricar sesiones de cualquier usuario. Es el único secreto del proyecto con esa propiedad.
+- **El frontend no recibe ningún secreto.** `web/public/config.js`, generado en el build, lleva únicamente la URL de la API. `tests/unit/test_secretos_fuera_del_frontend.py` revisa todos los archivos versionados.
+- **La contraseña de Postgres** vive en el `.env` del servidor, que no se versiona. La base no publica ningún puerto al exterior: sólo la alcanza la API, por la red interna del compose.
+- `DB_SCHEMA` es siempre `public` (§4.1.1); `scripts/check_db.py` verifica que esté definida y que valga eso. Lo que sí exige `APP_ENV=production` explícito en la línea de comando es **migrar** (`migrations/env.py`, §16.4): es la operación destructiva del proyecto, y que pida ser consciente es deliberado.
 
 ---
 
@@ -1450,36 +1463,41 @@ El `theme_color` del manifest y el `<meta name="theme-color">` se actualizan al 
 
 ## 16. Despliegue
 
-### 16.1 Un proyecto de Vercel, dos cosas dentro
+### 16.1 Qué corre en el servidor
 
-```jsonc
-// vercel.json — el archivo real del repositorio
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "web",
-  "framework": null,
-  "regions": ["gru1"],                      // junto a la base, ver §20.1
-  "functions": {
-    "api/index.py": { "maxDuration": 30, "memory": 1024 }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" }
-  ],
-  "headers": [ /* seguridad y caché, ver abajo */ ]
-}
+Un VPS propio con Docker. Tres piezas, en dos `docker compose` distintos:
+
+```text
+/opt/edge/            proxy de borde — ÚNICO dueño del 80 y el 443
+    caddy             TLS automático, estáticos, enruta por dominio
+    conf.d/           un archivo de sitio por proyecto
+
+/opt/epic-wallet/     esta aplicación
+    api               FastAPI sobre uvicorn — sin puerto publicado
+    db                Postgres 17 — sin puerto publicado, volumen propio
+
+/opt/jarvis/          el otro proyecto del servidor, independiente
 ```
 
-Notas sobre la configuración:
+**Ni la API ni la base publican puertos al exterior.** Lo único que escucha desde afuera es Caddy. `ss -tlnp` tiene que mostrar 22, 80 y 443, y nada más.
 
-- **No se declara `runtime`.** Vercel detecta Python por la extensión de `api/index.py` e instala `requirements.txt`. Fijar el runtime a mano es una fuente habitual de despliegues fallidos porque el nombre válido cambia entre versiones de la plataforma; si en algún momento hace falta otra versión de Python, se fija en el panel (Settings → General).
-- **`framework: null`** evita que Vercel intente autodetectar un framework de frontend y aplique convenciones que no son las nuestras.
-- **`memory: 1024`** porque la función carga SQLAlchemy, Pydantic y `cryptography`: con la memoria mínima el arranque en frío se alarga.
-- **`maxDuration: 30`** da margen al arranque en frío con la búsqueda inicial del JWKS.
+El proxy es compartido porque sólo puede haber un dueño del 443. Cada proyecto tiene su archivo en `conf.d/`, su red y su volumen: reiniciar uno no toca al otro.
+
+```caddyfile
+# /opt/edge/conf.d/epicwallet.caddy
+13-140-36-93.sslip.io {
+    encode gzip zstd
+    handle /api/* { reverse_proxy epic-wallet-api:8000 }
+    handle        { root * /srv/epic-wallet; try_files {path} /index.html; file_server }
+    header { ... }   # las de la tabla de abajo
+}
+```
 
 Cabeceras que se aplican:
 
 | Ruta | Cabecera | Para qué |
 |---|---|---|
+| todo | `Content-Security-Policy` | `default-src 'self'`; sin dominios de terceros, porque ya no hay ninguno |
 | todo | `X-Content-Type-Options: nosniff` | que el navegador no adivine tipos |
 | todo | `X-Frame-Options: DENY` | no embebible en un iframe |
 | todo | `Referrer-Policy: strict-origin-when-cross-origin` | no filtrar rutas al salir del sitio |
@@ -1490,58 +1508,70 @@ Cabeceras que se aplican:
 | `/icons/*` | `Cache-Control: 1 semana` | |
 | `/service-worker.js` | `Cache-Control: no-cache` | que una versión nueva se tome enseguida |
 
-`.vercelignore` deja fuera del despliegue la documentación, los mockups, las pruebas, las migraciones y el entorno virtual: unos 680 KB de documentación y 178 MB de `.venv` que no se sirven.
-
-Queda una consecuencia menor de `outputDirectory: "web"`: los fuentes de CSS en `web/src/` quedan accesibles públicamente. No hay secretos en ellos (son hojas de estilo), y excluirlos rompería el build porque Tailwind los necesita como entrada.
-
-```python
-# api/index.py — punto de entrada de la función
-from app.main import app        # Vercel detecta el ASGI y lo sirve
-```
+La CSP se simplificó al mudarse: antes tenía que permitir el dominio del proveedor de autenticación en `connect-src`. Ahora el navegador sólo habla con su propio origen.
 
 Frontend y API comparten dominio, así que **no hay CORS** en producción. Sólo se configura para desarrollo local.
 
-`"regions": ["gru1"]` fija la función Python en São Paulo, **la misma región donde vive la base de datos y la más cercana a Buenos Aires**. No es un detalle menor: ver §20.1.
+### 16.2 El esquema `auth` es nuestro
 
-### 16.2 Entornos
+Las políticas RLS se escribieron contra `auth.uid()` y `profiles.id` referencia `auth.users`. Al dejar el proveedor externo, esas dos cosas pasan a ser del proyecto, **sin que las políticas ni el DDL cambien una línea**:
 
-| Entorno | Rama | URL | Base de datos |
-|---|---|---|---|
-| Producción | `main` | `epic-wallet-v2.vercel.app` | Supabase · esquema `public` |
-| Preview | cualquier otra rama o PR | URL automática por rama | Supabase · esquema `public` |
-| Local | — | `localhost:3000` + `localhost:8000` | Supabase · esquema `public` |
+```sql
+create schema if not exists auth;
 
-Los tres apuntan al mismo proyecto y al mismo esquema (§4.1.1). La diferencia entre ellos es el código que corre, no los datos.
+create table auth.users (
+  id                 uuid primary key default gen_random_uuid(),
+  email              text not null unique,
+  encrypted_password text not null,          -- bcrypt
+  email_confirmed_at timestamptz,
+  created_at         timestamptz not null default now()
+);
 
-**Esto es lo que te permite probar en el celular en el momento:** cada push genera una URL de preview; cuando una tarea se aprueba, se integra a `main` y queda en la URL de producción. Nunca hay que esperar al final de una fase para ver algo funcionando.
+-- Lee el mismo GUC que la aplicación ya seteaba por transacción.
+create or replace function auth.uid() returns uuid
+language sql stable as $$
+  select nullif(current_setting('request.jwt.claims', true)::json ->> 'sub', '')::uuid
+$$;
 
-**Consecuencia a tener presente:** una preview escribe sobre los datos reales. Las tareas que prueban escritura usan una **segunda cuenta de prueba**, no la tuya; RLS garantiza que no se cruzan.
+create role anon          nologin;
+create role authenticated nologin;
+grant authenticated to epic;   -- sin esto, `set local role` falla
+```
 
-### 16.3 Flujo de trabajo por tarea
+**Por qué funciona sin tocar nada más:** `core/db.py` ya hacía `set local role authenticated` y `set_config('request.jwt.claims', …, true)` por transacción (§6.5). Esa pieza fue siempre nuestra; lo único prestado era la función que leía el claim.
+
+### 16.3 Cómo se publica un cambio
 
 ```text
-rama feat/F04-T03-alta-movimiento
+rama feat/F15-T03-compose
    │
    ├─ 1. lógica  → funciones puras + tests unitarios (verde en local)
    ├─ 2. backend → endpoint + tests de API
    ├─ 3. frontend→ interfaz conectada
    │
-   ├─ push → Vercel construye la preview
-   ├─ vos la probás en el celular con la URL de preview
+   ├─ push a GitHub
+   ├─ en el servidor: git pull && docker compose up -d --build
+   ├─ vos lo probás en el celular
    │
-   ├─ aprobada  → merge a main → producción → se marca [x] en el roadmap
-   └─ rechazada → se corrige en la misma rama y vuelve a preview
+   ├─ aprobada  → merge a main → se marca [x] en el roadmap
+   └─ rechazada → se corrige en la misma rama
 ```
+
+El servidor baja el código con una **clave de despliegue de sólo lectura, generada dentro del servidor**: la privada no viaja por ningún lado y no sirve para escribir en el repositorio.
+
+**Hay un solo entorno.** No hay previews por rama: con un servidor propio, montar un entorno efímero por rama es infraestructura que a esta escala no se paga sola. Se prueba en local y después en el servidor.
+
+**Consecuencia a tener presente:** una prueba en el servidor escribe sobre los datos reales. Las tareas que prueban escritura usan una **segunda cuenta de prueba**, no la tuya; RLS garantiza que no se cruzan.
 
 ### 16.4 Migraciones
 
-Las migraciones **no** corren automáticamente en el despliegue: una migración fallida en una función serverless dejaría la base a medio camino. Se ejecutan a mano desde local, antes de integrar el código que las necesita.
+Las migraciones **no** corren automáticamente al desplegar: una migración fallida a mitad de camino deja la base en un estado que nadie pidió. Se ejecutan a mano, a conciencia.
 
 Con un solo esquema (§4.1.1), **una migración toca los datos reales**. El procedimiento no es negociable:
 
 ```bash
-# 1 · respaldo primero, siempre
-#     (desde el panel de Supabase, o GET /api/export)
+# 1 · respaldo primero, siempre — y el script verifica el archivo que escribió
+./scripts/respaldo.sh && ls -lh respaldos/
 
 # 2 · generar la migración
 DB_SCHEMA=public APP_ENV=production alembic revision --autogenerate -m "F03 meses"
@@ -1557,19 +1587,18 @@ DB_SCHEMA=public APP_ENV=production alembic upgrade head
 
 `DB_SCHEMA` y `APP_ENV` van explícitos en cada comando de Alembic. `migrations/env.py` los exige y no asume un valor por defecto: migrar es la operación destructiva del proyecto, y que pida ser explícita es deliberado.
 
-**Toda migración tiene su `downgrade` escrito y revisado.** El orden en cada despliegue con migración es: respaldo, migrar, publicar. Nunca al revés, porque el código nuevo espera tablas que el viejo no usa.
+**Toda migración tiene su `downgrade` escrito y revisado.** El orden es: respaldo, migrar, publicar. Nunca al revés, porque el código nuevo espera tablas que el viejo no usa.
 
 ### 16.5 Puesta en marcha inicial
 
-Lo que hay que tener antes de la primera línea de lógica de negocio (es la Fase 0 del roadmap):
+Lo que hay que tener antes de la primera línea de lógica de negocio:
 
 1. Repositorio en GitHub con la estructura de la sección 10.
-2. Un proyecto Supabase con el esquema `public` creado; anotar URL, claves y secreto de JWT.
-3. Proyecto en Vercel vinculado al repositorio, con las variables de entorno cargadas en los tres entornos.
-4. `/api/health` respondiendo en la URL de producción.
-5. `index.html` mínimo con el estilo aplicado, instalable como PWA en el celular.
-
-Recién cuando eso funciona de punta a punta empieza la Fase 1.
+2. El servidor con Docker, el proxy de borde sirviendo el dominio con certificado válido, y la clave de despliegue cargada.
+3. El compose de la aplicación levantado, con el esquema migrado y el shim de `auth` (§16.2).
+4. `/api/health` respondiendo a través del proxy.
+5. `index.html` sirviéndose, instalable como PWA en el celular.
+6. **El respaldo diario corriendo y una restauración ya probada** (§18). Esto va antes de cargar un solo dato real.
 
 ---
 
@@ -1583,8 +1612,8 @@ Todo esto ya está implementado o es gratuito, así que no se discute:
 
 | Requisito | Implementación |
 |---|---|
-| HTTPS en producción | Vercel lo fuerza, más HSTS por cabecera |
-| Contraseñas nunca en texto plano | No las almacenamos: Supabase Auth (bcrypt) |
+| HTTPS en producción | Caddy redirige el 80 al 443 y renueva el certificado solo, más HSTS por cabecera |
+| Contraseñas nunca en texto plano | Sólo el hash bcrypt, en `auth.users` |
 | **Aislamiento entre cuentas** | `user_id` en toda consulta **y RLS como segunda barrera**. Es la defensa que importa acá |
 | Sesiones seguras | JWT de vida corta (1 h) con refresh automático |
 | Protección CSRF | No aplica: token en cabecera `Authorization`, no cookie de sesión |
@@ -1593,11 +1622,11 @@ Todo esto ya está implementado o es gratuito, así que no se discute:
 | Protección contra XSS | `esc()` obligatorio en todo dato que venga del servidor |
 | Recuperación de contraseña segura | Enlace de un solo uso con vencimiento; nunca se revela si un email tiene cuenta |
 | Registro sin enumerar usuarios | El alta y la recuperación responden igual exista o no el email |
-| Secretos por entorno | Variables de Vercel; `.env` en `.gitignore`; `.env.example` sin valores |
+| Secretos | `.env` del servidor, fuera del repositorio; la clave privada de firma montada como archivo; `.env.example` sin valores |
 | Permisos mínimos en la base | `anon` y `authenticated` con sólo los permisos que la aplicación usa (cerrado en F02-T16) |
 | Registro sin datos sensibles | Nunca se loguean tokens, contraseñas ni importes identificables |
 
-La CSP se envía por cabecera desde `vercel.json` y es la razón por la que no hay JavaScript en línea en el HTML: todo va en módulos.
+La CSP se envía por cabecera desde el Caddyfile y es la razón por la que no hay JavaScript en línea en el HTML: todo va en módulos.
 
 ```text
 Content-Security-Policy:
@@ -1606,7 +1635,7 @@ Content-Security-Policy:
   style-src 'self' https://fonts.googleapis.com;
   font-src https://fonts.gstatic.com;
   img-src 'self' data:;
-  connect-src 'self' https://*.supabase.co;
+  connect-src 'self';
   frame-ancestors 'none';
   base-uri 'self'
 ```
@@ -1617,7 +1646,7 @@ Recortado en la revisión del 07/10/2026 (roadmap v2.0, F11-T04). No es que sea 
 
 | Descartado | Por qué |
 |---|---|
-| Límite de peticiones (60/min, respuesta 429) | Los usuarios son conocidos y pocos. Supabase ya limita el abuso contra Auth |
+| Límite general de peticiones (60/min, respuesta 429) | Los usuarios son conocidos y pocos. El login sí tiene su propio límite (§8.10), que es donde importa |
 | Auditoría del historial de Git buscando secretos | `.env` estuvo ignorado desde el primer commit. Se verifica el estado actual, no el historial |
 | Endurecer la CSP más allá de lo que ya hay | Ya no hay JavaScript en línea; la cabecera actual alcanza |
 | Prueba de rendimiento con volumen | El volumen real son unos cientos de movimientos por año y por usuario |
@@ -1633,13 +1662,17 @@ Recortado en la revisión del 07/10/2026 (roadmap v2.0, F11-T04). No es que sea 
 
 ## 18. Respaldo y exportación
 
-Tres niveles, porque "la información financiera no debe depender de una única copia" (sección 58).
+**Es el motivo por el que la aplicación se mudó a un servidor propio.** "La información financiera no debe depender de una única copia" (sección 58), y antes la copia dependía del plan de un tercero.
 
-1. **Automático de Supabase** — copias diarias del plan, con restauración desde el panel.
-2. **Exportación desde la app** — `GET /api/export?format=json` devuelve el estado completo del usuario (perfil, meses, categorías, movimientos, totales consolidados, inversiones, historial laboral, preferencias) con versión de esquema. `format=csv` devuelve un ZIP con un archivo por tabla, para abrir en Excel.
-3. **Script local** — `scripts/backup.py` hace `pg_dump` del proyecto Supabase a un archivo local.
+Tres niveles:
 
-La restauración (`POST /api/import`) valida la versión de esquema, muestra una vista previa de qué se va a escribir y pide confirmación. **No se implementa en el MVP**; se deja el endpoint de exportación, que es lo que protege los datos.
+1. **Respaldo diario del servidor** — `scripts/respaldo.sh` hace `pg_dump -Fc` todas las noches, **verifica el archivo que acaba de escribir** (que abra y liste las tablas) y falla ruidosamente si no. Retención de 7 diarios, 4 semanales y 6 mensuales.
+2. **Copia fuera del servidor** — el archivo del día se copia a un destino externo. Una copia que vive en el mismo disco que la base no es una copia: un disco que se pierde se lleva las dos.
+3. **Exportación desde la aplicación** — `GET /api/export?format=json` devuelve el estado completo del usuario (perfil, meses, categorías, movimientos, totales consolidados, inversiones, historial laboral, preferencias) con versión de esquema. `format=csv` devuelve un ZIP con un archivo por tabla, para abrir en Excel. Es la copia que se lee sin herramientas.
+
+**La restauración está probada, no sólo escrita.** `scripts/restaurar.sh` levanta el dump sobre una base vacía, y el procedimiento se ejecutó de verdad antes de cargar un solo dato real. Un respaldo que nunca se restauró no es un respaldo: es un archivo.
+
+`POST /api/import` valida la versión de esquema, muestra una vista previa de qué se va a escribir y pide confirmación. Sólo escribe sobre una cuenta limpia.
 
 ---
 
@@ -1675,7 +1708,7 @@ Decidido en la revisión del 07/10/2026. Estos tests existían y consumían más
 
 - **La estructura del HTML** y la presencia de componentes en la página.
 - **Los tokens de CSS**, sus valores y el contraste calculado por expresiones regulares.
-- **La configuración del despliegue** (`.vercelignore`, `vercel.json`, variables de entorno).
+- **La configuración del despliegue** (`compose.yml`, el Caddyfile, variables de entorno).
 - **El contenido de la documentación**: que un documento mencione lo que menciona.
 - **Flujos de interfaz con Playwright en CI.**
 
@@ -1691,44 +1724,34 @@ Todo eso se verifica **mirando la pantalla en el celular**, que es el paso que y
 
 Los presupuestos de KB de JavaScript y CSS y el puntaje de Lighthouse se quitaron como exigencias en la revisión del 07/10/2026: generaban trabajo de medición sin cambiar la experiencia. Las prácticas que los conseguían se mantienen igual, porque no cuestan nada.
 
-Cómo se consigue: una sola llamada para todo el dashboard; caché por mes en memoria; `font-display: swap` con precarga; fondo con `background-attachment: fixed` y una única capa de ruido en SVG embebido en lugar de imágenes; `content-visibility: auto` en los paneles que están fuera de pantalla; estáticos con cache inmutable; pooler de conexiones en Supabase.
+Cómo se consigue: una sola llamada para todo el dashboard; caché por mes en memoria; `font-display: swap` con precarga; fondo con `background-attachment: fixed` y una única capa de ruido en SVG embebido en lugar de imágenes; `content-visibility: auto` en los paneles que están fuera de pantalla; estáticos con cache inmutable; pool de conexiones en la API, que ahora tiene sentido porque el proceso vive.
 
-### 20.1 Región: todo en São Paulo
+### 20.1 Región: el servidor está en US-east
 
-La base vive en **`sa-east-1` (São Paulo)**, la región de AWS más cercana a Buenos Aires, y la función de Vercel se fija en **`gru1`** (São Paulo también). Los tres puntos del recorrido —teléfono, función y base— quedan en Sudamérica.
+El VPS está en **US-east**, a unos **130–160 ms** de Buenos Aires. Contabo no tiene región sudamericana, así que no hay alternativa dentro del proveedor. Es una desventaja frente al alojamiento anterior, que estaba en São Paulo, y está asumida a cambio del control sobre los datos y los respaldos.
 
-Esto no salió gratis: el proyecto se creó primero en `us-west-2` (Oregón), que es la región por defecto de Supabase, y **la región de un proyecto no se puede cambiar**. Se detectó en la verificación de F00-T04, con la base todavía vacía, y se recreó en São Paulo. Las mediciones, desde Buenos Aires:
-
-| Medición | Oregón (`us-west-2`) | São Paulo (`sa-east-1`) | Mejora |
-|---|---|---|---|
-| Conexión TCP al pooler | 236 ms | **47 ms** | 5,0× |
-| Consulta sobre conexión abierta | 223 ms | **35 ms** | 6,4× |
-| Abrir conexión nueva | 665–2.049 ms | **105 ms** | 6–20× |
-
-**Por qué importa tanto:** el costo no es el viaje, es el viaje **multiplicado por consulta**. Con el dashboard haciendo seis consultas, Oregón costaba ~1,3 s sólo de red; São Paulo cuesta ~210 ms. Es la diferencia entre cumplir el objetivo de 400 ms y no acercarse.
-
-**Por qué la función va en `gru1` y no donde esté el usuario:** porque la latencia que se multiplica es la de función → base, no la de usuario → función. El usuario paga un único viaje de ida y vuelta por petición HTTP; la función paga uno por consulta SQL. Poniéndola junto a la base, cada consulta cuesta ~5 ms en lugar de ~35 ms:
+**Por qué el objetivo de 400 ms se sigue cumpliendo**, y con margen: lo que antes se multiplicaba no era el viaje del teléfono sino el de la aplicación a la base, una vez por consulta. Ahora la API y Postgres están **en el mismo host, en la misma red de Docker**: cada consulta cuesta una fracción de milisegundo en vez de decenas.
 
 ```text
-Función en gru1, junto a la base (lo elegido):
-  teléfono → función   ~40 ms   (una sola vez por petición)
-  función  → base      ~5 ms × 6 consultas = 30 ms
-  total                ~70 ms   y casi no crece al agregar consultas
+Antes (aplicación y base en São Paulo, separadas por la red):
+  teléfono → servidor   ~40 ms    (una vez por petición)
+  servidor → base       ~5 ms × 6 consultas = 30 ms
+  total                 ~70 ms
 
-Función en otra región (por ejemplo Virginia):
-  teléfono → función   ~120 ms
-  función  → base      ~130 ms × 6 consultas = 780 ms
-  total                ~900 ms  y empeora con cada consulta
+Ahora (servidor propio en US-east, base en el mismo host):
+  teléfono → servidor  ~150 ms    (una vez por petición)
+  servidor → base      ~0,3 ms × 6 consultas ≈ 2 ms
+  total                ~155 ms
 ```
 
-Los **estáticos no dependen de esto**: el CDN de Vercel los sirve desde el nodo más cercano a Buenos Aires sin importar dónde corra la función.
+Se nota al abrir la aplicación —unos 80 ms más que antes— y **no empeora al agregar consultas**, que es lo que hacía peligrosa la latencia en el modelo anterior.
 
 Qué queda como regla:
 
-1. **`regions: ["gru1"]`** en `vercel.json` (F00-T08). Si alguna vez la base se mueve, esta variable se mueve con ella.
-2. **Mantener la respuesta única del dashboard** (§9.2): con cualquier latencia, una llamada es mejor que seis.
-3. **Medir el percentil 95 desde la función desplegada**, no desde la máquina de desarrollo.
-4. En desarrollo local hay que contar ~35 ms por consulta: es el viaje a São Paulo, no un problema de código.
+1. **Mantener la respuesta única del dashboard** (§9.2): con cualquier latencia, una llamada es mejor que seis. Con un solo viaje caro, esto importa más que antes, no menos.
+2. **La base nunca se separa de la API.** Si alguna vez se mueve a otro host, el cálculo de arriba se invierte y el objetivo deja de cumplirse.
+3. **Medir el percentil 95 contra el servidor**, no contra la base local.
+4. Un dominio propio con CDN delante de los estáticos reduciría la primera carga, pero no la de la API. Está anotado como mejora, no como pendiente.
 
 ---
 
@@ -1737,7 +1760,7 @@ Qué queda como regla:
 ### Código
 
 - Python: `ruff` para formato y lint; `snake_case`; anotaciones de tipo obligatorias en servicios y repos; `Decimal` para dinero, **nunca `float`**.
-- JavaScript: módulos ES; `camelCase`; `const` por defecto; sin dependencias de terceros salvo `supabase-js`.
+- JavaScript: módulos ES; `camelCase`; `const` por defecto; **sin dependencias de terceros**.
 - CSS: tokens primero, utilidades de Tailwind después, CSS propio sólo para los componentes de vidrio.
 - Textos de interfaz en español rioplatense; identificadores de código en inglés.
 
@@ -1761,13 +1784,13 @@ Al cerrar cada fase se escribe `docs/FASE_XX_<nombre>.md` con qué se hizo en le
 
 | Tema | Decisión | Dónde se amplía |
 |---|---|---|
-| Framework backend | FastAPI sobre Vercel Python Functions | 3, 16.1 |
-| Base de datos | Supabase Postgres, un proyecto y un esquema (`public`); SQLite sólo para tests de cálculo | 4.1, 4.1.1, 6 |
+| Framework backend | FastAPI sobre uvicorn, en contenedor | 3, 16.1 |
+| Base de datos | Postgres 17 propio, un esquema (`public`); SQLite sólo para tests de cálculo | 4.1, 4.1.1, 6 |
 | ORM | SQLAlchemy 2.0 + Alembic | 3, 16.4 |
-| Autenticación | Supabase Auth; el JWT se verifica con la clave pública del JWKS (ES256), no con secreto compartido | 8.8 |
+| Autenticación | Propia; bcrypt para las contraseñas y JWT ES256 verificado con la clave pública del proyecto, no con secreto compartido | 8.1, 8.8 |
 | Cuentas | Registro abierto, multiusuario desde el MVP. La confirmación por email se activa en F11-T03 | 8.2, 8.3 |
 | Perfil y categorías iniciales | Trigger de Postgres sobre `auth.users`, no el backend | 8.4 |
-| Envío de mails | SMTP propio obligatorio; el de Supabase sólo sirve para pruebas | 8.5 |
+| Envío de mails | No hay. La recuperación de contraseña se hace con un comando en el servidor | 8.5 |
 | Aislamiento de datos | `user_id` en consultas + RLS | 6.5 |
 | Frontend | Estático, una página, seis vistas, hash routing | 12.1 |
 | Estilos | Tailwind v4 con los tokens del mockup | 13 |

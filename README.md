@@ -1,4 +1,4 @@
-# Epic Wallet 2.0
+# Epic Wallet 3.0
 
 Aplicación personal de gestión financiera. Web responsive y PWA, **pensada primero para el celular** y con un dashboard completo en PC.
 
@@ -10,7 +10,11 @@ Reemplaza la planilla de Excel que vengo usando hace años: conserva su lógica 
 
 ## Estado del proyecto
 
-**Fase 0 — Puesta en marcha.** En construcción. La API ya está en internet: [https://epic-wallet-v2.vercel.app/api/health](https://epic-wallet-v2.vercel.app/api/health) El avance tarea por tarea está en [`documentacion/03_Roadmap.md`](documentacion/03_Roadmap.md).
+**La aplicación está construida y se usa.** Catorce fases cerradas: cuentas, meses, movimientos, los seis indicadores, los cinco gráficos, histórico, patrimonio, inversiones, escritorio y vencimientos.
+
+**Lo que está en curso es el traslado a un servidor propio** (fases 14 a 19): el respaldo de años de contabilidad deja de depender del plan de un tercero y pasa a ser un archivo que podemos copiar, verificar y restaurar.
+
+El avance tarea por tarea está en [`documentacion/03_Roadmap.md`](documentacion/03_Roadmap.md) y el plan del traslado en [`documentacion/04_Migracion_a_Contabo.md`](documentacion/04_Migracion_a_Contabo.md).
 
 ---
 
@@ -22,9 +26,10 @@ Leerla en este orden:
 |---|---|
 | [`documentacion/01_Documento_General.md`](documentacion/01_Documento_General.md) | **Qué** hace la aplicación. Especificación funcional completa: modelo financiero, reglas de negocio, pantallas, alcance. |
 | [`documentacion/02_Documento_Tecnico.md`](documentacion/02_Documento_Tecnico.md) | **Cómo** se construye. Stack, arquitectura, esquema de datos, contratos de API, sistema de estilo, despliegue y seguridad. |
-| [`documentacion/03_Roadmap.md`](documentacion/03_Roadmap.md) | **En qué orden.** 12 fases y 46 tareas pendientes con criterios de aceptación. Es la guía obligatoria de implementación. |
+| [`documentacion/03_Roadmap.md`](documentacion/03_Roadmap.md) | **En qué orden.** Única fuente de tareas; ninguna se ejecuta fuera de ahí. |
+| [`documentacion/04_Migracion_a_Contabo.md`](documentacion/04_Migracion_a_Contabo.md) | El traslado al servidor propio. Se borra cuando termine. |
 | [`documentacion/mockups/01_Mockup_V1_Grafito_Clasico.html`](documentacion/mockups/01_Mockup_V1_Grafito_Clasico.html) | Diseño aprobado. Se abre con doble clic y es funcional. |
-| `docs/` | `COMO_FUNCIONA.md` (se escribe en F11-T05) y los dos documentos de fase escritos antes de la revisión. |
+| `docs/` | `COMO_FUNCIONA.md` y los documentos de cierre de las primeras fases. |
 
 Si el documento técnico contradice al general en una decisión funcional, gana el general. Si el general propone una tecnología y el técnico decide otra, gana el técnico y la desviación queda registrada en su sección 4.
 
@@ -36,11 +41,11 @@ Si el documento técnico contradice al general en una decisión funcional, gana 
 |---|---|
 | Frontend | HTML5 · Tailwind CSS v4 · JavaScript (módulos ES) · SVG propio para gráficos · PWA |
 | Backend | Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · Alembic |
-| Base de datos | Supabase Postgres (producción) · SQLite (sólo tests) |
-| Autenticación | Supabase Auth, con verificación de JWT en el backend |
-| Hosting | Vercel: estáticos en el CDN y la API como función Python, mismo dominio |
+| Base de datos | Postgres 17 en contenedor, volumen propio · SQLite sólo para los tests de cálculo |
+| Autenticación | Propia: bcrypt para las contraseñas, JWT ES256 con el par de claves del proyecto |
+| Servidor | VPS propio con Docker · Caddy como proxy, con TLS automático |
 
-Sin React, Vue ni Angular. Los detalles y el porqué de cada elección están en el documento técnico.
+**Sin React, Vue ni Angular, y sin dependencias de terceros en el frontend.** Los detalles y el porqué de cada elección están en el documento técnico.
 
 ---
 
@@ -48,8 +53,7 @@ Sin React, Vue ni Angular. Los detalles y el porqué de cada elección están en
 
 ```text
 epic-wallet/
-├── api/                      # backend (función serverless en Vercel)
-│   ├── index.py              # punto de entrada: expone `app`
+├── api/                      # backend (FastAPI sobre uvicorn)
 │   └── app/
 │       ├── main.py           # creación de FastAPI, middlewares, errores
 │       ├── core/             # configuración, base de datos, seguridad, errores
@@ -64,13 +68,13 @@ epic-wallet/
 │   ├── manifest.json
 │   ├── service-worker.js
 │   ├── icons/
-│   ├── public/               # CSS compilado (no se versiona)
+│   ├── public/               # CSS compilado y config.js (no se versionan)
 │   └── src/
 │       ├── styles/           # tokens, base y componentes
 │       └── js/               # router, api, estado, gráficos, componentes, vistas
 ├── migrations/               # Alembic
-├── scripts/                  # siembra de categorías, carga de histórico, respaldo
-├── tests/                    # unit · api · e2e
+├── scripts/                  # siembra, carga de histórico, respaldo, verificaciones
+├── tests/                    # unit · api · js
 ├── docs/                     # documentación del proyecto
 └── documentacion/            # especificación funcional, técnica, roadmap y mockups
 ```
@@ -79,147 +83,98 @@ Las cuatro capas del backend (router → service → repo → core) y la regla d
 
 ---
 
-## Levantar el proyecto
+## Levantar el proyecto en tu máquina
 
 ### Requisitos
 
 - Python 3.12 o superior
 - Node.js 20 o superior
+- Docker (para la base de datos)
 - Git
-- Una cuenta de Supabase (alcanza **un solo proyecto**) y una de Vercel
 
 ### Pasos
 
 ```bash
 # 1 · Clonar
-git clone <url-del-repositorio> epic-wallet
+git clone git@github.com:gusoliva85/Epic_Wallet_v3.git epic-wallet
 cd epic-wallet
 
 # 2 · Backend: entorno virtual y dependencias
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -e .                 # requiere pyproject.toml (F00-T02)
+pip install -e ".[dev]"
 
 # 3 · Frontend: dependencias y compilación del CSS
 npm install
 npm run build                    # genera web/public/app.css minificado
 
 # 4 · Variables de entorno
-cp .env.example .env             # y completar los valores (F00-T08)
+cp .env.example .env             # y completar los valores
 
-# 5 · Base de datos: migraciones (respaldo primero, ver abajo)
-DB_SCHEMA=public APP_ENV=production alembic upgrade head
+# 5 · Base de datos local
+docker compose up -d db
+DB_SCHEMA=public APP_ENV=development alembic upgrade head
 
 # 6 · Levantar
-uvicorn api.app.main:app --reload --port 8000    # API en :8000
-npm run dev                                      # CSS en modo watch
+cd api && uvicorn app.main:app --reload --port 8000
+npm run dev                                      # CSS en modo watch, en otra terminal
 ```
 
 ### Sobre el CSS
 
-| Script | Qué hace |
-|---|---|
-| `npm run build` | Compila `web/src/app.css` a `web/public/app.css` minificado. Es el que corre Vercel. |
-| `npm run dev` | Vigila `web/src` y recompila al guardar. |
-| `npm run size` | Mide el CSS contra el presupuesto de 50 KB comprimido del documento técnico. |
-| `npm run build:debug` | Igual que `build` pero sin minificar, para inspeccionar la salida. |
-| `npm run dev:tailwind` | El `--watch` nativo de Tailwind. Ver la nota de abajo. |
-
-`npm run dev` usa `scripts/dev-css.mjs` en lugar del `--watch` de Tailwind porque **el watcher nativo de Tailwind v4 no detecta cambios cuando la ruta del proyecto tiene espacios en Windows** (acá: `D:\_Mis Datos\...`). Se comprobó que no reacciona ni al archivo de entrada ni a los parciales importados, mientras que el build puntual funciona bien. El script propio usa `fs.watch` de Node, sin dependencias nuevas. Si alguna vez se trabaja desde una ruta sin espacios, `npm run dev:tailwind` es equivalente.
-
-El CSS compilado **no se versiona**: lo genera el build.
+`web/public/app.css` **no se versiona**: lo genera el build. `npm run build` lo compila minificado y `npm run dev` lo deja en modo watch mientras trabajás.
 
 ### Sobre las migraciones
 
-**Hay un solo esquema (`public`), así que una migración toca los datos reales.** Lo que protege es el procedimiento: **respaldo primero, generar y revisar el archivo a mano, aplicar, verificar con `/api/health`, y recién entonces publicar el código.** Toda migración lleva su `downgrade` escrito y revisado.
+**Hay un solo esquema, así que una migración toca los datos reales.** El procedimiento está en la sección 16.4 del documento técnico y no es negociable:
 
-`DB_SCHEMA` y `APP_ENV` siguen siendo obligatorios y explícitos en todo comando de Alembic: `migrations/env.py` no asume un valor por defecto. Migrar es la operación destructiva del proyecto y que pida ser explícita es deliberado. La aplicación, en cambio, usa `public` por defecto y no necesita que definas nada.
+```bash
+./scripts/respaldo.sh                       # 1 · respaldo, y se verifica solo
+DB_SCHEMA=public APP_ENV=production alembic revision --autogenerate -m "..."
+                                            # 2 · revisar el archivo A MANO
+DB_SCHEMA=public APP_ENV=production alembic upgrade head
+                                            # 3 · aplicar
+curl -s https://13-140-36-93.sslip.io/api/health   # 4 · verificar
+```
 
-El esquema se crea solo en la primera migración si no existe, y `alembic_version` vive dentro del esquema.
-
-Los pasos marcados con una tarea entre paréntesis todavía no están disponibles: se habilitan al completar esa tarea de la Fase 0.
+`DB_SCHEMA` y `APP_ENV` van explícitos a propósito: `migrations/env.py` los exige y no asume nada. Migrar es la operación destructiva del proyecto.
 
 ### Variables de entorno
 
-Se copian de `.env.example` y se completan con los valores de tu proyecto de Supabase. Verificá con `python scripts/check_db.py`, que comprueba todo sin imprimir ningún secreto. La lista completa y qué significa cada una está en la sección 11 del documento técnico.
+Se copian de `.env.example` y se completan. `python scripts/check_db.py` verifica que esté todo, sin imprimir ningún secreto. La lista completa está en la sección 11 del documento técnico.
 
-**Reglas que no se negocian:**
+Dos reglas que no se discuten:
 
-- `SUPABASE_SERVICE_ROLE_KEY` y `SUPABASE_JWT_SECRET` son secretas: **nunca** llegan al navegador ni al repositorio.
-- El frontend sólo conoce `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
-- `.env` está en `.gitignore`. Si alguna vez se filtra una clave, se rota.
+- **La clave privada de firma nunca sale del servidor** ni entra al repositorio. Es el único secreto que, filtrado, permitiría fabricar sesiones de cualquier usuario.
+- **El frontend no recibe ningún secreto.** `web/public/config.js` lleva sólo la URL de la API, y `tests/unit/test_secretos_fuera_del_frontend.py` revisa todos los archivos versionados.
 
 ---
 
-## Entornos
+## Dónde corre
 
-| Entorno | Rama | URL | Base de datos |
-|---|---|---|---|
-| Producción | `main` | [epic-wallet-v2.vercel.app](https://epic-wallet-v2.vercel.app) | Supabase · esquema `public` |
-| Preview | cualquier otra rama | URL automática de Vercel por rama | Supabase · esquema `public` |
-| Local | — | `localhost:8000` | Supabase · esquema `public` |
+| Entorno | Dónde | Base de datos |
+|---|---|---|
+| Producción | [13-140-36-93.sslip.io](https://13-140-36-93.sslip.io) | Postgres del servidor |
+| Local | `localhost:8000` + `localhost:3000` | Postgres en Docker, en tu máquina |
 
-Los tres apuntan al **mismo proyecto de Supabase y al mismo esquema `public`**. La diferencia entre ellos es el código que corre, no los datos.
+**Hay un solo entorno publicado.** No hay previews por rama: con un servidor propio, montar un entorno efímero por rama es infraestructura que a esta escala no se paga sola.
 
-La separación en dos esquemas (`public` y `dev`) se quitó en la revisión del 07/10/2026: para una aplicación de pocos usuarios conocidos costaba más de lo que protegía. El detalle está en la sección 4.1.1 del documento técnico.
+**Una prueba en el servidor escribe sobre los datos reales.** Las tareas que prueban escritura usan una segunda cuenta de prueba; RLS garantiza que no se cruzan.
 
-**Consecuencia a tener presente:** una preview escribe sobre los datos reales. Las tareas que prueban escritura usan una **segunda cuenta de prueba**, no la tuya; RLS garantiza que no se cruzan.
+### Publicar un cambio
 
-Cada push genera una URL de preview. Eso es lo que permite probar cada tarea en el celular en el momento, sin esperar a que termine una fase.
+```bash
+ssh jarvis-vps
+cd /opt/epic-wallet
+git pull && docker compose up -d --build
+curl -s https://13-140-36-93.sslip.io/api/health
+```
 
 ---
 
 ## Cómo se trabaja
 
-El roadmap manda. Una tarea a la vez, y cada tarea se implementa en este orden:
-
-```text
-1 · Lógica    funciones puras + tests unitarios
-2 · Backend   endpoint + tests de API
-3 · Frontend  interfaz conectada
-```
-
-```text
-rama feat/F04-T03-alta-movimiento
-   │
-   ├─ push → Vercel construye la preview automáticamente
-   ├─ se prueba en el celular con la URL de preview
-   │
-   ├─ aprobada  → merge a main → producción → se marca [x] en el roadmap
-   └─ rechazada → se corrige en la misma rama y vuelve a preview
-```
-
-### La URL de cada preview
-
-Vercel la arma con un patrón predecible a partir del nombre de la rama:
-
-```text
-https://epic-wallet-v2-git-<rama-normalizada>-gusoliva85s-projects.vercel.app
-```
-
-La rama se normaliza a minúsculas y con los `/` y `_` convertidos en `-`. Por ejemplo, la rama `feat/F04-T03-alta-movimiento` queda:
-
-```text
-https://epic-wallet-v2-git-feat-f04-t03-alta-movimiento-gusoliva85s-projects.vercel.app
-```
-
-Si el nombre resulta muy largo, Vercel lo trunca y agrega un hash, así que ante la duda la URL exacta está en el panel del despliegue.
-
-**Cómo saber contra qué está corriendo:** `/api/health` informa el entorno y el esquema activo.
-
-```bash
-curl -s https://epic-wallet-v2.vercel.app/api/health | grep db_schema
-#   "db_schema":"public"    ← producción, datos reales
-
-curl -s https://epic-wallet-v2-git-<rama>-gusoliva85s-projects.vercel.app/api/health | grep db_schema
-#   "db_schema":"public"    ← el único esquema del proyecto
-```
-
-`APP_ENV` es lo que distingue un entorno de otro en las variables de Vercel. `DB_SCHEMA` vale `public` en los tres.
-
-**Protección de las previews:** está desactivada (Settings → Deployment Protection → Vercel Authentication → Disabled) para poder abrirlas en el celular sin iniciar sesión en Vercel. Las previews quedan accesibles para quien tenga la URL exacta. Los datos siguen protegidos por el login y por RLS, y las claves viven en variables de entorno del servidor. Si alguna vez se quiere volver a protegerlas, alcanza con reactivar esa opción.
-
-Nada se da por terminado sin probarlo. Nada se implementa junto.
+Una tarea del roadmap a la vez, sin adelantar fases. Dentro de cada tarea: **cálculo → backend → frontend**. Al terminar se avisa qué probar y se espera la aprobación; la tarea pasa a `[x]` sólo entonces.
 
 ### Estado de las tareas en el roadmap
 
@@ -233,9 +188,9 @@ Nada se da por terminado sin probarlo. Nada se implementa junto.
 ### Convención de commits
 
 ```text
-feat(F04-T03): alta de movimiento con recálculo del mes
+feat(F15-T03): compose con postgres y la api
 fix(F06-T02): la línea de ahorro no se dibujaba con ahorro negativo
-docs(F03): documentación de la fase 3
+docs(F14-T04): el documento técnico pasa al servidor propio
 ```
 
 ---
@@ -245,12 +200,17 @@ docs(F03): documentación de la fase 3
 ```bash
 pytest                      # unitarios y de API
 pytest tests/unit -v        # sólo la lógica de cálculo
-npx playwright test         # interfaz, a 390 px y 1440 px
+npm test                    # frontend, con node --test
 ruff check . && ruff format --check .
 mypy api
+./scripts/sin_proveedores.sh   # que nada quede atado a un servicio externo
 ```
 
-Cobertura mínima exigida en `api/app/services/`: 90 %. Toda función de cálculo tiene test antes del endpoint que la usa, y todo bug encontrado deja primero un test que falla.
+Se testea **lo que da un número o protege un dato**: las funciones de `services/calc.py`, el recálculo del mes, los casos borde y que una cuenta no vea los datos de otra.
+
+**No se testea** la estructura del HTML, los tokens de CSS, el contraste ni la configuración del despliegue: eso se verifica mirando la pantalla en el celular. **No hay exigencia de cobertura.** El criterio es: *si el test falla, ¿me enteré de algo que la pantalla no me hubiera mostrado?*
+
+**Ninguna prueba toca un servidor de verdad.** Corren contra la base local.
 
 ---
 
@@ -258,24 +218,29 @@ Cobertura mínima exigida en `api/app/services/`: 90 %. Toda función de cálcul
 
 ```bash
 # Migraciones · RESPALDO PRIMERO: hay un solo esquema y son los datos reales
-DB_SCHEMA=public APP_ENV=production alembic revision --autogenerate -m "F03 meses"
+DB_SCHEMA=public APP_ENV=production alembic revision --autogenerate -m "F15 algo"
 DB_SCHEMA=public APP_ENV=production alembic upgrade head
 DB_SCHEMA=public APP_ENV=production alembic downgrade -1
 DB_SCHEMA=public APP_ENV=production alembic current   # en qué revisión está
 
-# Siembra de datos
-python scripts/seed_categories.py        # las 21 categorías iniciales
-python scripts/load_history.py --dry-run # carga de histórico, sin escribir
+# Datos
+python scripts/load_history.py --dry-run              # carga de histórico, sin escribir
 
-# Respaldo
-python scripts/backup.py
+# Respaldo y restauración
+./scripts/respaldo.sh                                 # dump verificado
+./scripts/restaurar.sh <archivo>                      # restaurar, probado de verdad
+
+# Cuentas
+docker compose exec api python -m app.cli recuperar <email>   # link de contraseña nueva
 ```
 
 ---
 
 ## Seguridad
 
-Contiene información financiera personal. HTTPS siempre, contraseñas gestionadas por Supabase Auth (nunca almacenamos hashes propios), aislamiento por usuario con `user_id` en toda consulta **y** Row Level Security como segunda barrera, validación en el servidor sin excepciones, y consultas siempre parametrizadas.
+Contiene información financiera personal. HTTPS siempre, contraseñas guardadas sólo como hash bcrypt, aislamiento por usuario con `user_id` en toda consulta **y Row Level Security como segunda barrera**, validación en el servidor sin excepciones, y consultas siempre parametrizadas.
+
+El aislamiento entre cuentas es la única exigencia de seguridad que no se negocia: toda tabla de datos de usuario lleva RLS activo y forzado, incluidas las que se agreguen.
 
 El detalle completo está en la sección 17 del documento técnico.
 

@@ -97,8 +97,8 @@ que preguntar de nuevo por su estado, nunca se marcan solas:
 
 - **F11-T01 (Configuración) y F11-T02 (Exportación y respaldo):
   aprobadas 2026-10-23.** El tema real entre dispositivos y
-  export/import quedaron verificados contra Supabase real (tests +
-  Gustavo probándolo). El detalle completo de cómo se construyeron ya
+  export/import quedaron verificados contra la base real de entonces
+  (tests + Gustavo probándolo). El detalle completo de cómo se construyeron ya
   está en el roadmap mismo (notas de implementación bajo cada tarea),
   no hace falta repetirlo acá.
 - **F11-T03 (correo/recuperación de contraseña), F11-T04 (repaso de
@@ -224,52 +224,41 @@ y volvió a pasar con el deslizo de vista — mismo síntoma, misma
 solución. Si aparece una animación nueva que "se nota apenas" aunque
 el código esté bien, revisar la curva antes que cualquier otra cosa.
 
-## Cómo probar algo contra producción sin tocar la cuenta real de Gustavo
+## Cómo probar algo sin tocar la cuenta real de Gustavo
 
-Técnica que se repitió varias veces esta sesión (auditoría visual de
-escritorio, diagnóstico de gestos, verificación de respaldo) y
-conviene no reinventar:
+Técnica que se repitió varias veces y conviene no reinventar. **Desde
+la 3.0 corre contra la base local, no contra un servidor de verdad.**
 
-1. **Cuenta de prueba por HTTP directo**, mismo patrón que
-   `tests/api/*.py`: `POST {SUPABASE_URL}/auth/v1/signup` con la
-   `anon key` (confirmación por correo apagada todavía, F11-T03 no
-   arrancó, así que el signup ya da sesión) y
-   `POST {SUPABASE_URL}/auth/v1/token?grant_type=password` para un
-   `access_token`/`refresh_token` limpios.
+1. **Cuenta de prueba por la API propia**: `POST /api/auth/signup`
+   devuelve sesión directa (no hay confirmación por correo, Técnico
+   §8.3).
 2. **Sembrar datos rápido con `fastapi.testclient.TestClient(app)`**
-   contra el backend real (mismo Postgres que producción, las tres
-   "URLs" del proyecto comparten base) en vez de pelear con HTTP a
-   mano — se arma perfil, categorías, movimientos, meses históricos e
-   inversiones en segundos.
-3. **Para ver la pantalla ya logueado, sin pasar por el formulario de
-   login:** `context.addInitScript()` en Playwright que hace
+   en vez de pelear con HTTP a mano — se arma perfil, categorías,
+   movimientos, meses históricos e inversiones en segundos.
+3. **Para ver la pantalla ya logueado, sin pasar por el formulario:**
+   `context.addInitScript()` en Playwright que hace
    `localStorage.setItem("epic-wallet-auth", JSON.stringify(sesion))`
-   **antes** de que cargue cualquier script de la página — `sesion` es
-   la respuesta cruda de `/token?grant_type=password`. Evita el
-   "cold-boot 401" de iniciar sesión por la UI de verdad (ver la
-   sección vieja más abajo) porque nunca pasa por esa carrera: el
-   cliente de Supabase encuentra la sesión ya guardada al arrancar,
-   como si la pestaña se hubiera reabierto con sesión persistida.
+   **antes** de que cargue cualquier script — `sesion` es la respuesta
+   cruda del login. Evita el "cold-boot 401" (ver más abajo) porque
+   nunca pasa por esa carrera: `auth.js` encuentra la sesión ya
+   guardada al arrancar.
 4. **Siempre limpiar al final**, nunca dejar cuentas de QA colgadas:
    `delete from auth.users where email like 'epicwallet.qa.%@example.com'`
-   con el `service_role` (cascada se lleva todo lo demás). Los
-   scripts en sí viven en el scratchpad de la sesión, nunca se
-   commitean.
+   (la cascada se lleva todo lo demás). Los scripts viven en el
+   scratchpad de la sesión, nunca se commitean.
 
 ## Acceso de administrador: reseteo de contraseña
 
-Tengo `SUPABASE_SERVICE_ROLE_KEY` en `.env` y puedo resetear la
-contraseña de cualquier cuenta (incluida la real de Gustavo) con
-`PUT {SUPABASE_URL}/auth/v1/admin/users/{uid}` body `{"password": "..."}`,
-cabeceras `apikey`/`Authorization: Bearer <service_role>`. Lo usé una
-vez (2026-10-23) porque Gustavo quedó afuera de `goliva@live.com.ar`.
-**Importante:** nunca tuve ni puedo ver la contraseña que él elige —
-Supabase la guarda hasheada — así que lo único que puedo hacer es
-reemplazarla, nunca "recuperarla". Si vuelve a pasar, confirmar primero
-con `AskUserQuestion` (o preguntando directo) **cuál** cuenta es antes
-de tocar nada: puede haber más de una cuenta real en la base (en esta
-sesión apareció una segunda, `nellybici07@gmail.com`, que no es la de
-Gustavo).
+`python -m app.cli recuperar <email>` imprime un link de un solo uso
+válido 30 minutos. Sirve para cualquier cuenta, incluida la real de
+Gustavo, y es el camino previsto (Técnico §8.5) — no un atajo.
+
+**Nunca puedo ver la contraseña que él elige**: sólo se guarda el hash
+bcrypt. Lo único posible es darle un link para poner una nueva, nunca
+"recuperar" la vieja.
+
+Si vuelve a hacer falta, **confirmar primero cuál cuenta** antes de
+tocar nada: puede haber más de una cuenta real en la base. Ya pasó.
 
 ## El clasificador de "Production Deploy" también bloquea `git push origin main`
 
@@ -286,7 +275,7 @@ propia terminal, igual que las migraciones.
 que sí funciona, en este orden:
 
 ```powershell
-cd "D:\_Mis Datos\Proyectos\Epic_Wallet_2.0"
+cd "D:\_Mis Datos\Proyectos\Epic_Wallet_3.0"
 .venv\Scripts\Activate.ps1          # si da error de política de ejecución:
                                       # Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $env:DB_SCHEMA = "public"
@@ -320,7 +309,7 @@ En sesiones viejas, loguearse por la UI real con Playwright para QA
 visual daba 401 persistentes en las primeras llamadas (ni recargar
 arreglaba siempre). No es un bug de la aplicación — los mismos
 endpoints andan bien llamados directo por HTTP. Es específico de la
-carrera entre el cliente de Supabase recién creado y la primera
+carrera entre el cliente de sesión recién creado y la primera
 petición. **La solución que se usa ahora** (ver la sección de arriba,
 "Cómo probar algo contra producción") evita el problema de raíz: no
 pasa por el formulario de login en absoluto, inyecta la sesión ya
@@ -332,8 +321,7 @@ autenticación que se usaba antes para esto ya no hace falta.
 - **Capas:** `routers` → `services` (cálculo puro, sin DB) → `repos`
   (consultas, sin decidir nada) → `core`. Un service nuevo se prueba
   con `tests/unit/`, cualquier cosa que toque Postgres de verdad con
-  `tests/api/` (marcador `@pytest.mark.api`, `sin_entorno` skip si
-  faltan credenciales).
+  `tests/api/` (marcador `@pytest.mark.api`), contra la base local.
 - **RLS en vez de `where user_id = ...` a mano.** Ninguna consulta de
   `repos/` filtra por usuario: `SesionDeUsuario` ya deja a Postgres
   actuando como `auth.uid()` del token.

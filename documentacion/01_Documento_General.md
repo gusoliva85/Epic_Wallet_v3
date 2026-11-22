@@ -1702,9 +1702,10 @@ revelar quién está registrado.
 > un mensaje: «por ahora no podemos mandarte un enlace por correo,
 > contactate con quien te dio la cuenta para que te asigne una
 > contraseña nueva», con un botón de vuelta al login. El cambio lo hace
-> a mano el administrador desde el panel de Supabase. Lo descrito arriba
-> está implementado y probado, y se enciende con una línea el día que
-> haya un proveedor de correo.
+> a mano el administrador, con un comando en el servidor que devuelve un
+> link de un solo uso (Técnico §8.5). Lo descrito arriba está implementado
+> y probado; lo único que no hay es el envío por correo, y es una decisión,
+> no una deuda.
 
 ## 48.1.3 Contraseña nueva
 
@@ -2029,7 +2030,7 @@ permanecer exclusivamente en backend.
 
 > **Nota del 07/10/2026.** Esta lista se implementa **a la escala del
 > proyecto**: pocos usuarios conocidos, cada uno viendo sus propios
-> datos. Lo central —HTTPS, contraseñas hasheadas por Supabase Auth,
+> datos. Lo central —HTTPS, contraseñas guardadas sólo como hash bcrypt,
 > aislamiento entre cuentas con RLS, validación en servidor, consultas
 > parametrizadas y secretos en variables de entorno— está implementado y
 > no se negocia. Se decidió **no** hacer límite de peticiones, auditoría

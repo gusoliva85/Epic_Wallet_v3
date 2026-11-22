@@ -2,19 +2,19 @@
 
 Aplicación personal de gestión financiera. Reemplaza un Excel de varios años. Web responsive + PWA, **prioridad celular**.
 
-La 3.0 es la misma aplicación que la 2.0, **corriendo en un servidor propio**. Se mueve para que el respaldo sea un archivo que podamos copiar, verificar y restaurar, y no un plan de un tercero.
+La 3.0 es la misma aplicación, **corriendo en un servidor propio**. Se mueve para que el respaldo sea un archivo que podamos copiar, verificar y restaurar, y no un plan de un tercero.
 
 **Escala real: pocos usuarios conocidos**, cada uno con sus propios datos de contabilidad. No es un producto público. Toda decisión se toma a esa escala: lo simple gana.
 
-## La 2.0 es intocable
+## La versión anterior es intocable
 
-La 2.0 sigue viva en Vercel + Supabase y es **el único sistema que hoy funciona**. Hasta que el corte esté aprobado:
+La versión anterior sigue viva, en los servicios de terceros donde se construyó, y es **el único sistema que hoy funciona**. Hasta que el corte esté aprobado:
 
-- Ni un push al repositorio `Epic_Wallet_v2`, ni una migración, ni un cambio de variable de entorno, ni un script que escriba.
+- Ni un push a su repositorio, ni una migración, ni un cambio de variable de entorno, ni un script que escriba.
 - **Leer está bien** (`pg_dump`, `GET /api/export`). Escribir, no.
 - Si algo pareciera necesitar un cambio allá, **se frena y se pregunta**, diciendo qué tabla, qué filas y por qué.
 
-Esta carpeta apunta a `Epic_Wallet_v3` y no tiene forma de alcanzar la v2. Que siga así.
+Esta carpeta apunta a `Epic_Wallet_v3` y no tiene forma de alcanzar el repositorio anterior. Que siga así.
 
 ## Documentos que mandan
 
@@ -42,7 +42,7 @@ Se testea **lo que da un número o protege un dato**: `services/calc.py`, el rec
 
 Criterio para el futuro: *si el test falla, ¿me enteré de algo que la pantalla no me hubiera mostrado?* Si no, el test no se escribe. No hay exigencia de cobertura.
 
-**Las pruebas corren contra la base local.** En la 2.0, `tests/api/` pegaba contra el Supabase real con la clave de servicio. Eso se terminó: ninguna prueba toca un servidor de verdad.
+**Las pruebas corren contra la base local.** Antes, `tests/api/` pegaba contra el servidor real del proveedor con su clave de servicio. Eso se termina en F16-T03: ninguna prueba toca un servidor de verdad.
 
 ## Stack
 

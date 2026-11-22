@@ -4,7 +4,7 @@
 **Tareas:** 14 de 14
 **Resultado:** la aplicación entera está maquetada y navegable en el celular, con un sistema de estilo donde ningún componente puede inventar un color, una medida ni una sombra.
 
-> **https://epic-wallet-v2.vercel.app**
+> **https://13-140-36-93.sslip.io**
 
 ---
 

@@ -32,14 +32,15 @@ patrimonio, cartera— se deriva de eso.
 
 ## 2 · Levantarla
 
-Hace falta Python 3.12, Node 20+ y un proyecto de Supabase.
+Hace falta Python 3.12, Node 20+ y Docker (para la base).
 
 ```bash
-git clone <repo> && cd Epic_Wallet_2.0
+git clone <repo> && cd Epic_Wallet_3.0
 python -m venv .venv && . .venv/Scripts/activate   # en Linux/macOS: .venv/bin/activate
 pip install -r requirements.txt
 npm install
 cp .env.example .env        # y completalo, ver abajo
+docker compose up -d db     # Postgres local
 npm run build               # compila Tailwind y genera web/public/config.js
 python scripts/check_db.py  # verifica la conexión y te dice qué falta
 cd api && uvicorn app.main:app --reload --port 8000
@@ -53,24 +54,24 @@ puerto 8000.
 
 `.env.example` las lista con su explicación. Las que importan:
 
-- `DATABASE_URL` — la cadena de Postgres de Supabase. Usá la del **pooler** para
-  la función de Vercel.
+- `DATABASE_URL` — la cadena de Postgres. En el servidor apunta al contenedor
+  `db` por la red interna; en tu máquina, al Postgres local de Docker.
 - `DB_SCHEMA` — siempre `public`. Hay un solo esquema (ver §4).
-- `SUPABASE_URL`, `SUPABASE_ANON_KEY` — públicas, van al navegador.
-- `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` — **secretas, sólo backend**.
-  Se saltean RLS. `tests/unit/test_secretos_fuera_del_frontend.py` falla si
-  alguna aparece en `web/` o en un archivo versionado.
+- `JWT_PRIVATE_KEY_FILE` — la clave con la que se firman los tokens. **Es el
+  único secreto que, filtrado, permite fabricar sesiones de cualquier usuario.**
+  Se monta como archivo y nunca entra al repositorio.
+- `JWT_PUBLIC_KEY` — la que verifica. No es secreta.
+  `tests/unit/test_secretos_fuera_del_frontend.py` falla si algún secreto
+  aparece en `web/` o en un archivo versionado.
 - `APP_ENV`, `APP_TIMEZONE`, `ALLOWED_ORIGINS`, `LOG_LEVEL`.
 - `PRICE_PROVIDER_ORDER`, `PRICE_REFRESH_COOLDOWN_MINUTES` — **no se usan**: la
   cotización automática quedó afuera del MVP (§6).
 
 `npm run build` corre `scripts/generar-config.mjs`, que escribe
-`web/public/config.js` con la URL y la clave anónima. Ese archivo **no está
-versionado** y se regenera en cada build. El generador **rechaza** una clave
-secreta puesta por error en `SUPABASE_ANON_KEY`, reconociendo los dos formatos
-(`sb_secret_…` y el JWT viejo con `role: service_role`): es el único error de
-esta lista que no se puede deshacer, porque una clave de servicio publicada ya
-quedó publicada.
+`web/public/config.js` con la URL de la API y nada más. Ese archivo **no está
+versionado** y se regenera en cada build. **Ningún secreto llega al navegador**,
+y hay una prueba que revisa todos los archivos publicados por si alguno se cuela
+por otro camino.
 
 ### Comandos
 
@@ -118,17 +119,16 @@ pública es `/api/health`. Así una ruta nueva **nace protegida** sin que nadie 
 acuerde. `tests/api/test_api_protegida.py` recorre las rutas registradas —no una
 lista escrita a mano— y falla si aparece una sin guardia.
 
-El token se verifica con la clave pública del JWKS de Supabase (**ES256**,
-asimétrico). `SUPABASE_JWT_SECRET` quedó en la configuración como resto y no se
-usa para verificar.
+El token se verifica con la **clave pública del proyecto** (ES256, asimétrico),
+localmente: sin viaje de red y sin depender de ningún servicio externo. La
+privada sólo firma y vive en el servidor.
 
 ### Frontend · `web/`
 
 HTML + Tailwind v4 + JavaScript ES2022 con módulos nativos. **Sin React y sin
 bundler**: los `<script type="module">` de `index.html` cargan los archivos de
-`web/src/js/` tal cual, y el único paso de build es Tailwind. La librería de
-auth de Supabase está *vendorizada* en `web/src/js/vendor/auth-js.js`
-(`npm run auth:vendor`), para no depender de un CDN en tiempo de ejecución.
+`web/src/js/` tal cual, y el único paso de build es Tailwind. **Cero
+dependencias de terceros**: la sesión la maneja `web/src/js/auth.js`, propio.
 
 Una sola página, **seis vistas** (`inicio`, `movimientos`, `historial`,
 `inversiones`, `patrimonio`, `config`) y cuatro pantallas de cuenta (`login`,
@@ -158,10 +158,11 @@ archivo hace `fetch` a `/api`.
 
 ### Despliegue
 
-Vercel. El frontend se sirve estático desde `web/`; `vercel.json` reescribe
-`/api/*` a una única función Python (`api/index.py`) en la región `gru1`, al lado
-de la base en `sa-east-1` (São Paulo) — el viaje entre función y base es lo que
-domina la latencia. Preview por rama, producción en `main`.
+VPS propio con Docker. Caddy es el único dueño del 80 y el 443: sirve los
+estáticos de `web/` y manda `/api/*` al contenedor de la API, que no publica
+puerto. La base corre en el mismo host, así que el viaje entre API y Postgres es
+una fracción de milisegundo. Un solo entorno; se publica con `git pull` y
+`docker compose up -d --build`.
 
 ---
 
@@ -219,7 +220,7 @@ Hay **un solo esquema**, así que una migración toca los datos reales. El
 procedimiento es el que protege los datos, y el orden no se invierte:
 
 ```bash
-# 1 · respaldo primero (panel de Supabase, o GET /api/export)
+# 1 · respaldo primero: ./scripts/respaldo.sh (se verifica solo), o GET /api/export
 # 2 · generar y REVISAR el archivo a mano
 DB_SCHEMA=public APP_ENV=production alembic revision --autogenerate -m "F03 meses"
 # 3 · aplicar
@@ -252,12 +253,11 @@ Las que sorprenden si no te las cuentan:
 - **El signo de un movimiento lo decide su `transaction_type`, nunca el valor
   del importe.** El importe llega formateado y sin signo; el frontend no hace
   aritmética. El menos es `−` (U+2212), no el guión del teclado.
-- **El correo saliente no existe.** No hay SMTP contratado, así que
-  `#/recuperar` muestra un mensaje («contactate con quien te dio la cuenta») en
-  vez de un formulario, y la confirmación por correo está desactivada. El camino
-  completo está escrito y probado detrás de `RECUPERACION_POR_CORREO` en
-  `web/src/js/recuperar.js`: se enciende con esa línea más cuatro pasos en el
-  panel de Supabase, documentados en F11-T03 del roadmap.
+- **El correo saliente no existe, y es una decisión.** `#/recuperar` muestra un
+  mensaje («contactate con quien te dio la cuenta») en vez de un formulario. La
+  recuperación se hace con `python -m app.cli recuperar <email>`, que imprime un
+  link de un solo uso válido 30 minutos contra la pantalla `#/nueva-clave` que ya
+  existe. El link se entrega a mano.
 - **Los datos reales que ya están cargados no se tocan.** Ningún fix, migración
   ni script corre un `DELETE`, `TRUNCATE` o `DROP` contra la base real sin
   explicar antes qué se borra y esperar confirmación explícita — nunca como
@@ -318,9 +318,9 @@ hay exigencia de cobertura.**
 Dónde vive cada cosa:
 
 - `tests/unit/` — funciones puras y lo que no toca la red. Rápido.
-- `tests/api/` — marcado `api`: cuentas **reales** de Supabase creadas y
-  borradas por el propio módulo, contra la base real. Es la única forma de
-  probar RLS, que en un doble no existe.
+- `tests/api/` — marcado `api`: cuentas creadas y borradas por el propio módulo
+  contra una base **local**. Es la única forma de probar RLS, que en un doble no
+  existe. Ninguna prueba toca un servidor de verdad.
 - `tests/js/` — jsdom, con el HTML recortado del `index.html` real para que una
   prueba se entere si un `id` deja de existir.
 
