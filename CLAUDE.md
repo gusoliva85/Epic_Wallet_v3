@@ -1,8 +1,20 @@
-# Epic Wallet 2.0
+# Epic Wallet 3.0
 
 Aplicación personal de gestión financiera. Reemplaza un Excel de varios años. Web responsive + PWA, **prioridad celular**.
 
+La 3.0 es la misma aplicación que la 2.0, **corriendo en un servidor propio**. Se mueve para que el respaldo sea un archivo que podamos copiar, verificar y restaurar, y no un plan de un tercero.
+
 **Escala real: pocos usuarios conocidos**, cada uno con sus propios datos de contabilidad. No es un producto público. Toda decisión se toma a esa escala: lo simple gana.
+
+## La 2.0 es intocable
+
+La 2.0 sigue viva en Vercel + Supabase y es **el único sistema que hoy funciona**. Hasta que el corte esté aprobado:
+
+- Ni un push al repositorio `Epic_Wallet_v2`, ni una migración, ni un cambio de variable de entorno, ni un script que escriba.
+- **Leer está bien** (`pg_dump`, `GET /api/export`). Escribir, no.
+- Si algo pareciera necesitar un cambio allá, **se frena y se pregunta**, diciendo qué tabla, qué filas y por qué.
+
+Esta carpeta apunta a `Epic_Wallet_v3` y no tiene forma de alcanzar la v2. Que siga así.
 
 ## Documentos que mandan
 
@@ -11,6 +23,7 @@ Aplicación personal de gestión financiera. Reemplaza un Excel de varios años.
 | `documentacion/01_Documento_General.md` | **Qué** hace la aplicación. El modelo financiero |
 | `documentacion/02_Documento_Tecnico.md` | **Cómo**. Stack, modelo de datos, API, estilo |
 | `documentacion/03_Roadmap.md` | **Qué sigue.** Única fuente de tareas. Ninguna tarea se ejecuta fuera de acá |
+| `documentacion/04_Migracion_a_Contabo.md` | El traslado: servidor, decisiones y fases. Se borra cuando termine |
 | `.claude/skills/epic-wallet-ui/SKILL.md` | Sistema de diseño «Vidrio Grafito». **Cargarlo antes de tocar cualquier HTML, CSS o JS de interfaz** |
 
 ## Forma de trabajar
@@ -18,7 +31,7 @@ Aplicación personal de gestión financiera. Reemplaza un Excel de varios años.
 1. **Una tarea del roadmap a la vez.** No adelantar fases.
 2. **Dentro de la tarea: cálculo → backend → frontend.** Funciones puras con sus tests, después el endpoint, después la interfaz.
 3. **Al terminar, avisar qué probar y esperar la aprobación de Gustavo.** La tarea pasa a `- [x]` sólo cuando él lo dice.
-4. **Se prueba en la URL de preview, desde el celular.**
+4. **Se prueba en `https://13-140-36-93.sslip.io`, desde el celular.**
 5. **Escribir corto.** Las entradas del roadmap son «qué hacer» y «cómo se verifica». Sin ensayos, sin relato de los errores encontrados.
 
 ## Qué se testea y qué no
@@ -29,19 +42,22 @@ Se testea **lo que da un número o protege un dato**: `services/calc.py`, el rec
 
 Criterio para el futuro: *si el test falla, ¿me enteré de algo que la pantalla no me hubiera mostrado?* Si no, el test no se escribe. No hay exigencia de cobertura.
 
+**Las pruebas corren contra la base local.** En la 2.0, `tests/api/` pegaba contra el Supabase real con la clave de servicio. Eso se terminó: ninguna prueba toca un servidor de verdad.
+
 ## Stack
 
 - **Backend:** Python 3.12, FastAPI, SQLAlchemy 2.0, Alembic. Capas: `routers` → `services` → `repos` → `core`. Todo cálculo financiero es una **función pura** en `services/calc.py`.
 - **Frontend:** HTML + Tailwind v4 + JavaScript ES2022 con módulos nativos. **Sin React ni bundler.** Gráficos en SVG propio, sin Chart.js. Una página, seis vistas, enrutado por hash.
-- **Base:** Supabase Postgres, **un solo proyecto y un solo esquema (`public`)**. Región `sa-east-1` (São Paulo).
-- **Auth:** Supabase Auth. El JWT se verifica con la clave pública del JWKS (ES256).
-- **Despliegue:** Vercel, función en `gru1`. Preview por rama, producción en `main`.
+- **Base:** Postgres 17 en Docker, volumen propio, **un solo esquema (`public`)**.
+- **Auth:** propia, en FastAPI. JWT firmado **ES256** con par de claves del proyecto; se verifica con la pública. Sin proveedor externo.
+- **Servidor:** VPS de Contabo (`13.140.36.93`), Docker Compose detrás de un Caddy compartido con Jarvis. TLS de Let's Encrypt, renovado solo.
 
 ## Cosas que no se pueden romper
 
 - **Las dos naturalezas de mes.** Un mes `open` saca sus totales de `transactions`; un mes `historical` de sus propios campos y devuelve **`transactions: null`** — distinto de `[]`. Nunca se inventan movimientos para un mes consolidado.
-- **Aislamiento entre cuentas.** `user_id` en toda consulta **y RLS activo** en cada tabla de datos de usuario, incluidas las nuevas. Es la única exigencia de seguridad que no se negocia.
+- **Aislamiento entre cuentas.** `user_id` en toda consulta **y RLS activo** en cada tabla de datos de usuario, incluidas las nuevas. Es la única exigencia de seguridad que no se negocia. `auth.uid()` ahora es una función nuestra, pero las políticas no cambian.
 - **Los datos reales que Gustavo ya cargó no se tocan.** Ningún fix, migración ni script corre un `DELETE`, `TRUNCATE` o `DROP` contra la base real sin explicar antes qué se va a borrar (tabla, filas, motivo) y esperar su confirmación explícita — nunca como efecto secundario de otra cosa. No aplica a las cuentas de prueba que se crean y se borran dentro de una misma tarea de QA, ni a lo que la aplicación ya le permite hacer desde la interfaz (borrar un movimiento, vender una inversión — Reglas 10 y 11 del documento general): eso sigue funcionando como está diseñado.
+- **Jarvis convive en el mismo servidor.** Base propia, red propia, volumen propio. Epic Wallet no comparte base con nadie y no toca los contenedores de Jarvis.
 - **Importes en `numeric(14,2)`** en la base y `Decimal` en Python. Nunca `float`.
 - **Una sola llamada para el dashboard** (`GET /api/dashboard`), por debajo de 400 ms.
 - **Tasa de ahorro con ingresos en cero devuelve `null`**, no un error ni una división.
@@ -53,7 +69,8 @@ Criterio para el futuro: *si el test falla, ¿me enteré de algo que la pantalla
 Hay un solo esquema, así que **una migración toca los datos reales**.
 
 ```bash
-# 1 · respaldo primero (panel de Supabase, o GET /api/export)
+# 1 · respaldo primero, y verificar que el archivo tiene algo adentro
+./scripts/respaldo.sh && ls -lh respaldos/
 # 2 · generar y REVISAR el archivo a mano
 DB_SCHEMA=public APP_ENV=production alembic revision --autogenerate -m "F03 meses"
 # 3 · aplicar
@@ -70,8 +87,13 @@ npm run build          # compila Tailwind a web/public/app.css
 npm run dev            # Tailwind en modo watch
 pytest                 # tests
 ruff check . && mypy . # linter y tipos
-python scripts/check_db.py   # verifica la conexión a Supabase
 cd api && uvicorn app.main:app --reload --port 8000
+
+# en el servidor
+ssh jarvis-vps
+cd /opt/epic-wallet && docker compose ps
+docker compose exec api python -m app.cli recuperar <email>   # link de contraseña nueva
+./scripts/respaldo.sh                                          # dump verificado
 ```
 
 ## Convenciones
