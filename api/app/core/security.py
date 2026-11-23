@@ -8,15 +8,22 @@ de ese usuario y de nadie más.
 
 Por qué ES256 y no un secreto compartido
 ----------------------------------------
-Se comprobó contra el proyecto real en F00-T06: Supabase firma con
-claves asimétricas (`alg: ES256`, curva P-256) y publica la pública en
-un endpoint JWKS. `SUPABASE_JWT_SECRET` existe en la configuración como
-resto de la documentación vieja y **no sirve para verificar nada**.
+Con un secreto compartido, el mismo valor firma y verifica: quien lo
+tenga puede fabricar la sesión de cualquier usuario. Con claves
+asimétricas, este módulo sólo puede **comprobar**. La clave que lee
+—la pública— no sirve para firmar nada, así que filtrarla no permite
+entrar.
 
-La diferencia importa: con secreto compartido, el mismo valor firma y
-verifica, así que quien lo tenga puede fabricar sesiones. Con claves
-asimétricas sólo Supabase puede firmar; el backend únicamente
-comprueba. Un secreto filtrado desde acá no permitiría entrar.
+De dónde sale la clave · F17-T01
+--------------------------------
+De `JWT_PUBLIC_KEY`, en la configuración. Hasta F17-T01 se pedía a un
+endpoint JWKS del proveedor anterior, lo que significaba un viaje de
+red y, peor, que entrar a la aplicación dependiera de que un servicio
+ajeno respondiera. Ahora la clave está en el proceso: la verificación
+no sale a internet.
+
+`SUPABASE_JWT_SECRET` sigue en la configuración como resto de la
+documentación vieja y **no sirve para verificar nada**.
 """
 
 from __future__ import annotations
@@ -28,7 +35,6 @@ from typing import Annotated, Final
 import jwt
 from fastapi import Depends, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jwt import PyJWKClient
 
 from .config import get_settings
 from .errors import UNAUTHENTICATED, ErrorDeApi
@@ -38,15 +44,11 @@ log = logging.getLogger("epic_wallet")
 ALGORITMO: Final = "ES256"
 AUDIENCIA: Final = "authenticated"
 
-# Cuánto se guardan las claves del JWKS. Una hora: Supabase no las rota
-# seguido, y si rotara, al vencer la caché se vuelven a pedir solas.
-VIDA_DE_LAS_CLAVES: Final = 3600
-
 # Tolerancia de reloj, en segundos.
 #
 # No es una comodidad: sin esto, un token recién emitido se rechaza si
 # el reloj del servidor está aunque sea una fracción de segundo
-# atrasado respecto del de Supabase. Medido en esta máquina: **0,2
+# atrasado respecto del de quien lo emitió. Medido en esta máquina: **0,2
 # segundos de desfase bastaban** para que la verificación fallara con
 # «The token is not yet valid (iat)».
 #
@@ -64,30 +66,30 @@ TOLERANCIA_DE_RELOJ: Final = 30
 # respuesta saldría con otra forma que todas las demás.
 bearer = HTTPBearer(auto_error=False)
 
-_cliente_jwks: PyJWKClient | None = None
+
+class ClaveDeVerificacionError(RuntimeError):
+    """No hay `JWT_PUBLIC_KEY` configurada."""
 
 
-def cliente_jwks() -> PyJWKClient:
-    """Un solo cliente para todo el proceso.
+def clave_de_verificacion() -> str:
+    """La clave pública con la que se comprueban las firmas.
 
-    Crearlo en cada petición significaría ir a buscar las claves a
-    Supabase en cada petición: un viaje de red extra, y una dependencia
-    de que ese endpoint esté disponible en todo momento. Con uno solo y
-    caché, se piden una vez por proceso.
+    Se lee de la configuración en cada llamada y no se guarda en una
+    variable del módulo: así cambiarla es reiniciar el proceso y nada
+    más, y las pruebas pueden ponerle una propia sin dejar basura entre
+    casos.
 
-    Se crea perezosamente y no al importar el módulo: así importar esto
-    no obliga a tener `SUPABASE_URL` configurada, que es lo que permite
-    que las pruebas que no tocan autenticación corran sin ella.
+    Si falta, se levanta un error en vez de devolver una cadena vacía.
+    Una clave vacía haría que `jwt.decode` fallara con un mensaje sobre
+    el formato de la clave, y el registro diría que el token está mal
+    cuando lo que está mal es el despliegue.
     """
-    global _cliente_jwks
-    if _cliente_jwks is None:
-        url = get_settings().SUPABASE_URL.rstrip("/")
-        _cliente_jwks = PyJWKClient(
-            f"{url}/auth/v1/.well-known/jwks.json",
-            cache_keys=True,
-            lifespan=VIDA_DE_LAS_CLAVES,
+    clave = get_settings().clave_publica
+    if not clave:
+        raise ClaveDeVerificacionError(
+            "JWT_PUBLIC_KEY no está configurada: no hay con qué verificar las sesiones"
         )
-    return _cliente_jwks
+    return clave
 
 
 def _sin_sesion(detalle: str) -> ErrorDeApi:
@@ -108,10 +110,9 @@ def verificar(token: str) -> dict[str, object]:
     es siempre «sesión inválida»; el detalle va al registro.
     """
     try:
-        clave = cliente_jwks().get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
-            clave.key,
+            clave_de_verificacion(),
             algorithms=[ALGORITMO],
             audience=AUDIENCIA,
             leeway=TOLERANCIA_DE_RELOJ,
@@ -119,10 +120,10 @@ def verificar(token: str) -> dict[str, object]:
         )
     except jwt.ExpiredSignatureError:
         raise _sin_sesion("La sesión expiró.") from None
-    except jwt.PyJWKClientError as exc:
-        # No se encontró la clave con la que se firmó. Puede ser un
-        # token de otro proyecto, o que Supabase no responda.
-        log.warning("No se pudo obtener la clave del JWKS: %s", exc)
+    except ClaveDeVerificacionError as exc:
+        # Falta configuración, no es culpa de quien pide. Se registra
+        # fuerte, porque con esto ningún endpoint privado responde.
+        log.error("%s", exc)
         raise _sin_sesion("La sesión no es válida.") from None
     except jwt.InvalidTokenError as exc:
         log.info("Token rechazado: %s: %s", type(exc).__name__, exc)
@@ -143,9 +144,9 @@ def verificar(token: str) -> dict[str, object]:
 class Usuario:
     """Lo que el token dice del usuario de esta petición.
 
-    El correo viene del propio token y no de una consulta a la base: es
-    un dato firmado por Supabase, así que es tan confiable como el uuid
-    y no cuesta un viaje.
+    El correo viene del propio token y no de una consulta a la base: va
+    dentro de la firma, así que es tan confiable como el uuid y no
+    cuesta un viaje.
     """
 
     id: str

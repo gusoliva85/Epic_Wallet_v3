@@ -12,15 +12,14 @@ audiencia incorrecta y sin el claim `sub`.
 
 from __future__ import annotations
 
-import json
 import time
 from typing import Any
 
 import jwt
 import pytest
 from api.app.core import security
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from jwt.utils import base64url_encode
 
 AUDIENCIA = "authenticated"
 UUID_DE_PRUEBA = "6f1d2b40-0000-4000-8000-000000000001"
@@ -31,7 +30,7 @@ UUID_DE_PRUEBA = "6f1d2b40-0000-4000-8000-000000000001"
 
 @pytest.fixture(scope="module")
 def par_de_claves() -> tuple[Any, Any]:
-    """Una clave EC P-256, la misma curva que usa Supabase."""
+    """Una clave EC P-256, la misma curva que firma las sesiones."""
     privada = ec.generate_private_key(ec.SECP256R1())
     return privada, privada.public_key()
 
@@ -42,35 +41,27 @@ def otra_clave() -> Any:
     return ec.generate_private_key(ec.SECP256R1())
 
 
-def _numero_a_base64url(valor: int) -> str:
-    largo = (valor.bit_length() + 7) // 8
-    return base64url_encode(valor.to_bytes(max(largo, 32), "big")).decode()
+def _pem_publica(publica: Any) -> str:
+    return publica.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    ).decode()
 
 
 @pytest.fixture
-def jwks(monkeypatch: pytest.MonkeyPatch, par_de_claves: tuple[Any, Any]) -> None:
-    """Hace que el verificador use nuestra clave pública.
+def clave_del_proyecto(monkeypatch: pytest.MonkeyPatch, par_de_claves: tuple[Any, Any]) -> None:
+    """Pone nuestra clave pública donde el verificador la busca.
 
-    Se reemplaza el cliente de JWKS, no `jwt.decode`: así la firma se
-    comprueba de verdad contra una clave que nosotros controlamos, que
-    es exactamente lo que pasa en producción con la de Supabase.
+    Se toca la configuración, no `jwt.decode`: así la firma se
+    comprueba de verdad contra una clave que controlamos, que es
+    exactamente lo que pasa en el servidor.
+
+    Hasta F17-T01 esta fixture simulaba un endpoint JWKS del proveedor
+    anterior. Ahora la clave está en el proceso y no hay nada que
+    simular.
     """
     _, publica = par_de_claves
-    numeros = publica.public_numbers()
-    clave_jwk = {
-        "kty": "EC",
-        "crv": "P-256",
-        "use": "sig",
-        "kid": "prueba",
-        "x": _numero_a_base64url(numeros.x),
-        "y": _numero_a_base64url(numeros.y),
-    }
-
-    class ClienteDePrueba:
-        def get_signing_key_from_jwt(self, token: str) -> Any:
-            return jwt.PyJWK(json.loads(json.dumps(clave_jwk)), algorithm="ES256")
-
-    monkeypatch.setattr(security, "cliente_jwks", lambda: ClienteDePrueba())
+    monkeypatch.setattr(security, "clave_de_verificacion", lambda: _pem_publica(publica))
 
 
 def token(
@@ -81,7 +72,7 @@ def token(
     exp: int | None = None,
     extra: dict[str, Any] | None = None,
 ) -> str:
-    """Fabrica un token como los que manda Supabase."""
+    """Fabrica un token como los que emite el proyecto."""
     ahora = int(time.time())
     carga: dict[str, Any] = {"iat": ahora, "exp": exp if exp is not None else ahora + 3600}
     if sub is not None:
@@ -96,7 +87,7 @@ def token(
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_valido_devuelve_el_usuario(par_de_claves: tuple[Any, Any]) -> None:
     privada, _ = par_de_claves
     payload = security.verificar(token(privada))
@@ -104,7 +95,7 @@ def test_un_token_valido_devuelve_el_usuario(par_de_claves: tuple[Any, Any]) -> 
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_vencido_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
     """Y con mensaje propio: el frontend puede renovar la sesión sin
     molestar al usuario, cosa que no haría con una inválida."""
@@ -119,7 +110,7 @@ def test_un_token_vencido_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_firmado_con_otra_clave_se_rechaza(otra_clave: Any) -> None:
     """Criterio de aceptación: un token manipulado se rechaza por la
     firma. Es el caso que importa: alguien que fabrica un token con el
@@ -133,7 +124,7 @@ def test_un_token_firmado_con_otra_clave_se_rechaza(otra_clave: Any) -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_con_otra_audiencia_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
     """Supabase emite tokens para varias audiencias. Uno de otro uso,
     aunque esté bien firmado por el mismo proyecto, no sirve acá."""
@@ -144,7 +135,7 @@ def test_un_token_con_otra_audiencia_se_rechaza(par_de_claves: tuple[Any, Any]) 
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_sin_sub_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
     """Sin `sub` no hay a quién atribuirle los datos. Dejarlo pasar
     sería trabajar con un usuario vacío."""
@@ -158,7 +149,7 @@ def test_un_token_sin_sub_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 @pytest.mark.parametrize("vacio", ["", "   "])
 def test_un_sub_vacio_tambien_se_rechaza(par_de_claves: tuple[Any, Any], vacio: str) -> None:
     """`require: ["sub"]` exige que el claim ESTÉ, no que valga algo.
@@ -173,7 +164,7 @@ def test_un_sub_vacio_tambien_se_rechaza(par_de_claves: tuple[Any, Any], vacio: 
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_sin_vencimiento_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
     """Sin `exp`, el token vale para siempre. PyJWT lo acepta si no se
     lo exige explícitamente."""
@@ -191,7 +182,7 @@ def test_un_token_sin_vencimiento_se_rechaza(par_de_claves: tuple[Any, Any]) -> 
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_sin_firma_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
     """El ataque clásico: cambiar el algoritmo a `none` y sacar la
     firma. Se rechaza porque sólo se admite ES256."""
@@ -216,7 +207,7 @@ def test_un_token_sin_firma_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 @pytest.mark.parametrize(
     "caso",
     ["otra_clave", "otra_audiencia", "sin_sub", "basura"],
@@ -248,7 +239,7 @@ def test_el_mensaje_no_filtra_por_que_fallo(
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_los_tres_casos_se_distinguen(par_de_claves: tuple[Any, Any]) -> None:
     """Sin sesión, vencida e inválida tienen que ser distinguibles: el
     frontend renueva una y manda a entrar en las otras dos."""
@@ -270,56 +261,77 @@ def test_los_tres_casos_se_distinguen(par_de_claves: tuple[Any, Any]) -> None:
 
 
 @pytest.mark.unit
-def test_las_claves_se_buscan_una_sola_vez_por_proceso(
-    monkeypatch: pytest.MonkeyPatch,
+def test_verificar_no_sale_a_internet(
+    monkeypatch: pytest.MonkeyPatch, par_de_claves: tuple[Any, Any]
 ) -> None:
-    """Criterio de aceptación.
+    """Criterio de F17-T01.
 
-    Un cliente nuevo por petición significa un viaje de red a Supabase
-    por petición, y depender de que ese endpoint esté arriba siempre.
+    Hasta esta tarea, verificar un token significaba pedirle las claves
+    a un servicio ajeno: un viaje de red por proceso y, peor, que entrar
+    a la aplicación dependiera de que ese servicio respondiera.
+
+    Se revienta `socket.socket` para que cualquier intento de abrir una
+    conexión falle de forma ruidosa. Si la verificación sigue andando,
+    es porque no sale a ningún lado.
     """
-    monkeypatch.setattr(security, "_cliente_jwks", None)
-    creados = 0
+    import socket
 
-    class ClienteFalso:
-        def __init__(self, url: str, **kwargs: Any) -> None:
-            nonlocal creados
-            creados += 1
-            self.url = url
-            self.kwargs = kwargs
+    def prohibido(*_a: Any, **_k: Any) -> Any:
+        raise AssertionError("verificar() intentó abrir una conexión de red")
 
-    monkeypatch.setattr(security, "PyJWKClient", ClienteFalso)
+    monkeypatch.setattr(socket, "socket", prohibido)
 
-    primero = security.cliente_jwks()
-    segundo = security.cliente_jwks()
+    privada, publica = par_de_claves
+    monkeypatch.setattr(security, "clave_de_verificacion", lambda: _pem_publica(publica))
 
-    assert creados == 1, f"se creó el cliente {creados} veces"
-    assert primero is segundo
-    assert primero.kwargs["cache_keys"] is True
-    assert primero.kwargs["lifespan"] == security.VIDA_DE_LAS_CLAVES
+    carga = security.verificar(token(privada))
+    assert carga["sub"] == UUID_DE_PRUEBA
 
 
 @pytest.mark.unit
-def test_la_url_del_jwks_es_la_del_proyecto(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Y sin barra doble: `SUPABASE_URL` puede venir con barra final y
-    `https://x.supabase.co//auth/...` no responde."""
-    monkeypatch.setattr(security, "_cliente_jwks", None)
-    capturada = {}
+def test_la_clave_sale_de_la_configuracion(monkeypatch: pytest.MonkeyPatch) -> None:
+    """`clave_de_verificacion` lee `JWT_PUBLIC_KEY`, y acepta el PEM con
+    los saltos escapados: así es como sobrevive a un archivo .env."""
+    from api.app.core.config import Settings
 
-    class ClienteFalso:
-        def __init__(self, url: str, **kwargs: Any) -> None:
-            capturada["url"] = url
+    privada = ec.generate_private_key(ec.SECP256R1())
+    pem = _pem_publica(privada.public_key())
 
-    monkeypatch.setattr(security, "PyJWKClient", ClienteFalso)
+    config = Settings(  # type: ignore[call-arg]
+        DATABASE_URL="postgresql+psycopg://u:p@db:5432/x",
+        JWT_PUBLIC_KEY=pem.replace("\n", "\\n"),
+    )
+    assert config.clave_publica == pem.strip()
 
-    class ConfigFalsa:
-        SUPABASE_URL = "https://ejemplo.supabase.co/"
+    monkeypatch.setattr(security, "get_settings", lambda: config)
+    assert security.clave_de_verificacion() == pem.strip()
 
-    monkeypatch.setattr(security, "get_settings", lambda: ConfigFalsa())
-    security.cliente_jwks()
 
-    assert capturada["url"] == ("https://ejemplo.supabase.co/auth/v1/.well-known/jwks.json")
-    assert "//auth" not in capturada["url"]
+@pytest.mark.unit
+def test_sin_clave_configurada_se_rechaza_y_se_avisa(
+    monkeypatch: pytest.MonkeyPatch, caplog: Any, par_de_claves: tuple[Any, Any]
+) -> None:
+    """Sin clave no se puede verificar nada, así que ningún endpoint
+    privado responde. Hacia afuera es «sesión inválida» como siempre;
+    hacia el registro tiene que decir que falta configuración, porque
+    si no parece que el token está mal cuando lo que está mal es el
+    despliegue."""
+    import logging
+
+    class ConfigSinClave:
+        clave_publica = ""
+
+    monkeypatch.setattr(security, "get_settings", lambda: ConfigSinClave())
+
+    privada, _ = par_de_claves
+    with (
+        caplog.at_level(logging.ERROR, logger="epic_wallet"),
+        pytest.raises(security.ErrorDeApi) as excepcion,
+    ):
+        security.verificar(token(privada))
+
+    assert excepcion.value.status_code == 401
+    assert "JWT_PUBLIC_KEY" in caplog.text
 
 
 # ------------------------------------------------ la configuración del algoritmo
@@ -376,7 +388,7 @@ def cliente() -> Any:
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_con_token_valido_el_endpoint_responde(
     cliente: Any, par_de_claves: tuple[Any, Any]
 ) -> None:
@@ -387,7 +399,7 @@ def test_con_token_valido_el_endpoint_responde(
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 @pytest.mark.parametrize(
     "cabeceras",
     [
@@ -403,7 +415,7 @@ def test_sin_sesion_responde_401(cliente: Any, cabeceras: dict[str, str]) -> Non
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_el_401_sale_con_la_forma_de_error_de_la_api(cliente: Any) -> None:
     """Por esto `HTTPBearer` va con `auto_error=False`: con `True`,
     FastAPI devuelve su propio 401 sin pasar por los manejadores y la
@@ -417,7 +429,7 @@ def test_el_401_sale_con_la_forma_de_error_de_la_api(cliente: Any) -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_de_otra_persona_no_deja_entrar(cliente: Any, otra_clave: Any) -> None:
     """El caso que de verdad importa: alguien fabrica un token con el
     uuid de otro usuario y lo firma con una clave suya."""
@@ -431,7 +443,7 @@ def test_un_token_de_otra_persona_no_deja_entrar(cliente: Any, otra_clave: Any) 
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_recien_emitido_se_acepta_con_el_reloj_corrido(
     par_de_claves: tuple[Any, Any],
 ) -> None:
@@ -465,7 +477,7 @@ def test_un_token_recien_emitido_se_acepta_con_el_reloj_corrido(
 
 
 @pytest.mark.unit
-@pytest.mark.usefixtures("jwks")
+@pytest.mark.usefixtures("clave_del_proyecto")
 def test_la_tolerancia_no_acepta_un_token_del_futuro_lejano(
     par_de_claves: tuple[Any, Any],
 ) -> None:

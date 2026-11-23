@@ -43,10 +43,26 @@ class Settings(BaseSettings):
     # Un solo esquema para todo el proyecto. No hay entorno separado.
     DB_SCHEMA: str = "public"
 
-    # --- Supabase ---
-    # Sin valor obligatorio desde F15: el servidor propio arranca sin
-    # ella. Mientras esté vacía nadie puede iniciar sesión, y
-    # `validar_coherencia` lo dice en el arranque. F17 la saca del todo.
+    # --- firma de las sesiones · F17-T01 ---
+    # Par de claves ES256 (curva P-256) del proyecto, en formato PEM.
+    #
+    # La PRIVADA firma, y es el secreto más caro del proyecto: quien la
+    # tenga puede fabricar la sesión de cualquier usuario. No entra al
+    # repositorio, no va al frontend y no sale del servidor.
+    #
+    # La PÚBLICA sólo verifica. Que sean distintas es el punto: este
+    # backend comprueba sesiones y, hasta F17-T02, ni siquiera las
+    # emite.
+    #
+    # Se aceptan con saltos de línea reales o escapados, que es como
+    # sobreviven a un archivo de variables de entorno.
+    JWT_PRIVATE_KEY: str = ""
+    JWT_PUBLIC_KEY: str = ""
+
+    # --- Supabase · en retirada ---
+    # Desde F17-T01 la verificación de tokens ya no la usa: se hace con
+    # `JWT_PUBLIC_KEY`, acá mismo y sin viaje de red. Lo que queda lo
+    # necesita el frontend viejo, hasta F17-T03.
     SUPABASE_URL: str = ""
     SUPABASE_ANON_KEY: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
@@ -105,11 +121,27 @@ class Settings(BaseSettings):
     def proveedores_de_precio(self) -> list[str]:
         return [p.strip() for p in self.PRICE_PROVIDER_ORDER.split(",") if p.strip()]
 
+    @staticmethod
+    def _pem(valor: str) -> str:
+        """Devuelve la clave lista para que `cryptography` la lea.
+
+        En un archivo de variables de entorno una clave PEM entra en
+        una sola línea, con los saltos escapados. Acá se deshacen,
+        porque el formato PEM los necesita de verdad.
+        """
+        return valor.replace("\\n", "\n").strip()
+
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def jwks_url(self) -> str:
-        """De dónde salen las claves públicas para verificar los JWT (§8.8)."""
-        return f"{self.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+    def clave_publica(self) -> str:
+        """Con la que se verifican las sesiones."""
+        return self._pem(self.JWT_PUBLIC_KEY)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def clave_privada(self) -> str:
+        """Con la que se firman. Nunca se registra ni se devuelve."""
+        return self._pem(self.JWT_PRIVATE_KEY)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -125,14 +157,17 @@ class Settings(BaseSettings):
         sería lo otro.
         """
         avisos: list[str] = []
-        if self.es_produccion and not self.SUPABASE_URL:
+        if not self.clave_publica:
             avisos.append(
-                "SUPABASE_URL vacía: no hay de dónde sacar las claves para "
-                "verificar los tokens, así que nadie puede iniciar sesión. "
-                "Es lo esperado hasta F17, que trae la autenticación propia"
+                "JWT_PUBLIC_KEY vacía: no hay con qué verificar las sesiones, "
+                "así que ningún endpoint privado responde. Se genera con "
+                "`python scripts/generar_claves.py`"
             )
-        if self.es_produccion and self.SUPABASE_URL and not self.SUPABASE_ANON_KEY:
-            avisos.append("SUPABASE_ANON_KEY vacía: el frontend no podría autenticar")
+        if self.es_produccion and not self.clave_privada:
+            avisos.append(
+                "JWT_PRIVATE_KEY vacía: el servidor todavía no puede emitir "
+                "sesiones. Es lo esperado hasta F17-T02"
+            )
         return avisos
 
 
