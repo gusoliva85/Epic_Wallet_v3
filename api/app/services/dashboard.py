@@ -248,7 +248,9 @@ def armar(
     periodo_actual = mes_actual(ahora)
     abrir_mes(sesion, user_id, periodo_actual)
 
-    periodo_pedido = Periodo(year, month) if year is not None and month is not None else periodo_actual
+    periodo_pedido = (
+        Periodo(year, month) if year is not None and month is not None else periodo_actual
+    )
 
     meses = repos_meses.listar(sesion)  # del más nuevo al más viejo, F03-T03
     mes = next((m for m in meses if (m.year, m.month) == periodo_pedido), None)
@@ -301,7 +303,10 @@ def armar(
     # nada con qué comparar" que ya usa `variaciones` unas líneas
     # arriba, sólo que acá por categoría en vez de por mes entero.
     totales_anteriores_por_categoria = (
-        {t.category_id: t.total_amount for t in repos_totales.listar_por_mes(sesion, anterior_mes.id)}
+        {
+            t.category_id: t.total_amount
+            for t in repos_totales.listar_por_mes(sesion, anterior_mes.id)
+        }
         if anterior_mes
         else {}
     )
@@ -340,7 +345,11 @@ def armar(
         diario=diario,
         ultimos_seis_meses=_ultimos_seis(hasta_aqui),
         categorias=_desglose_por_categoria(
-            totales_por_categoria, categorias_por_id, movimientos, mes, totales_anteriores_por_categoria
+            totales_por_categoria,
+            categorias_por_id,
+            movimientos,
+            mes,
+            totales_anteriores_por_categoria,
         ),
         # `meses` y `categorias` ya están leídos: se los pasa para que
         # el armado de vencimientos no vuelva a pedirlos (tres

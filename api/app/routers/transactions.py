@@ -71,9 +71,7 @@ def _validar_categoria(sesion: SesionDeUsuario, category_id: int, transaction_ty
         # RLS ya la sacó de la consulta si es de otra cuenta: esto no
         # distingue "no existe" de "no es tuya", mismo criterio de no
         # revelar que existe.
-        raise error_de_validacion(
-            "La categoría no existe.", [{"field": "category_id"}]
-        )
+        raise error_de_validacion("La categoría no existe.", [{"field": "category_id"}])
     if not tipo_coincide(categoria.type, transaction_type):
         raise error_de_validacion(
             f"«{categoria.name}» es una categoría de "
@@ -162,7 +160,9 @@ def crear_movimiento(
     )
 
 
-@router.put("/{transaction_id}", response_model=RespuestaDeMovimiento, summary="Editar un movimiento")
+@router.put(
+    "/{transaction_id}", response_model=RespuestaDeMovimiento, summary="Editar un movimiento"
+)
 def editar_movimiento(
     transaction_id: int, datos: CambioDeMovimiento, sesion: SesionDeUsuario
 ) -> RespuestaDeMovimiento:

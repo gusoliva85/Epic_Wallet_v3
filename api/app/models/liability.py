@@ -41,7 +41,9 @@ class Liability(Base):
 
     name: Mapped[str] = mapped_column(Text, nullable=False)
     # numeric(14,2): nunca float con plata de por medio.
-    amount: Mapped[decimal.Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
+    amount: Mapped[decimal.Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
 
     created_at: Mapped[dt.datetime] = mapped_column(

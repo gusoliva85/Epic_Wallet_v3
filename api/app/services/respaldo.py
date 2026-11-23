@@ -91,9 +91,7 @@ def armar_respaldo(sesion: Session) -> Respaldo:
     return Respaldo(
         exported_at=dt.datetime.now(dt.UTC),
         profile=PerfilRespaldo.model_validate(perfil, from_attributes=True),
-        categories=[
-            CategoriaRespaldo.model_validate(c, from_attributes=True) for c in categorias
-        ],
+        categories=[CategoriaRespaldo.model_validate(c, from_attributes=True) for c in categorias],
         months=meses,
         transactions=movimientos,
         investments=[
@@ -149,15 +147,15 @@ def _escribir_meses(
 ) -> dict[int, int]:
     mapa_meses: dict[int, int] = {}
     for m in backup.months:
-        mes = repos_meses.crear(sesion, user_id=user_id, year=m.year, month=m.month, status=m.status)
+        mes = repos_meses.crear(
+            sesion, user_id=user_id, year=m.year, month=m.month, status=m.status
+        )
         mapa_meses[m.id] = mes.id
         if m.status == HISTORICO:
             mes.income_total = m.income_total
             mes.expense_total = m.expense_total
             mes.saving_total = m.saving_total
-            totales = {
-                mapa_categorias[t.category_id]: t.total_amount for t in m.category_totals
-            }
+            totales = {mapa_categorias[t.category_id]: t.total_amount for t in m.category_totals}
             repos_totales.reemplazar_manuales(
                 sesion, user_id=user_id, month_id=mes.id, totales=totales
             )
@@ -272,9 +270,7 @@ def armar_zip_csv(backup: Respaldo) -> bytes:
     tablas: dict[str, list[dict[str, object]]] = {
         "profile": [backup.profile.model_dump(mode="json")],
         "categories": [c.model_dump(mode="json") for c in backup.categories],
-        "months": [
-            m.model_dump(mode="json", exclude={"category_totals"}) for m in backup.months
-        ],
+        "months": [m.model_dump(mode="json", exclude={"category_totals"}) for m in backup.months],
         "month_category_totals": [
             {"month_id": m.id, **t.model_dump(mode="json")}
             for m in backup.months

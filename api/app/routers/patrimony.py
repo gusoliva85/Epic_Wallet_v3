@@ -22,7 +22,11 @@ from .me import asegurar_perfil_y_categorias
 router = APIRouter(prefix="/patrimony", tags=["patrimonio"])
 
 
-@router.get("", response_model=RespuestaPatrimonio, summary="Ahorros, inversiones, pasivos y patrimonio neto")
+@router.get(
+    "",
+    response_model=RespuestaPatrimonio,
+    summary="Ahorros, inversiones, pasivos y patrimonio neto",
+)
 def leer_patrimonio(sesion: SesionDeUsuario, usuario: UsuarioDelToken) -> RespuestaPatrimonio:
     # Mismo motivo que en `routers/dashboard.py`: sin perfil, abrir el
     # mes actual fallaría con una violación de clave foránea en vez de

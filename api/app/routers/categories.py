@@ -94,7 +94,9 @@ def listar_categorias(
     status_code=status.HTTP_201_CREATED,
     summary="Crear una categoría",
 )
-def crear_categoria(datos: AltaDeCategoria, usuario: UsuarioDelToken, sesion: SesionDeUsuario) -> Category:
+def crear_categoria(
+    datos: AltaDeCategoria, usuario: UsuarioDelToken, sesion: SesionDeUsuario
+) -> Category:
     # Sin perfil, este insert fallaría con una violación de clave
     # foránea (`categories.user_id` referencia `profiles.id`) en vez de
     # crear la categoría. No alcanza con que `listar_categorias` ya la
@@ -137,7 +139,9 @@ def cambiar_categoria(
     return categoria
 
 
-@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Borrar una categoría")
+@router.delete(
+    "/{category_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Borrar una categoría"
+)
 def borrar_categoria(category_id: int, sesion: SesionDeUsuario) -> None:
     categoria = repos.buscar_por_id(sesion, category_id)
     if categoria is None:
@@ -181,7 +185,11 @@ def ver_detalle_de_categoria(
     # por ESTA categoría puntual), así que el total es cero en vez de
     # faltar.
     total = next(
-        (t.total_amount for t in repos_totales.listar_por_mes(sesion, mes.id) if t.category_id == category_id),
+        (
+            t.total_amount
+            for t in repos_totales.listar_por_mes(sesion, mes.id)
+            if t.category_id == category_id
+        ),
         decimal.Decimal("0.00"),
     )
 
@@ -195,7 +203,11 @@ def ver_detalle_de_categoria(
         )
 
     crudas = transacciones_del_mes(mes.status, movimientos)
-    transactions = None if crudas is None else [Movimiento.model_validate(m, from_attributes=True) for m in crudas]
+    transactions = (
+        None
+        if crudas is None
+        else [Movimiento.model_validate(m, from_attributes=True) for m in crudas]
+    )
 
     return DetalleDeCategoria(
         category_id=categoria.id,

@@ -72,7 +72,9 @@ def comprar_inversion(
     return respuesta_desde_posicion(posicion)
 
 
-@router.put("/{investment_id}", response_model=RespuestaInversion, summary="Editar o actualizar el valor")
+@router.put(
+    "/{investment_id}", response_model=RespuestaInversion, summary="Editar o actualizar el valor"
+)
 def editar_inversion(
     investment_id: int, cambios: EdicionDeInversion, sesion: SesionDeUsuario
 ) -> RespuestaInversion:
@@ -93,7 +95,9 @@ def editar_inversion(
 
 
 @router.delete(
-    "/{investment_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Vender (baja de una posición)"
+    "/{investment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Vender (baja de una posición)",
 )
 def vender_inversion(investment_id: int, sesion: SesionDeUsuario) -> None:
     posicion = repos.buscar_por_id(sesion, investment_id)

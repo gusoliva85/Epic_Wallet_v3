@@ -64,9 +64,7 @@ class MonthlyCategoryTotal(Base):
     total_amount: Mapped[decimal.Decimal] = mapped_column(
         Numeric(14, 2), nullable=False, server_default="0"
     )
-    is_manual_summary: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default="false"
-    )
+    is_manual_summary: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

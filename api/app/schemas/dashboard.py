@@ -156,7 +156,9 @@ def _diario(diario: servicio.SerieDiaria | None) -> DiarioDelDashboard | None:
         expense=[_importe(v) for v in diario.expense],
         saving_cumulative=[_importe(v) for v in diario.saving_cumulative],
         peak_expense=(
-            PicoDeGastoDelDashboard(day=diario.peak_expense.day, amount=_importe(diario.peak_expense.amount))
+            PicoDeGastoDelDashboard(
+                day=diario.peak_expense.day, amount=_importe(diario.peak_expense.amount)
+            )
             if diario.peak_expense is not None
             else None
         ),

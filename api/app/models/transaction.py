@@ -96,9 +96,7 @@ class Transaction(Base):
     __table_args__ = (
         CheckConstraint("transaction_type in ('income','expense')", name="transaction_type"),
         CheckConstraint("amount > 0", name="amount_positive"),
-        CheckConstraint(
-            "source in ('manual','mercado_pago','system','import')", name="source"
-        ),
+        CheckConstraint("source in ('manual','mercado_pago','system','import')", name="source"),
         UniqueConstraint("user_id", "source", "external_id", name="transactions_external_unique"),
     )
 

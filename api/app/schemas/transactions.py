@@ -88,7 +88,9 @@ def _validar_importe(valor: decimal.Decimal) -> decimal.Decimal:
 def _validar_descripcion(valor: str | None) -> str | None:
     limpio = valor.strip() if valor else None
     if not descripcion_valida(limpio):
-        raise ValueError(f"la descripción no puede superar los {LARGO_MAXIMO_DESCRIPCION} caracteres")
+        raise ValueError(
+            f"la descripción no puede superar los {LARGO_MAXIMO_DESCRIPCION} caracteres"
+        )
     return limpio or None
 
 

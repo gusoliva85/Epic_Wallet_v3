@@ -128,7 +128,9 @@ def _tasa(mes: Month) -> str | None:
     response_model=list[SaldoMensual],
     summary="La evolución del ahorro acumulado, mes a mes",
 )
-def ver_evolucion_del_ahorro(sesion: SesionDeUsuario, usuario: UsuarioDelToken) -> list[SaldoMensual]:
+def ver_evolucion_del_ahorro(
+    sesion: SesionDeUsuario, usuario: UsuarioDelToken
+) -> list[SaldoMensual]:
     # Antes de `/{month_id}` a propósito: con el otro orden, FastAPI
     # intenta leer "savings-evolution" como el `int` de esa ruta y
     # nunca llega hasta acá.
@@ -227,7 +229,10 @@ def cargar_mes_historico(
 
 @router.patch("/{month_id}", response_model=MesDetalle, summary="Corregir un mes histórico")
 def corregir_mes_historico(
-    month_id: int, datos: CorreccionDeMesHistorico, usuario: UsuarioDelToken, sesion: SesionDeUsuario
+    month_id: int,
+    datos: CorreccionDeMesHistorico,
+    usuario: UsuarioDelToken,
+    sesion: SesionDeUsuario,
 ) -> MesDetalle:
     """General §6.3: un mes histórico se puede corregir si se detecta
     un error. No sirve para convertir un mes `open` —para eso está

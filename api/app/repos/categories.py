@@ -15,7 +15,9 @@ from sqlalchemy.orm import Session
 from ..models import Category
 
 
-def listar(sesion: Session, *, type_: str | None = None, active: bool | None = None) -> list[Category]:
+def listar(
+    sesion: Session, *, type_: str | None = None, active: bool | None = None
+) -> list[Category]:
     """En el orden en que se muestran siempre: `sort_order` primero,
     que es el que fija el trigger al crear la cuenta y el que respeta
     el reordenamiento manual del día que exista."""
@@ -36,15 +38,11 @@ def siguiente_orden(sesion: Session, type_: str) -> int:
     medio: usar el máximo de `sort_order` de ese tipo y sumarle uno es
     lo mismo que ya hace el trigger de F02-T04 al sembrar las 21
     iniciales, sólo que acá el tipo ya trae categorías puestas."""
-    maximo = sesion.scalar(
-        select(func.max(Category.sort_order)).where(Category.type == type_)
-    )
+    maximo = sesion.scalar(select(func.max(Category.sort_order)).where(Category.type == type_))
     return (maximo or 0) + 1
 
 
-def crear(
-    sesion: Session, *, user_id: str, name: str, type_: str, sort_order: int
-) -> Category:
+def crear(sesion: Session, *, user_id: str, name: str, type_: str, sort_order: int) -> Category:
     categoria = Category(user_id=user_id, name=name, type=type_, sort_order=sort_order)
     sesion.add(categoria)
     sesion.flush()

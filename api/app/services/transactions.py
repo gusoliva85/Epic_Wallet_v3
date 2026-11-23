@@ -101,7 +101,9 @@ def recalcular_mes(movimientos: list[Movimiento]) -> TotalesDelMes:
             income_total += m.amount
         else:
             expense_total += m.amount
-        por_categoria[m.category_id] = por_categoria.get(m.category_id, decimal.Decimal("0.00")) + m.amount
+        por_categoria[m.category_id] = (
+            por_categoria.get(m.category_id, decimal.Decimal("0.00")) + m.amount
+        )
 
     return TotalesDelMes(
         income_total=income_total,

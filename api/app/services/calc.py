@@ -101,9 +101,7 @@ def porcentajes_de_categorias(
     return resultado
 
 
-def tasa_de_ahorro(
-    ingresos: decimal.Decimal, ahorro: decimal.Decimal
-) -> decimal.Decimal | None:
+def tasa_de_ahorro(ingresos: decimal.Decimal, ahorro: decimal.Decimal) -> decimal.Decimal | None:
     """`None` con ingresos en cero — nunca `0%` ni una división
     (criterio de aceptación de la tarea; Técnico §7.1, primera fila).
     La interfaz es quien decide mostrar «N/A» con ese `None`, acá sólo
@@ -288,15 +286,11 @@ def resumen_de_comparacion(
     ultimo = totales[-1] if totales else None
     previo = cerrados[-1] if cerrados else None
 
-    promedio = (
-        money(sum(cerrados, decimal.Decimal("0")) / len(cerrados)) if cerrados else None
-    )
+    promedio = money(sum(cerrados, decimal.Decimal("0")) / len(cerrados)) if cerrados else None
 
     diferencia = money(ultimo - previo) if ultimo is not None and previo is not None else None
     variacion = (
-        variacion_porcentual(ultimo, previo)
-        if ultimo is not None and previo is not None
-        else None
+        variacion_porcentual(ultimo, previo) if ultimo is not None and previo is not None else None
     )
 
     return {

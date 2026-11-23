@@ -155,8 +155,12 @@ class CargaDeMesHistorico(BaseModel):
 
     @model_validator(mode="after")
     def _totales_no_negativos(self) -> CargaDeMesHistorico:
-        if not totales_historicos_son_validos(self.income_total, self.expense_total, self.saving_total):
-            raise ValueError("los ingresos y los egresos de un mes histórico no pueden ser negativos")
+        if not totales_historicos_son_validos(
+            self.income_total, self.expense_total, self.saving_total
+        ):
+            raise ValueError(
+                "los ingresos y los egresos de un mes histórico no pueden ser negativos"
+            )
         return self
 
 
@@ -174,6 +178,10 @@ class CorreccionDeMesHistorico(BaseModel):
 
     @model_validator(mode="after")
     def _totales_no_negativos(self) -> CorreccionDeMesHistorico:
-        if not totales_historicos_son_validos(self.income_total, self.expense_total, self.saving_total):
-            raise ValueError("los ingresos y los egresos de un mes histórico no pueden ser negativos")
+        if not totales_historicos_son_validos(
+            self.income_total, self.expense_total, self.saving_total
+        ):
+            raise ValueError(
+                "los ingresos y los egresos de un mes histórico no pueden ser negativos"
+            )
         return self

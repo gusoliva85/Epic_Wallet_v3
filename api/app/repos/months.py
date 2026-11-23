@@ -46,6 +46,4 @@ def crear(sesion: Session, *, user_id: str, year: int, month: int, status: str) 
 def listar(sesion: Session) -> list[Month]:
     """Los meses del usuario de la sesión, del más nuevo al más viejo
     —el orden que usa la barra de mes y el historial."""
-    return list(
-        sesion.scalars(select(Month).order_by(Month.year.desc(), Month.month.desc()))
-    )
+    return list(sesion.scalars(select(Month).order_by(Month.year.desc(), Month.month.desc())))

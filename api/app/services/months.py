@@ -183,7 +183,9 @@ def totales_historicos_son_validos(
     return income_total >= 0 and expense_total >= 0
 
 
-def requiere_confirmacion_para_historico(status_actual: str | None, tiene_movimientos: bool) -> bool:
+def requiere_confirmacion_para_historico(
+    status_actual: str | None, tiene_movimientos: bool
+) -> bool:
     """Si hace falta un aviso explícito antes de convertir el mes en
     histórico consolidado (General §6.3, Regla 4 de la §50 — criterio
     de aceptación de F08-T01: "un mes `open` con movimientos no se

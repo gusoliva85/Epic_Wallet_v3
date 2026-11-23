@@ -137,4 +137,3 @@ class EdicionDeInversion(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     current_value: decimal.Decimal | None = Field(default=None, gt=0)
     active: bool | None = None
-
