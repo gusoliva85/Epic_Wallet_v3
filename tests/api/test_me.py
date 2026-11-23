@@ -9,116 +9,26 @@ es saber que encajan.
 
 from __future__ import annotations
 
-import json
-import os
-import re
-import secrets
-import urllib.error
-import urllib.request
 from collections.abc import Iterator
-from pathlib import Path
-from typing import Any
 
 import pytest
 from sqlalchemy import text
 
-from tests.api.ayudas_auth import confirmar_correo
-from tests.api.ayudas_db import escritura, motor_de_pruebas
-
-RAIZ = Path(__file__).resolve().parents[2]
-pytestmark = pytest.mark.api
-
-
-def _del_env(clave: str) -> str | None:
-    valor = os.getenv(clave, "").strip()
-    if valor:
-        return valor
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        return None
-    m = re.search(rf"^{clave}=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-    return m.group(1).strip() if m else None
-
-
-URL_BASE = _del_env("DATABASE_URL")
-SUPABASE = (_del_env("SUPABASE_URL") or "").rstrip("/")
-ANON = _del_env("SUPABASE_ANON_KEY")
-ESQUEMA = _del_env("DB_SCHEMA") or "public"
-
-sin_entorno = pytest.mark.skipif(
-    not (URL_BASE and SUPABASE and ANON) or str(URL_BASE).startswith("sqlite"),
-    reason="hacen falta Postgres y las credenciales de Supabase",
+from tests.api.ayudas_db import escritura
+from tests.api.entorno import (
+    ESQUEMA,
+    Cuenta,
+    crear_cuenta,
+    sin_entorno,
 )
 
 
-def _auth(ruta: str, cuerpo: dict[str, Any]) -> tuple[int, dict[str, Any]]:
-    req = urllib.request.Request(
-        f"{SUPABASE}/auth/v1{ruta}",
-        data=json.dumps(cuerpo).encode(),
-        headers={
-            "apikey": str(ANON),
-            "Authorization": f"Bearer {ANON}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, json.loads(r.read() or b"{}")
-    except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read() or b"{}")
-
-
-@pytest.fixture(scope="module")
-def motor():
-    return motor_de_pruebas(str(URL_BASE))
-
-
-@pytest.fixture(scope="module")
-def cliente():
-    from api.app.main import app
-    from fastapi.testclient import TestClient
-
-    return TestClient(app, raise_server_exceptions=False)
-
-
-class Cuenta:
-    """Una cuenta de prueba con su token."""
-
-    def __init__(self, uid: str, correo: str, token: str) -> None:
-        self.uid = uid
-        self.correo = correo
-        self.token = token
-
-    @property
-    def cabeceras(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.token}"}
-
-
 def _crear_cuenta() -> Cuenta:
-    correo = f"epicwallet.me.{secrets.token_hex(6)}@example.com"
-    clave = secrets.token_urlsafe(16)
+    """Una cuenta descartable nueva, con su token."""
+    return crear_cuenta()
 
-    estado, cuerpo = _auth("/signup", {"email": correo, "password": clave})
-    if estado >= 400:
-        motivo = str(cuerpo.get("msg") or cuerpo)
-        if "rate limit" in motivo.lower():
-            pytest.skip(f"Supabase cortó por límite: {motivo}")
-        pytest.fail(f"no se pudo crear la cuenta: {motivo}")
 
-    uid = str(cuerpo.get("id") or cuerpo.get("user", {}).get("id"))
-    token = cuerpo.get("access_token")
-    if not token:
-        # F11-T03: con la confirmación por correo activada, `signup` no
-        # devuelve sesión y el `grant_type=password` daría
-        # `email_not_confirmed`. Nadie va a abrir el mail de una cuenta
-        # de QA, así que se confirma con la clave de servicio.
-        confirmar_correo(uid)
-        estado, sesion = _auth("/token?grant_type=password", {"email": correo, "password": clave})
-        token = sesion.get("access_token")
-    assert token, "la cuenta se creó pero no hay token"
-
-    return Cuenta(uid, correo, str(token))
+pytestmark = pytest.mark.api
 
 
 @pytest.fixture(scope="module")

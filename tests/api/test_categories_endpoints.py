@@ -12,114 +12,28 @@ coincidencia de tipo, que es de cálculo puro) se prueba aparte en
 
 from __future__ import annotations
 
-import json
-import os
-import re
 import secrets
-import urllib.error
-import urllib.request
 from collections.abc import Iterator
-from pathlib import Path
-from typing import Any
 
 import pytest
 from api.app.core.categorias_iniciales import INICIALES
 from sqlalchemy import text
 
-from tests.api.ayudas_auth import confirmar_correo
-from tests.api.ayudas_db import escritura, motor_de_pruebas
-
-RAIZ = Path(__file__).resolve().parents[2]
-pytestmark = pytest.mark.api
-
-
-def _del_env(clave: str) -> str | None:
-    valor = os.getenv(clave, "").strip()
-    if valor:
-        return valor
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        return None
-    m = re.search(rf"^{clave}=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-    return m.group(1).strip() if m else None
-
-
-URL_BASE = _del_env("DATABASE_URL")
-SUPABASE = (_del_env("SUPABASE_URL") or "").rstrip("/")
-ANON = _del_env("SUPABASE_ANON_KEY")
-ESQUEMA = _del_env("DB_SCHEMA") or "public"
-
-sin_entorno = pytest.mark.skipif(
-    not (URL_BASE and SUPABASE and ANON) or str(URL_BASE).startswith("sqlite"),
-    reason="hacen falta Postgres y las credenciales de Supabase",
+from tests.api.ayudas_db import escritura
+from tests.api.entorno import (
+    ESQUEMA,
+    Cuenta,
+    crear_cuenta,
+    sin_entorno,
 )
 
 
-def _auth(ruta: str, cuerpo: dict[str, Any]) -> tuple[int, dict[str, Any]]:
-    req = urllib.request.Request(
-        f"{SUPABASE}/auth/v1{ruta}",
-        data=json.dumps(cuerpo).encode(),
-        headers={
-            "apikey": str(ANON),
-            "Authorization": f"Bearer {ANON}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, json.loads(r.read() or b"{}")
-    except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read() or b"{}")
-
-
-class Cuenta:
-    def __init__(self, uid: str, correo: str, token: str) -> None:
-        self.uid = uid
-        self.correo = correo
-        self.token = token
-
-    @property
-    def cabeceras(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.token}"}
-
-
 def _crear_cuenta() -> Cuenta:
-    correo = f"epicwallet.categories.{secrets.token_hex(6)}@example.com"
-    clave = secrets.token_urlsafe(16)
-
-    estado, cuerpo = _auth("/signup", {"email": correo, "password": clave})
-    if estado >= 400:
-        motivo = str(cuerpo.get("msg") or cuerpo)
-        if "rate limit" in motivo.lower():
-            pytest.skip(f"Supabase cortó por límite: {motivo}")
-        pytest.fail(f"no se pudo crear la cuenta: {motivo}")
-
-    uid = str(cuerpo.get("id") or cuerpo.get("user", {}).get("id"))
-    token = cuerpo.get("access_token")
-    if not token:
-        # F11-T03: con la confirmación por correo activada, `signup` no
-        # devuelve sesión y el `grant_type=password` daría
-        # `email_not_confirmed`. Nadie va a abrir el mail de una cuenta
-        # de QA, así que se confirma con la clave de servicio.
-        confirmar_correo(uid)
-        estado, sesion = _auth("/token?grant_type=password", {"email": correo, "password": clave})
-        token = sesion.get("access_token")
-    assert token, "la cuenta se creó pero no hay token"
-    return Cuenta(uid, correo, str(token))
+    """Una cuenta descartable nueva, con su token."""
+    return crear_cuenta()
 
 
-@pytest.fixture(scope="module")
-def motor():
-    return motor_de_pruebas(str(URL_BASE))
-
-
-@pytest.fixture(scope="module")
-def cliente():
-    from api.app.main import app
-    from fastapi.testclient import TestClient
-
-    return TestClient(app, raise_server_exceptions=False)
+pytestmark = pytest.mark.api
 
 
 @pytest.fixture(scope="module")
@@ -270,9 +184,7 @@ def test_crear_categoria_la_agrega_al_final_de_su_tipo(
 
     # Las 18 de egreso que trae la siembra van de sort_order 4 a 21;
     # la nueva tiene que quedar después de todas.
-    egresos = cliente.get(
-        "/api/categories", params={"type": "expense"}, headers=a.cabeceras
-    ).json()
+    egresos = cliente.get("/api/categories", params={"type": "expense"}, headers=a.cabeceras).json()
     assert egresos[-1]["name"] == "Gimnasio"
 
 
@@ -282,7 +194,9 @@ def test_dos_categorias_con_el_mismo_nombre_y_tipo_se_rechazan(
 ) -> None:
     """Criterio de aceptación de la tarea."""
     a, _ = cuentas
-    cliente.post("/api/categories", json={"name": "Suscripciones", "type": "expense"}, headers=a.cabeceras)
+    cliente.post(
+        "/api/categories", json={"name": "Suscripciones", "type": "expense"}, headers=a.cabeceras
+    )
     r = cliente.post(
         "/api/categories", json={"name": "Suscripciones", "type": "expense"}, headers=a.cabeceras
     )
@@ -297,9 +211,13 @@ def test_el_mismo_nombre_en_el_otro_tipo_no_choca(
     # "Otros" ya existe como ingreso Y como egreso desde la siembra:
     # si esto fallara, la cuenta nueva no podría ni crearse.
     a, _ = cuentas
-    r = cliente.post("/api/categories", json={"name": "Varios", "type": "income"}, headers=a.cabeceras)
+    r = cliente.post(
+        "/api/categories", json={"name": "Varios", "type": "income"}, headers=a.cabeceras
+    )
     assert r.status_code == 201
-    r = cliente.post("/api/categories", json={"name": "Varios", "type": "expense"}, headers=a.cabeceras)
+    r = cliente.post(
+        "/api/categories", json={"name": "Varios", "type": "expense"}, headers=a.cabeceras
+    )
     assert r.status_code == 201
 
 
@@ -332,7 +250,9 @@ def test_patch_renombra(cliente, cuentas: tuple[Cuenta, Cuenta], limpiar_categor
         "/api/categories", json={"name": "Antes", "type": "expense"}, headers=a.cabeceras
     ).json()
 
-    r = cliente.patch(f"/api/categories/{creada['id']}", json={"name": "Después"}, headers=a.cabeceras)
+    r = cliente.patch(
+        f"/api/categories/{creada['id']}", json={"name": "Después"}, headers=a.cabeceras
+    )
     assert r.status_code == 200
     assert r.json()["name"] == "Después"
 
@@ -346,7 +266,9 @@ def test_patch_desactiva_sin_tocar_el_nombre(
         "/api/categories", json={"name": "Para desactivar", "type": "expense"}, headers=a.cabeceras
     ).json()
 
-    r = cliente.patch(f"/api/categories/{creada['id']}", json={"active": False}, headers=a.cabeceras)
+    r = cliente.patch(
+        f"/api/categories/{creada['id']}", json={"active": False}, headers=a.cabeceras
+    )
     assert r.status_code == 200
     assert r.json()["active"] is False
     assert r.json()["name"] == "Para desactivar"
@@ -361,7 +283,9 @@ def test_patch_no_acepta_cambiar_el_tipo(
         "/api/categories", json={"name": "Fija", "type": "expense"}, headers=a.cabeceras
     ).json()
 
-    r = cliente.patch(f"/api/categories/{creada['id']}", json={"type": "income"}, headers=a.cabeceras)
+    r = cliente.patch(
+        f"/api/categories/{creada['id']}", json={"type": "income"}, headers=a.cabeceras
+    )
     assert r.status_code == 422, "type no es un campo de CambioDeCategoria"
 
 
@@ -374,7 +298,9 @@ def test_patch_a_una_categoria_de_otra_cuenta_da_404(
         "/api/categories", json={"name": "De A", "type": "expense"}, headers=a.cabeceras
     ).json()
 
-    r = cliente.patch(f"/api/categories/{creada['id']}", json={"name": "Robada"}, headers=b.cabeceras)
+    r = cliente.patch(
+        f"/api/categories/{creada['id']}", json={"name": "Robada"}, headers=b.cabeceras
+    )
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "NOT_FOUND"
 

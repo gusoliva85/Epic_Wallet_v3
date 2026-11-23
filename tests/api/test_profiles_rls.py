@@ -16,48 +16,30 @@ corriendo en una máquina sin `.env`.
 
 from __future__ import annotations
 
-import os
-import re
 import uuid
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
 
 import pytest
 from sqlalchemy import Engine, text
 
-from tests.api.ayudas_db import escritura, lectura, motor_de_pruebas
-
-RAIZ = Path(__file__).resolve().parents[2]
-
-
-def _url() -> str | None:
-    url = os.getenv("DATABASE_URL", "").strip()
-    if url:
-        return url
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        return None
-    m = re.search(r"^DATABASE_URL=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-    return m.group(1).strip() if m else None
+from tests.api.ayudas_db import escritura, lectura
+from tests.api.entorno import (
+    ESQUEMA,
+    URL_BASE,
+    Cuenta,
+    crear_cuenta,
+)
 
 
-def _esquema() -> str:
-    valor = os.getenv("DB_SCHEMA", "").strip()
-    if valor:
-        return valor
-    archivo = RAIZ / ".env"
-    if archivo.exists():
-        m = re.search(r"^DB_SCHEMA=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-        if m:
-            return m.group(1).strip()
-    return "public"
+def _crear_cuenta() -> Cuenta:
+    """Una cuenta descartable nueva, con su token."""
+    return crear_cuenta()
 
 
 pytestmark = pytest.mark.api
 
-URL = _url()
-ESQUEMA = _esquema()
+URL = URL_BASE
 
 sin_base = pytest.mark.skipif(
     not URL or URL.startswith("sqlite"),
@@ -109,12 +91,6 @@ def _dos_cuentas_descartables(motor) -> tuple[str, str]:
             "esta prueba NO puede usar cuentas reales"
         )
     return ids[0], ids[1]
-
-
-@pytest.fixture(scope="module")
-def motor() -> Engine:
-    assert URL
-    return motor_de_pruebas(str(URL))
 
 
 @pytest.fixture

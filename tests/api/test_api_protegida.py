@@ -22,6 +22,8 @@ from fastapi import APIRouter
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
+from tests.api.entorno import Cuenta, crear_cuenta
+
 pytestmark = pytest.mark.api
 
 # La única ruta pública, y el motivo: sirve para saber si el despliegue
@@ -86,10 +88,9 @@ def _enrutador_privado() -> APIRouter:
     )
 
 
-@pytest.fixture(scope="module")
-def cliente() -> Iterator[TestClient]:
-    with TestClient(app, raise_server_exceptions=False) as c:
-        yield c
+def _crear_cuenta() -> Cuenta:
+    """Una cuenta descartable nueva, con su token."""
+    return crear_cuenta()
 
 
 def _con_valores(ruta: str) -> str:

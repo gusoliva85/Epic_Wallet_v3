@@ -44,24 +44,26 @@ se borran al terminar.
 from __future__ import annotations
 
 import datetime as dt
-import json
-import os
-import re
-import secrets
-import urllib.error
-import urllib.request
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
 from sqlalchemy import text
 
-from tests.api.ayudas_auth import confirmar_correo
-from tests.api.ayudas_db import escritura, motor_de_pruebas
+from tests.api.ayudas_db import escritura
+from tests.api.entorno import (
+    Cuenta,
+    crear_cuenta,
+    sin_entorno,
+)
 
-RAIZ = Path(__file__).resolve().parents[2]
+
+def _crear_cuenta() -> Cuenta:
+    """Una cuenta descartable nueva, con su token."""
+    return crear_cuenta()
+
+
 pytestmark = pytest.mark.api
 
 # Misma zona de presentación que el resto de las pruebas de API: la
@@ -71,91 +73,6 @@ ZONA_APP = ZoneInfo("America/Argentina/Buenos_Aires")
 
 def _hoy() -> dt.date:
     return dt.datetime.now(ZONA_APP).date()
-
-
-def _del_env(clave: str) -> str | None:
-    valor = os.getenv(clave, "").strip()
-    if valor:
-        return valor
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        return None
-    m = re.search(rf"^{clave}=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-    return m.group(1).strip() if m else None
-
-
-URL_BASE = _del_env("DATABASE_URL")
-SUPABASE = (_del_env("SUPABASE_URL") or "").rstrip("/")
-ANON = _del_env("SUPABASE_ANON_KEY")
-
-sin_entorno = pytest.mark.skipif(
-    not (URL_BASE and SUPABASE and ANON) or str(URL_BASE).startswith("sqlite"),
-    reason="hacen falta Postgres y las credenciales de Supabase",
-)
-
-
-def _auth(ruta: str, cuerpo: dict[str, Any]) -> tuple[int, dict[str, Any]]:
-    req = urllib.request.Request(
-        f"{SUPABASE}/auth/v1{ruta}",
-        data=json.dumps(cuerpo).encode(),
-        headers={
-            "apikey": str(ANON),
-            "Authorization": f"Bearer {ANON}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, json.loads(r.read() or b"{}")
-    except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read() or b"{}")
-
-
-class Cuenta:
-    def __init__(self, uid: str, correo: str, token: str) -> None:
-        self.uid = uid
-        self.correo = correo
-        self.token = token
-
-    @property
-    def cabeceras(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.token}"}
-
-
-def _crear_cuenta() -> Cuenta:
-    correo = f"epicwallet.f11t04.{secrets.token_hex(6)}@example.com"
-    clave = secrets.token_urlsafe(16)
-
-    estado, cuerpo = _auth("/signup", {"email": correo, "password": clave})
-    if estado >= 400:
-        motivo = str(cuerpo.get("msg") or cuerpo)
-        if "rate limit" in motivo.lower():
-            pytest.skip(f"Supabase cortó por límite: {motivo}")
-        pytest.fail(f"no se pudo crear la cuenta: {motivo}")
-
-    uid = str(cuerpo.get("id") or cuerpo.get("user", {}).get("id"))
-    token = cuerpo.get("access_token")
-    if not token:
-        confirmar_correo(uid)
-        estado, sesion = _auth("/token?grant_type=password", {"email": correo, "password": clave})
-        token = sesion.get("access_token")
-    assert token, "la cuenta se creó pero no hay token"
-
-    return Cuenta(uid, correo, str(token))
-
-
-@pytest.fixture(scope="module")
-def motor():
-    return motor_de_pruebas(str(URL_BASE))
-
-
-@pytest.fixture(scope="module")
-def cliente():
-    from api.app.main import app
-    from fastapi.testclient import TestClient
-
-    return TestClient(app, raise_server_exceptions=False)
 
 
 @pytest.fixture(scope="module")
@@ -258,7 +175,9 @@ def datos(cliente, cuentas: tuple[Cuenta, Cuenta]) -> DatosDeA:
     # envuelta como la hace `POST /api/transactions`.
     inversion = int(r.json()["id"])
 
-    assert cliente.put("/api/settings", json={"theme": "dark"}, headers=a.cabeceras).status_code == 200
+    assert (
+        cliente.put("/api/settings", json={"theme": "dark"}, headers=a.cabeceras).status_code == 200
+    )
 
     return DatosDeA(
         categoria=categoria,
@@ -284,9 +203,24 @@ def _endpoints_con_id(d: DatosDeA) -> list[tuple[str, str, str, dict[str, Any] |
     contra el OpenAPI y falla si alguien agrega uno.
     """
     return [
-        ("get", f"/api/categories/{d.categoria}/detail", "/api/categories/{category_id}/detail", None),
-        ("get", f"/api/categories/{d.categoria}/history", "/api/categories/{category_id}/history", None),
-        ("patch", f"/api/categories/{d.categoria}", "/api/categories/{category_id}", {"name": "De B"}),
+        (
+            "get",
+            f"/api/categories/{d.categoria}/detail",
+            "/api/categories/{category_id}/detail",
+            None,
+        ),
+        (
+            "get",
+            f"/api/categories/{d.categoria}/history",
+            "/api/categories/{category_id}/history",
+            None,
+        ),
+        (
+            "patch",
+            f"/api/categories/{d.categoria}",
+            "/api/categories/{category_id}",
+            {"name": "De B"},
+        ),
         ("delete", f"/api/categories/{d.categoria}", "/api/categories/{category_id}", None),
         # El cuerpo va completo por lo mismo que los tres totales del
         # mes de abajo: el esquema lo exige y Pydantic valida antes de
@@ -452,13 +386,15 @@ def test_el_mes_historico_de_a_no_esta_en_la_lista_de_b(
     va aparte del barrido de arriba."""
     _, b = cuentas
     meses = cliente.get("/api/months", headers=b.cabeceras).json()
-    assert not [
-        m for m in meses if m["year"] == ANIO_HISTORICO and m["month"] == MES_HISTORICO
-    ], "B ve el mes histórico que cargó A"
+    assert not [m for m in meses if m["year"] == ANIO_HISTORICO and m["month"] == MES_HISTORICO], (
+        "B ve el mes histórico que cargó A"
+    )
 
 
 @sin_entorno
-def test_la_preferencia_de_tema_no_se_cruza(cliente, cuentas: tuple[Cuenta, Cuenta], datos: DatosDeA) -> None:
+def test_la_preferencia_de_tema_no_se_cruza(
+    cliente, cuentas: tuple[Cuenta, Cuenta], datos: DatosDeA
+) -> None:
     """A guardó `dark`. B no guardó nada: tiene que seguir sin nada, no
     heredar el tema de A."""
     _, b = cuentas
@@ -526,8 +462,8 @@ def test_la_cuenta_de_a_quedo_intacta_despues_de_todos_los_intentos(
     assert mes.json()["income_total"] == "900000.00", "B corrigió el mes histórico de A"
 
     inversiones = cliente.get("/api/investments", headers=a.cabeceras).json()
-    assert [
-        i for i in inversiones["positions"] if i["symbol"] == SIMBOLO_INVERSION
-    ], "B vendió la posición de A"
+    assert [i for i in inversiones["positions"] if i["symbol"] == SIMBOLO_INVERSION], (
+        "B vendió la posición de A"
+    )
 
     assert cliente.get("/api/settings", headers=a.cabeceras).json()["theme"] == "dark"

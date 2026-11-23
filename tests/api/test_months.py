@@ -15,87 +15,26 @@ que sí se puede automatizar.
 
 from __future__ import annotations
 
-import json
-import os
-import re
-import secrets
-import urllib.error
-import urllib.request
 from collections.abc import Iterator
-from pathlib import Path
-from typing import Any
 
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
-from tests.api.ayudas_db import escritura, motor_de_pruebas
-
-RAIZ = Path(__file__).resolve().parents[2]
-pytestmark = pytest.mark.api
-
-
-def _del_env(clave: str) -> str | None:
-    valor = os.getenv(clave, "").strip()
-    if valor:
-        return valor
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        return None
-    m = re.search(rf"^{clave}=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-    return m.group(1).strip() if m else None
-
-
-URL_BASE = _del_env("DATABASE_URL")
-SUPABASE = (_del_env("SUPABASE_URL") or "").rstrip("/")
-ANON = _del_env("SUPABASE_ANON_KEY")
-ESQUEMA = _del_env("DB_SCHEMA") or "public"
-
-sin_entorno = pytest.mark.skipif(
-    not (URL_BASE and SUPABASE and ANON) or str(URL_BASE).startswith("sqlite"),
-    reason="hacen falta Postgres y las credenciales de Supabase",
+from tests.api.ayudas_db import escritura
+from tests.api.entorno import (
+    ESQUEMA,
+    crear_cuenta,
+    sin_entorno,
 )
 
 
-def _auth(ruta: str, cuerpo: dict[str, Any]) -> tuple[int, dict[str, Any]]:
-    req = urllib.request.Request(
-        f"{SUPABASE}/auth/v1{ruta}",
-        data=json.dumps(cuerpo).encode(),
-        headers={
-            "apikey": str(ANON),
-            "Authorization": f"Bearer {ANON}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, json.loads(r.read() or b"{}")
-    except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read() or b"{}")
-
-
 def _crear_cuenta() -> str:
-    """Crea una cuenta real y devuelve su uid. Alcanza con el uid: acá
-    no se habla por HTTP, así que no hace falta el token."""
-    correo = f"epicwallet.months.{secrets.token_hex(6)}@example.com"
-    clave = secrets.token_urlsafe(16)
-
-    estado, cuerpo = _auth("/signup", {"email": correo, "password": clave})
-    if estado >= 400:
-        motivo = str(cuerpo.get("msg") or cuerpo)
-        if "rate limit" in motivo.lower():
-            pytest.skip(f"Supabase cortó por límite: {motivo}")
-        pytest.fail(f"no se pudo crear la cuenta: {motivo}")
-
-    uid = str(cuerpo.get("id") or cuerpo.get("user", {}).get("id"))
-    assert uid and uid != "None", "la cuenta se creó pero no hay uid"
-    return uid
+    """El uuid de una cuenta descartable nueva."""
+    return crear_cuenta().uid
 
 
-@pytest.fixture(scope="module")
-def motor():
-    return motor_de_pruebas(str(URL_BASE))
+pytestmark = pytest.mark.api
 
 
 @pytest.fixture(scope="module")
@@ -155,7 +94,9 @@ def test_crear_y_buscar_por_periodo(db, cuentas: tuple[str, str], limpiar_meses)
 
 
 @sin_entorno
-def test_buscar_un_periodo_que_no_existe_da_none(db, cuentas: tuple[str, str], limpiar_meses) -> None:
+def test_buscar_un_periodo_que_no_existe_da_none(
+    db, cuentas: tuple[str, str], limpiar_meses
+) -> None:
     from api.app.repos import months as repos
 
     a, _ = cuentas

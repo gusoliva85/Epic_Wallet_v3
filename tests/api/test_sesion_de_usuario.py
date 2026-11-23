@@ -17,8 +17,6 @@ se notan hasta que es tarde.
 
 from __future__ import annotations
 
-import os
-import re
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
@@ -27,24 +25,25 @@ import pytest
 from sqlalchemy import text
 
 from tests.api.ayudas_db import escritura, lectura
+from tests.api.entorno import (
+    ESQUEMA,
+    URL_BASE,
+    Cuenta,
+    crear_cuenta,
+)
 
-RAIZ = Path(__file__).resolve().parents[2]
+
+def _crear_cuenta() -> Cuenta:
+    """Una cuenta descartable nueva, con su token."""
+    return crear_cuenta()
+
+
 pytestmark = pytest.mark.api
 
 
-def _del_env(clave: str) -> str | None:
-    valor = os.getenv(clave, "").strip()
-    if valor:
-        return valor
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        return None
-    m = re.search(rf"^{clave}=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-    return m.group(1).strip() if m else None
+URL = URL_BASE
 
-
-URL = _del_env("DATABASE_URL")
-ESQUEMA = _del_env("DB_SCHEMA") or "public"
+RAIZ_DEL_PROYECTO = Path(__file__).resolve().parents[2]
 
 sin_base = pytest.mark.skipif(
     not URL or str(URL).startswith("sqlite"),
@@ -302,7 +301,7 @@ def test_el_rol_y_los_claims_van_como_local(db) -> None:
     entre `set` y `set local` no se nota en una prueba contra una sola
     conexión, pero es la que decide si hay filtración entre peticiones.
     """
-    fuente = (RAIZ / "api" / "app" / "core" / "db.py").read_text(encoding="utf-8")
+    fuente = (RAIZ_DEL_PROYECTO / "api" / "app" / "core" / "db.py").read_text(encoding="utf-8")
     cuerpo = fuente[fuente.index("def activar_usuario") :]
     cuerpo = cuerpo[: cuerpo.index("@contextmanager")]
 

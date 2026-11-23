@@ -1,10 +1,19 @@
 """El alta automática de una cuenta · F02-T04.
 
 El criterio de la tarea es «al crear una cuenta nueva aparecen solos su
-perfil y sus 21 categorías, **sin pasar por nuestra API**». Así que la
-prueba crea una cuenta **de verdad** contra Supabase Auth y después
-mira la base. Insertar a mano en `auth.users` probaría otra cosa: lo
-que importa es que el camino real —el registro— dispare el trigger.
+perfil y sus 21 categorías, **sin pasar por nuestra API**». La prueba
+da de alta la cuenta y después mira la base.
+
+QUÉ ES «EL CAMINO REAL» DESDE F16-T03
+
+Antes esto registraba la cuenta contra el servicio del proveedor. Hoy
+el alta es una fila en `auth.users`, que desde F16-T01 es una tabla
+nuestra, y el trigger de la base dispara igual: eso es exactamente lo
+que esta prueba verifica, y es el mismo camino que recorrerá el
+endpoint de registro de F17-T02 cuando exista.
+
+Lo que esta prueba **no** cubre es el endpoint HTTP de registro, que
+todavía no está escrito. Lo cubre F17-T02.
 
 Las cuentas de prueba usan `example.com`, que la RFC 2606 reserva para
 esto y no entrega correo a nadie. Se borran al terminar.
@@ -12,22 +21,28 @@ esto y no entrega correo a nadie. Se borran al terminar.
 
 from __future__ import annotations
 
-import json
-import os
-import re
 import secrets
-import urllib.error
-import urllib.request
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
 
 import pytest
 from sqlalchemy import Engine, text
+from sqlalchemy.exc import IntegrityError
 
-from tests.api.ayudas_db import escritura, lectura, motor_de_pruebas
+from tests.api.ayudas_db import escritura, lectura
+from tests.api.entorno import (
+    ESQUEMA,
+    Cuenta,
+    crear_cuenta,
+    sin_entorno,
+)
 
-RAIZ = Path(__file__).resolve().parents[2]
+
+def _crear_cuenta() -> Cuenta:
+    """Una cuenta descartable nueva, con su token."""
+    return crear_cuenta()
+
+
 pytestmark = pytest.mark.api
 
 # Las 21 del documento general §7.1 y §7.2, en su orden.
@@ -56,55 +71,24 @@ ESPERADAS: tuple[tuple[str, str], ...] = (
 )
 
 
-def _del_env(clave: str) -> str | None:
-    valor = os.getenv(clave, "").strip()
-    if valor:
-        return valor
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        return None
-    m = re.search(rf"^{clave}=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-    return m.group(1).strip() if m else None
-
-
-URL_BASE = _del_env("DATABASE_URL")
-SUPABASE = (_del_env("SUPABASE_URL") or "").rstrip("/")
-ANON = _del_env("SUPABASE_ANON_KEY")
-ESQUEMA = _del_env("DB_SCHEMA") or "public"
-
-sin_entorno = pytest.mark.skipif(
-    not (URL_BASE and SUPABASE and ANON) or str(URL_BASE).startswith("sqlite"),
-    reason="hacen falta Postgres y las credenciales de Supabase",
-)
-
-
-@pytest.fixture(scope="module")
-def motor() -> Engine:
-    assert URL_BASE
-    return motor_de_pruebas(str(URL_BASE))
-
-
 def _registrar(correo: str, clave: str) -> tuple[int, dict[str, Any]]:
-    req = urllib.request.Request(
-        f"{SUPABASE}/auth/v1/signup",
-        data=json.dumps({"email": correo, "password": clave}).encode(),
-        headers={
-            "apikey": str(ANON),
-            "Authorization": f"Bearer {ANON}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
+    """Da de alta una cuenta y devuelve (estado, cuerpo).
+
+    Mantiene la forma que tenía cuando esto era una llamada HTTP a un
+    servicio ajeno, para que las pruebas de abajo no cambien. La
+    contraseña no se usa: el login lo prueba F17-T02.
+    """
+    del clave
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, json.loads(r.read() or b"{}")
-    except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read() or b"{}")
+        cuenta = crear_cuenta(correo=correo)
+    except IntegrityError as exc:
+        return 400, {"msg": str(exc.orig)}
+    return 201, {"id": cuenta.uid}
 
 
 @pytest.fixture
 def cuenta_nueva(motor: Engine) -> Iterator[str]:
-    """Crea una cuenta por el camino real y la borra al terminar."""
+    """Da de alta una cuenta y la borra al terminar."""
     correo = f"epicwallet.alta.{secrets.token_hex(6)}@example.com"
     estado, cuerpo = _registrar(correo, secrets.token_urlsafe(16))
 

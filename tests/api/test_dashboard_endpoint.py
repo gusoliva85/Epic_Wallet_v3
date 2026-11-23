@@ -22,113 +22,26 @@ Movimientos sin aportar nada, General §55).
 from __future__ import annotations
 
 import decimal
-import json
-import os
-import re
-import secrets
-import urllib.error
-import urllib.request
 from collections.abc import Iterator
-from pathlib import Path
-from typing import Any
 
 import pytest
 from sqlalchemy import text
 
-from tests.api.ayudas_auth import confirmar_correo
-from tests.api.ayudas_db import escritura, motor_de_pruebas
-
-RAIZ = Path(__file__).resolve().parents[2]
-pytestmark = pytest.mark.api
-
-
-def _del_env(clave: str) -> str | None:
-    valor = os.getenv(clave, "").strip()
-    if valor:
-        return valor
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        return None
-    m = re.search(rf"^{clave}=(.+)$", archivo.read_text(encoding="utf-8"), re.M)
-    return m.group(1).strip() if m else None
-
-
-URL_BASE = _del_env("DATABASE_URL")
-SUPABASE = (_del_env("SUPABASE_URL") or "").rstrip("/")
-ANON = _del_env("SUPABASE_ANON_KEY")
-ESQUEMA = _del_env("DB_SCHEMA") or "public"
-
-sin_entorno = pytest.mark.skipif(
-    not (URL_BASE and SUPABASE and ANON) or str(URL_BASE).startswith("sqlite"),
-    reason="hacen falta Postgres y las credenciales de Supabase",
+from tests.api.ayudas_db import escritura
+from tests.api.entorno import (
+    ESQUEMA,
+    Cuenta,
+    crear_cuenta,
+    sin_entorno,
 )
 
 
-def _auth(ruta: str, cuerpo: dict[str, Any]) -> tuple[int, dict[str, Any]]:
-    req = urllib.request.Request(
-        f"{SUPABASE}/auth/v1{ruta}",
-        data=json.dumps(cuerpo).encode(),
-        headers={
-            "apikey": str(ANON),
-            "Authorization": f"Bearer {ANON}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, json.loads(r.read() or b"{}")
-    except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read() or b"{}")
-
-
-class Cuenta:
-    def __init__(self, uid: str, correo: str, token: str) -> None:
-        self.uid = uid
-        self.correo = correo
-        self.token = token
-
-    @property
-    def cabeceras(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.token}"}
-
-
 def _crear_cuenta() -> Cuenta:
-    correo = f"epicwallet.dashboard.{secrets.token_hex(6)}@example.com"
-    clave = secrets.token_urlsafe(16)
-
-    estado, cuerpo = _auth("/signup", {"email": correo, "password": clave})
-    if estado >= 400:
-        motivo = str(cuerpo.get("msg") or cuerpo)
-        if "rate limit" in motivo.lower():
-            pytest.skip(f"Supabase cortó por límite: {motivo}")
-        pytest.fail(f"no se pudo crear la cuenta: {motivo}")
-
-    uid = str(cuerpo.get("id") or cuerpo.get("user", {}).get("id"))
-    token = cuerpo.get("access_token")
-    if not token:
-        # F11-T03: con la confirmación por correo activada, `signup` no
-        # devuelve sesión y el `grant_type=password` daría
-        # `email_not_confirmed`. Nadie va a abrir el mail de una cuenta
-        # de QA, así que se confirma con la clave de servicio.
-        confirmar_correo(uid)
-        estado, sesion = _auth("/token?grant_type=password", {"email": correo, "password": clave})
-        token = sesion.get("access_token")
-    assert token, "la cuenta se creó pero no hay token"
-    return Cuenta(uid, correo, str(token))
+    """Una cuenta descartable nueva, con su token."""
+    return crear_cuenta()
 
 
-@pytest.fixture(scope="module")
-def motor():
-    return motor_de_pruebas(str(URL_BASE))
-
-
-@pytest.fixture(scope="module")
-def cliente():
-    from api.app.main import app
-    from fastapi.testclient import TestClient
-
-    return TestClient(app, raise_server_exceptions=False)
+pytestmark = pytest.mark.api
 
 
 @pytest.fixture(scope="module")
@@ -171,7 +84,16 @@ def _categoria_id(cliente, cuenta: Cuenta, nombre: str, tipo: str) -> int:
     pytest.fail(f"no se encontró la categoría {nombre!r} de tipo {tipo!r}")
 
 
-def _cargar(cliente, cuenta: Cuenta, *, category_id: int, tipo: str, importe: str, fecha: str, desc: str = "") -> dict:
+def _cargar(
+    cliente,
+    cuenta: Cuenta,
+    *,
+    category_id: int,
+    tipo: str,
+    importe: str,
+    fecha: str,
+    desc: str = "",
+) -> dict:
     r = cliente.post(
         "/api/transactions",
         json={
@@ -196,7 +118,9 @@ def test_sin_token_devuelve_401(cliente) -> None:
 
 
 @sin_entorno
-def test_una_cuenta_nueva_trae_todo_en_cero(cliente, cuentas: tuple[Cuenta, Cuenta], limpiar_meses) -> None:
+def test_una_cuenta_nueva_trae_todo_en_cero(
+    cliente, cuentas: tuple[Cuenta, Cuenta], limpiar_meses
+) -> None:
     a, _ = cuentas
     r = cliente.get("/api/dashboard", headers=a.cabeceras)
     assert r.status_code == 200, r.text
@@ -236,9 +160,33 @@ def test_con_movimientos_cargados_los_indicadores_reflejan_la_realidad(
     def fecha(d: int) -> str:
         return f"{anio:04d}-{mes_num:02d}-{d:02d}"
 
-    _cargar(cliente, a, category_id=sueldo, tipo="income", importe="500000.00", fecha=fecha(1), desc="Sueldo")
-    _cargar(cliente, a, category_id=alquiler, tipo="expense", importe="150000.00", fecha=fecha(5), desc="Alquiler")
-    _cargar(cliente, a, category_id=gas, tipo="expense", importe="20000.00", fecha=fecha(5), desc="Gas de casa")
+    _cargar(
+        cliente,
+        a,
+        category_id=sueldo,
+        tipo="income",
+        importe="500000.00",
+        fecha=fecha(1),
+        desc="Sueldo",
+    )
+    _cargar(
+        cliente,
+        a,
+        category_id=alquiler,
+        tipo="expense",
+        importe="150000.00",
+        fecha=fecha(5),
+        desc="Alquiler",
+    )
+    _cargar(
+        cliente,
+        a,
+        category_id=gas,
+        tipo="expense",
+        importe="20000.00",
+        fecha=fecha(5),
+        desc="Gas de casa",
+    )
 
     r = cliente.get("/api/dashboard", headers=a.cabeceras)
     assert r.status_code == 200, r.text
@@ -276,8 +224,13 @@ def test_una_posicion_de_cartera_entra_en_el_patrimonio_neto(
     sueldo = _categoria_id(cliente, a, "Sueldo", "income")
     hoy = cliente.get("/api/dashboard", headers=a.cabeceras).json()["month"]
     _cargar(
-        cliente, a, category_id=sueldo, tipo="income", importe="200000.00",
-        fecha=f"{hoy['year']:04d}-{hoy['month']:02d}-01", desc="Sueldo",
+        cliente,
+        a,
+        category_id=sueldo,
+        tipo="income",
+        importe="200000.00",
+        fecha=f"{hoy['year']:04d}-{hoy['month']:02d}-01",
+        desc="Sueldo",
     )
 
     with escritura(motor) as con:
@@ -318,11 +271,21 @@ def test_los_porcentajes_del_desglose_suman_exactamente_cien(
     def fecha(d: int) -> str:
         return f"{anio:04d}-{mes_num:02d}-{d:02d}"
 
-    _cargar(cliente, a, category_id=sueldo, tipo="income", importe="100000.00", fecha=fecha(1), desc="Sueldo")
+    _cargar(
+        cliente,
+        a,
+        category_id=sueldo,
+        tipo="income",
+        importe="100000.00",
+        fecha=fecha(1),
+        desc="Sueldo",
+    )
     # 250/250/500 de 1000: un cuarto, un cuarto y la mitad — exactos,
     # sin resto que repartir, así se aísla la suma de la cuenta del
     # redondeo que ya prueba tests/unit/test_calc.py por su cuenta.
-    _cargar(cliente, a, category_id=alquiler, tipo="expense", importe="250.00", fecha=fecha(5), desc="")
+    _cargar(
+        cliente, a, category_id=alquiler, tipo="expense", importe="250.00", fecha=fecha(5), desc=""
+    )
     _cargar(cliente, a, category_id=gas, tipo="expense", importe="250.00", fecha=fecha(5), desc="")
     _cargar(cliente, a, category_id=luz, tipo="expense", importe="500.00", fecha=fecha(5), desc="")
 
@@ -350,18 +313,33 @@ def test_una_categoria_trae_la_variacion_contra_el_mes_anterior(
     anio_anterior, mes_anterior = (anio - 1, 12) if mes_num == 1 else (anio, mes_num - 1)
 
     _cargar(
-        cliente, a, category_id=gas, tipo="expense", importe="20000.00",
-        fecha=f"{anio_anterior:04d}-{mes_anterior:02d}-10", desc="Gas del mes pasado",
+        cliente,
+        a,
+        category_id=gas,
+        tipo="expense",
+        importe="20000.00",
+        fecha=f"{anio_anterior:04d}-{mes_anterior:02d}-10",
+        desc="Gas del mes pasado",
     )
     _cargar(
-        cliente, a, category_id=gas, tipo="expense", importe="30000.00",
-        fecha=f"{anio:04d}-{mes_num:02d}-10", desc="Gas de este mes",
+        cliente,
+        a,
+        category_id=gas,
+        tipo="expense",
+        importe="30000.00",
+        fecha=f"{anio:04d}-{mes_num:02d}-10",
+        desc="Gas de este mes",
     )
     # Sueldo es nueva este mes: no tuvo total el mes pasado, así que no
     # hay con qué comparar.
     _cargar(
-        cliente, a, category_id=sueldo, tipo="income", importe="500000.00",
-        fecha=f"{anio:04d}-{mes_num:02d}-01", desc="Sueldo",
+        cliente,
+        a,
+        category_id=sueldo,
+        tipo="income",
+        importe="500000.00",
+        fecha=f"{anio:04d}-{mes_num:02d}-01",
+        desc="Sueldo",
     )
 
     cuerpo = cliente.get("/api/dashboard", headers=a.cabeceras).json()
@@ -390,11 +368,15 @@ def test_un_mes_historico_no_tiene_diario(
             {"uid": a.uid},
         )
         categoria = con.execute(
-            text(f'select id from "{ESQUEMA}".categories where user_id = :uid and name = \'Alquiler\''),
+            text(
+                f"select id from \"{ESQUEMA}\".categories where user_id = :uid and name = 'Alquiler'"
+            ),
             {"uid": a.uid},
         ).scalar()
         mes_id = con.execute(
-            text(f'select id from "{ESQUEMA}".months where user_id = :uid and year = 2025 and month = 6'),
+            text(
+                f'select id from "{ESQUEMA}".months where user_id = :uid and year = 2025 and month = 6'
+            ),
             {"uid": a.uid},
         ).scalar()
         con.execute(
@@ -421,7 +403,9 @@ def test_un_mes_historico_no_tiene_diario(
 
 
 @sin_entorno
-def test_un_mes_que_no_existe_da_404(cliente, cuentas: tuple[Cuenta, Cuenta], limpiar_meses) -> None:
+def test_un_mes_que_no_existe_da_404(
+    cliente, cuentas: tuple[Cuenta, Cuenta], limpiar_meses
+) -> None:
     a, _ = cuentas
     r = cliente.get("/api/dashboard", params={"year": 1999, "month": 1}, headers=a.cabeceras)
     assert r.status_code == 404
@@ -449,7 +433,14 @@ def test_vs_previous_compara_con_el_mes_anterior(
         )
 
     sueldo = _categoria_id(cliente, a, "Sueldo", "income")
-    _cargar(cliente, a, category_id=sueldo, tipo="income", importe="150000.00", fecha=f"{anio:04d}-{mes_num:02d}-01")
+    _cargar(
+        cliente,
+        a,
+        category_id=sueldo,
+        tipo="income",
+        importe="150000.00",
+        fecha=f"{anio:04d}-{mes_num:02d}-01",
+    )
 
     r = cliente.get("/api/dashboard", headers=a.cabeceras)
     assert r.status_code == 200, r.text
@@ -458,12 +449,18 @@ def test_vs_previous_compara_con_el_mes_anterior(
 
 
 @sin_entorno
-def test_una_cuenta_no_ve_el_dashboard_de_otra(cliente, cuentas: tuple[Cuenta, Cuenta], limpiar_meses) -> None:
+def test_una_cuenta_no_ve_el_dashboard_de_otra(
+    cliente, cuentas: tuple[Cuenta, Cuenta], limpiar_meses
+) -> None:
     a, b = cuentas
     sueldo = _categoria_id(cliente, a, "Sueldo", "income")
     hoy = cliente.get("/api/dashboard", headers=a.cabeceras).json()["month"]
     _cargar(
-        cliente, a, category_id=sueldo, tipo="income", importe="999999.00",
+        cliente,
+        a,
+        category_id=sueldo,
+        tipo="income",
+        importe="999999.00",
         fecha=f"{hoy['year']:04d}-{hoy['month']:02d}-01",
     )
 
