@@ -112,7 +112,7 @@ npm run build                    # genera web/public/app.css minificado
 cp .env.example .env             # y completar los valores
 
 # 5 · Base de datos local
-docker compose up -d db
+docker compose -f docker-compose.yml -f docker-compose.desarrollo.yml up -d db
 DB_SCHEMA=public APP_ENV=development alembic upgrade head
 
 # 6 · Levantar
@@ -199,7 +199,7 @@ docs(F14-T04): el documento técnico pasa al servidor propio
 
 ```bash
 pytest                      # unitarios y de API
-pytest tests/unit -v        # sólo la lógica de cálculo
+pytest tests/unit -v        # sólo la lógica de cálculo, sin base
 npm test                    # frontend, con node --test
 ruff check . && ruff format --check .
 mypy api
@@ -207,11 +207,26 @@ mypy api
 ./scripts/sin_proveedores.sh          # todo el repo · reja final de F17, hoy falla a propósito
 ```
 
+### La base de las pruebas
+
+`tests/api/` necesita un Postgres local y **una base dedicada**. Le borra filas sin preguntar, así que el nombre tiene que contener «test» o «prueba»; si no, las pruebas se niegan a arrancar.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.desarrollo.yml up -d db
+docker compose exec db createdb -U epic epic_wallet_test
+# y en .env:  TEST_DATABASE_URL=postgresql+psycopg://epic:...@localhost:5432/epic_wallet_test
+pytest
+```
+
+El esquema lo crea sola la primera corrida. `TEST_DATABASE_URL` **no** cae por defecto en `DATABASE_URL`: si cayera, un `pytest` distraído le borraría filas a la base de trabajo. Sin esa variable, `tests/api/` se saltea y lo dice.
+
+El override de desarrollo publica la base en `127.0.0.1` y en ninguna otra interfaz. **El servidor no usa ese archivo:** allá la base sigue sin puertos.
+
 Se testea **lo que da un número o protege un dato**: las funciones de `services/calc.py`, el recálculo del mes, los casos borde y que una cuenta no vea los datos de otra.
 
 **No se testea** la estructura del HTML, los tokens de CSS, el contraste ni la configuración del despliegue: eso se verifica mirando la pantalla en el celular. **No hay exigencia de cobertura.** El criterio es: *si el test falla, ¿me enteré de algo que la pantalla no me hubiera mostrado?*
 
-**Ninguna prueba toca un servidor de verdad.** Corren contra la base local.
+**Ninguna prueba toca un servidor de verdad.** Corren contra la base local, firman sus propios tokens y no abren una sola conexión a internet.
 
 ---
 

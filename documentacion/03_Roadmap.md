@@ -262,11 +262,16 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Hecho. La cadena completa sube, baja y vuelve a subir. Las 9 tablas quedan con RLS activo y forzado, y hay 9 políticas. Ninguna política se tocó.*
   *Lo único que hubo que ajustar: dos migraciones tenían `postgres` escrito a mano —el nombre del rol del proveedor anterior— y fallaban con «role postgres does not exist». Ahora leen `current_user`, que es exactamente el rol cuyos privilegios por defecto hay que cambiar.*
 
-- [ ] **F16-T03 · Las pruebas, contra la base local**
+- [~] **F16-T03 · Las pruebas, contra la base local**
   *Se corre después de F17-T01, y no antes: estas pruebas necesitan firmar sus propios tokens, y hasta esa tarea el backend sólo aceptaba los de un emisor ajeno. La dependencia no estaba vista cuando se escribió el orden.*
   **Tipo:** QA
   **Hacer:** `tests/api/` hoy pega contra el servidor real del proveedor con su clave de servicio. Pasa a levantar su base de prueba local y a firmar sus propios tokens. Se borra `tests/api/ayudas_auth.py`, que existía sólo para confirmar correos por la API de administración ajena.
   **Aceptación:** · `pytest` completo en verde **sin una sola credencial externa en el entorno** · ninguna prueba abre una conexión a internet.
+  *Hecho. **491 pruebas de Python en verde** contra una base local, sin una credencial externa en el entorno: `conftest.py` las vacía antes de que se importe la aplicación, así ninguna prueba puede alcanzar nada aunque queden puestas en un `.env`. La única salida HTTP que queda es en proceso, contra la propia aplicación.*
+  *Las cuentas se insertan en `auth.users` y el trigger de la base les crea el perfil y las 21 categorías, igual que a una cuenta de verdad. Los tokens los firma la batería con un par ES256 que vive en memoria.*
+  *1.100 líneas repetidas en 17 archivos pasan a `tests/api/entorno.py`. Se borró `tests/api/ayudas_auth.py`.*
+  *`TEST_DATABASE_URL` no cae por defecto en `DATABASE_URL` a propósito, y las pruebas se niegan a correr si el nombre de la base no dice que es de pruebas.*
+  *Y algo que no estaba en el enunciado: **las once pruebas de aislamiento entre cuentas se estaban salteando en silencio.** La corrección de urgencia del accidente del 2026-11-10 las dejó buscando cuentas descartables ya existentes, y casi nunca las encontraba. Ahora las crean ellas: corren siempre.*
 
 ---
 

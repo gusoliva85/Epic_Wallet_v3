@@ -1,0 +1,24 @@
+# ============================================================
+#  Lo que cambia en la máquina de desarrollo.
+#
+#  No se usa solo. Va encima de docker-compose.yml:
+#
+#      docker compose -f docker-compose.yml \
+#                     -f docker-compose.desarrollo.yml up -d db
+#
+#  o, más cómodo, poniendo esto en tu .env:
+#
+#      COMPOSE_FILE=docker-compose.yml:docker-compose.desarrollo.yml
+#
+#  EL SERVIDOR NO USA ESTE ARCHIVO. Allá va
+#  docker-compose.servidor.yml, y la base sigue sin puertos.
+# ============================================================
+
+services:
+  db:
+    ports:
+      # 127.0.0.1 y no 0.0.0.0: la base queda visible para `pytest` y
+      # para un cliente de SQL en esta máquina, y para nadie más. Sin
+      # esa parte, Docker la publicaría en todas las interfaces y
+      # cualquiera en la misma red de wifi la podría alcanzar.
+      - "127.0.0.1:5432:5432"
