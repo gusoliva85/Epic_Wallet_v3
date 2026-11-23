@@ -38,6 +38,14 @@
 # ============================================================
 set -uo pipefail
 
+# TODA llamada a `docker compose exec` lleva `</dev/null`.
+#
+# `exec -T` LEE LA ENTRADA ESTANDAR, y si el script se invoco por una
+# tuberia o por `ssh servidor 'bash -s'`, se come el resto del propio
+# script: las lineas que faltan no se ejecutan y no hay ningun error.
+# Aparecio probando este script por ssh, donde la mitad de las pruebas
+# no corria y parecia que todo habia pasado.
+
 cd "$(dirname "$0")/.."
 RAIZ="$(pwd)"
 
@@ -124,7 +132,7 @@ verificar() {
 
   local listado
   if ! listado="$(docker compose exec -T "$SERVICIO_DB" \
-        pg_restore --list "/respaldos_interno/$relativa" 2>&1)"; then
+        pg_restore --list "/respaldos_interno/$relativa" 2>&1 </dev/null)"; then
     rojo "FALLA · pg_restore no pudo abrir el archivo"
     echo "$listado" | tail -5 | sed 's/^/    /'
     return 1
@@ -169,7 +177,7 @@ echo "Respaldando '$BASE' -> $ARCHIVO"
 # Postgres: comprimido y restaurable tabla por tabla.
 if ! docker compose exec -T "$SERVICIO_DB" sh -c \
       "pg_dump -U '$USUARIO' -d '$BASE' -Fc --no-owner --no-privileges \
-       -f '/respaldos_interno/$SUBCARPETA/$NOMBRE'" ; then
+       -f '/respaldos_interno/$SUBCARPETA/$NOMBRE'" </dev/null ; then
   rojo "FALLA · pg_dump no termino bien. No queda ningun archivo a medias."
   rm -f "$ARCHIVO"
   exit 1
@@ -188,7 +196,7 @@ echo "Escrito: $TAMANIO"
 #  Y recien ahora, verificarlo
 # ------------------------------------------------------------
 if ! docker compose exec -T "$SERVICIO_DB" \
-      pg_restore --list "/respaldos_interno/$SUBCARPETA/$NOMBRE" >/tmp/listado.$$ 2>&1; then
+      pg_restore --list "/respaldos_interno/$SUBCARPETA/$NOMBRE" >/tmp/listado.$$ 2>&1 </dev/null; then
   rojo "FALLA · el dump se escribio pero NO SE PUEDE ABRIR. Se borra."
   tail -5 /tmp/listado.$$ | sed 's/^/    /'
   rm -f "$ARCHIVO" /tmp/listado.$$
