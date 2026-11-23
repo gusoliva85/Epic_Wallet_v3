@@ -85,6 +85,10 @@ $RECYCLE.BIN/
 *.tmp
 *.bak
 /backups/
+
+# Respaldos de la base: son los datos de contabilidad de Gustavo en
+# un archivo. NUNCA al repositorio, por mas que esten comprimidos.
+/respaldos/
 /tmp/
 
 # Datos financieros reales (histórico para cargar a mano, F08-T06):

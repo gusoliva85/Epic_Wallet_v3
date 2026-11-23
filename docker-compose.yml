@@ -33,6 +33,10 @@ services:
       TZ: ${APP_TIMEZONE:-America/Argentina/Buenos_Aires}
     volumes:
       - db_data:/var/lib/postgresql/data
+      # Los respaldos se escriben DESDE el contenedor y se leen desde
+      # afuera. `pg_dump` vive acá adentro, así que no hace falta
+      # tener Postgres instalado en el servidor ni exponer la base.
+      - ./respaldos:/respaldos_interno
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-epic} -d ${POSTGRES_DB:-epic_wallet}"]
       interval: 10s
