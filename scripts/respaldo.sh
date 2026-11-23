@@ -105,9 +105,22 @@ verificar() {
     return 1
   fi
 
-  # La ruta que ve el contenedor es la misma, relativa a la carpeta
-  # de respaldos: `diario/epic_wallet_....dump`, no solo el nombre.
-  local relativa="${archivo#"$DESTINO"/}"
+  # La ruta que ve el contenedor es relativa a la carpeta de
+  # respaldos: `diario/epic_wallet_....dump`.
+  #
+  # Se pasa a absoluta primero. Sin eso, un argumento relativo
+  # —`respaldos/diario/x.dump`, que es como se escribe a mano— no
+  # coincidia con $DESTINO, no se recortaba nada, y pg_restore
+  # buscaba `/respaldos_interno/respaldos/diario/x.dump`. El error
+  # que salia era «no such file», o sea el script decia que el
+  # archivo estaba mal cuando lo que estaba mal era la ruta.
+  local absoluta
+  absoluta="$(cd "$(dirname "$archivo")" 2>/dev/null && pwd)/$(basename "$archivo")"
+  local relativa="${absoluta#"$DESTINO"/}"
+  if [ "$relativa" = "$absoluta" ]; then
+    rojo "FALLA · el archivo no esta dentro de $DESTINO: $archivo"
+    return 1
+  fi
 
   local listado
   if ! listado="$(docker compose exec -T "$SERVICIO_DB" \
