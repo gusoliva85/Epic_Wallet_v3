@@ -30,9 +30,11 @@ Esta carpeta apunta a `Epic_Wallet_v3` y no tiene forma de alcanzar el repositor
 
 1. **Una tarea del roadmap a la vez.** No adelantar fases.
 2. **Dentro de la tarea: cálculo → backend → frontend.** Funciones puras con sus tests, después el endpoint, después la interfaz.
-3. **Al terminar, avisar qué probar y esperar la aprobación de Gustavo.** La tarea pasa a `- [x]` sólo cuando él lo dice.
-4. **Se prueba en `https://13-140-36-93.sslip.io`, desde el celular.**
+3. **Se para y se espera.** Al terminar una tarea: publicarla en Contabo, decirle a Gustavo **qué tocar y qué tendría que ver**, y **detenerse ahí**. No se empieza la siguiente hasta que él conteste. La tarea queda en `- [~]` y pasa a `- [x]` **sólo cuando él lo dice**.
+4. **Se prueba en `https://13-140-36-93.sslip.io`, desde el celular.** Las pruebas automáticas corren contra la base local de pruebas y nunca contra datos reales; Gustavo prueba en Contabo. Son dos cosas distintas y no se confunden.
 5. **Escribir corto.** Las entradas del roadmap son «qué hacer» y «cómo se verifica». Sin ensayos, sin relato de los errores encontrados.
+
+> La regla 3 se incumplió durante F14 a F17: se avisaba qué probar pero se seguía con la tarea siguiente sin esperar. Explicitada el 2026-11-23 a pedido de Gustavo.
 
 ## Qué se testea y qué no
 
@@ -67,6 +69,8 @@ Criterio para el futuro: *si el test falla, ¿me enteré de algo que la pantalla
 ## Migraciones: el procedimiento es el que protege los datos
 
 Hay un solo esquema, así que **una migración toca los datos reales**.
+
+> **`scripts/respaldo.sh` y `scripts/restaurar.sh` todavía no existen** —los escribe F18—. Hasta entonces el paso 1 de abajo no se puede ejecutar, y por lo tanto **no se migra la base real**. F18-T04 hace que el propio Alembic se niegue a correr sin un respaldo fresco, para que esto deje de depender de que alguien se acuerde.
 
 ```bash
 # 1 · respaldo primero, y verificar que el archivo tiene algo adentro

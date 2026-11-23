@@ -318,21 +318,25 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 ---
 
-# FASE 18 — Respaldos
+# FASE 18 — Respaldos y resguardo de los datos
 
 **Objetivo:** el motivo por el que existe la 3.0. Que exista un archivo con tus datos, fuera del servidor, y que **ya se haya probado que se puede restaurar**.
 
-**Al cerrar esta fase:** hay copias diarias, una copia fuera del servidor, y una restauración hecha de verdad sobre una base vacía.
+**Al cerrar esta fase:** hay copias diarias verificadas, una copia fuera del servidor, una restauración hecha de verdad, y la base guarda sola la versión anterior de cada fila que se toca.
 
-- [ ] **F18-T01 · El respaldo diario**
-  **Tipo:** Infra
-  **Hacer:** `pg_dump -Fc` nocturno con retención de 7 diarios, 4 semanales y 6 mensuales. El script **verifica el archivo después de escribirlo** —que abra y liste las tablas— y falla ruidosamente si no.
-  **Aceptación:** · a la mañana siguiente hay un archivo nuevo · un dump corrupto a propósito hace fallar el script.
+**Se adelanta sobre F17 por decisión de Gustavo (2026-11-23).** Es independiente del login propio, y así la red existe **antes** de que haya algo que perder y antes de las dos etapas donde se puede romper algo: la autenticación nueva (F17) y la importación (F19).
 
-- [ ] **F18-T02 · La copia fuera del servidor**
+**El agujero que la justifica:** `scripts/respaldo.sh` y `scripts/restaurar.sh` se citan en `CLAUDE.md` y en el README —incluido el procedimiento de migración, «respaldo primero»— y **nunca se escribieron**. Hoy ese primer paso fallaría.
+
+- [ ] **F18-T01 · El respaldo diario, verificado**
   **Tipo:** Infra
-  **Hacer:** copia automática a un destino externo. Una copia que vive en el mismo disco que la base no es una copia.
-  **Aceptación:** · el archivo del día aparece en el destino externo · se puede descargar y abrir desde otra máquina.
+  **Hacer:** `scripts/respaldo.sh` con `pg_dump -Fc`, nocturno, retención de 7 diarios, 4 semanales y 6 mensuales. El script **abre el archivo que acaba de escribir y lista sus tablas**, y falla ruidosamente si no abre. Un dump que nadie leyó no es un respaldo.
+  **Aceptación:** · a la mañana siguiente hay un archivo nuevo · un dump corrupto a propósito hace fallar el script · la retención borra lo viejo y no lo que hay que guardar.
+
+- [ ] **F18-T02 · La copia en la PC de Gustavo**
+  **Tipo:** Infra
+  **Hacer:** una tarea programada de Windows que se trae el respaldo del día. **La PC tira del servidor**, no al revés: así el servidor no necesita ninguna credencial de la PC, y si la PC estuvo apagada, al volver se trae todos los pendientes. Una copia en el mismo disco que la base no es una copia.
+  **Aceptación:** · el archivo del día aparece en la PC sin que nadie haga nada · se abre desde la PC · apagar la PC tres días y prenderla trae los tres.
 
 - [ ] **F18-T03 · La restauración, probada**
   **Tipo:** QA
@@ -340,7 +344,25 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Aceptación:** · la base restaurada tiene las mismas filas que la original, tabla por tabla · la aplicación levanta contra ella y el tablero muestra los mismos números · **el procedimiento quedó escrito y ejecutado, no sólo escrito**.
   *Esta es la tarea que justifica toda la mudanza. Un respaldo que nunca se restauró no es un respaldo.*
 
-- [ ] **F18-T04 · Jarvis también**
+- [ ] **F18-T04 · El portón: no se migra sin respaldo fresco**
+  **Tipo:** Base
+  **Hacer:** que `migrations/env.py` se niegue a correr contra la base real si no hay un respaldo verificado de las últimas horas. Hoy «respaldo primero» es una regla escrita que depende de que alguien se acuerde.
+  **Aceptación:** · migrar sin respaldo fresco falla y dice por qué · con respaldo fresco corre normal · se puede saltear sólo con una variable explícita, que queda registrada.
+  *Una regla que depende de la memoria de alguien no es una protección.*
+
+- [ ] **F18-T05 · Registro de cambios: deshacer fila por fila**
+  **Tipo:** Base
+  **Hacer:** tabla `audit_log` **sólo-agregar**, llenada por disparadores de Postgres en las 9 tablas de datos: guarda la fila anterior en `jsonb` en cada `update` y cada `delete`, con quién y cuándo. Lo escribe la base, no la aplicación, así que ningún código olvidado lo puede saltear. Más un comando para recuperar una fila concreta.
+  **Aceptación:** · borrar un movimiento deja su versión anterior en `audit_log` · el comando lo devuelve sin tocar nada de lo cargado después · RLS activo: una cuenta no ve el registro de otra.
+  *Los respaldos cubren «se rompió la base». Esto cubre «se borró algo puntual el martes y me di cuenta el viernes», que restaurando un dump costaría perder miércoles y jueves.*
+
+- [ ] **F18-T06 · Aviso cuando el respaldo no pasó**
+  **Tipo:** Infra
+  **Hacer:** que `/api/health` informe la fecha del último respaldo verificado, y que haya una señal visible cuando pasaron más de 48 horas sin uno.
+  **Aceptación:** · con el respaldo al día, `/api/health` lo muestra · simulando dos días sin respaldo, avisa.
+  *Un respaldo que falla en silencio es peor que ninguno: creés que estás cubierto.*
+
+- [ ] **F18-T07 · Jarvis también**
   **Tipo:** Infra
   **Hacer:** agregar la base de Jarvis al mismo mecanismo. Es la misma tarea con una base más, y hoy no tiene ninguna copia. Incluir también la configuración del proxy de borde (`/opt/edge/`), que no vive en ningún repositorio.
   **Aceptación:** · el respaldo diario incluye las dos bases y `/opt/edge/` · la restauración de Jarvis también se probó.
@@ -367,6 +389,35 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Tipo:** QA
   **Hacer:** usar la 3.0 como sistema principal durante una semana con la anterior encendida y de sólo lectura. Recién después, apagarla —decisión tuya, con un respaldo final guardado aparte.
   **Aceptación:** · una semana de uso real sin volver atrás · el respaldo final existe y se probó · lo apagás vos, no yo.
+
+---
+
+# FASE 20 — Interfaz y funciones nuevas
+
+**Objetivo:** el lugar donde van las mejoras de pantalla y las funciones que Gustavo vaya pidiendo, una vez que la 3.0 sea el sistema de verdad.
+
+**No se adelanta nada de acá.** Cada cosa que toque el frontend antes del corte habría que hacerla dos veces: una en la versión que está viva hoy y otra acá. Por eso las nueve tareas que quedaron abiertas de las fases 0 a 13 están congeladas y se retoman desde esta fase.
+
+**Cómo se llena:** cuando Gustavo pide algo o encuentra algo que no le gusta, se anota acá como tarea, con su «qué hacer» y su «cómo se verifica». Nada se ejecuta sin estar escrito primero.
+
+## Lo que ya está anotado
+
+| De dónde viene | Qué |
+|---|---|
+| F13-T01 | El tamaño de la letra de los gráficos, parejo en todos |
+| F13-T02 | Comparación por ítem, dentro de Movimientos |
+| F13-T03 | Vencimientos: sección nueva, entre Historial y Cartera |
+| F12-T03 | El resto de los ajustes de uso, guiado por lo que vaya apareciendo |
+| F12-T05 | Cuatro correcciones de uso: scroll, color, orden y conmutadores |
+| F12-T06 | Dos animaciones: el interruptor y la fila que entra |
+| F08-T11 | Carga real del histórico del Excel |
+| F09-T08 | Verificación contra el Excel |
+| F10-T12 | Carga real de la cartera |
+
+Las tres últimas son de datos, no de interfaz, y van después de F19 por el mismo motivo que todo lo demás: cargar datos reales en dos lugares es trabajo tirado.
+
+- [ ] **F20-T00 · Sin tareas nuevas todavía**
+  Se abren a pedido de Gustavo, de a una.
 
 ---
 
