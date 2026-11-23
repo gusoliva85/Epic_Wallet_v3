@@ -41,7 +41,7 @@ pip install -r requirements.txt
 npm install
 cp .env.example .env        # y completalo, ver abajo
 docker compose up -d db     # Postgres local
-npm run build               # compila Tailwind y genera web/public/config.js
+npm run build               # compila Tailwind a web/public/app.css
 python scripts/check_db.py  # verifica la conexión y te dice qué falta
 cd api && uvicorn app.main:app --reload --port 8000
 ```
@@ -67,16 +67,17 @@ puerto 8000.
 - `PRICE_PROVIDER_ORDER`, `PRICE_REFRESH_COOLDOWN_MINUTES` — **no se usan**: la
   cotización automática quedó afuera del MVP (§6).
 
-`npm run build` corre `scripts/generar-config.mjs`, que escribe
-`web/public/config.js` con la URL de la API y nada más. Ese archivo **no está
-versionado** y se regenera en cada build. **Ningún secreto llega al navegador**,
-y hay una prueba que revisa todos los archivos publicados por si alguno se cuela
+El build no le pasa **ninguna** configuración al navegador. Hasta F17-T03
+escribía un `web/public/config.js` con la URL y la clave del proveedor de
+autenticación, porque el frontend tenía que hablarle directo; ahora el login es
+nuestro y vive en el mismo origen, así que no hay nada que configurar. Hay una
+prueba que revisa todos los archivos publicados por si algún secreto se cuela
 por otro camino.
 
 ### Comandos
 
 ```bash
-npm run build          # Tailwind → web/public/app.css, y config.js
+npm run build          # Tailwind → web/public/app.css
 npm run dev            # Tailwind en watch
 npm test               # pruebas de JS (node --test)
 pytest                 # pruebas de Python

@@ -20,13 +20,12 @@ RUN npm ci
 COPY web/ ./web/
 COPY scripts/ ./scripts/
 
-# Genera web/public/app.css y web/public/config.js.
+# Compila Tailwind a web/public/app.css. Es todo lo que hace el build.
 #
-# Si faltan las variables del proveedor de autenticación, el build NO
-# falla: escribe una configuración vacía y avisa. Es a propósito —ver
-# scripts/generar-config.mjs—. Hasta F17 el servidor propio no las
-# tiene, así que la aplicación se publica y se ve, pero nadie puede
-# iniciar sesión todavía.
+# Hasta F17-T03 generaba además un `config.js` con la URL y la clave
+# del proveedor de autenticación, porque el frontend las necesitaba
+# para hablarle. Ahora el login es nuestro y vive en el mismo origen:
+# no hay ninguna configuración que pasarle al navegador.
 RUN npm run build
 
 CMD ["sh", "-c", "rm -rf /destino/* /destino/.[!.]* 2>/dev/null; cp -a /build/web/. /destino/"]
