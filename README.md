@@ -139,6 +139,37 @@ curl -s https://13-140-36-93.sslip.io/api/health   # 4 · verificar
 
 `DB_SCHEMA` y `APP_ENV` van explícitos a propósito: `migrations/env.py` los exige y no asume nada. Migrar es la operación destructiva del proyecto.
 
+### Los respaldos
+
+Son tres piezas y cada una vive en un lado distinto. Que estén separadas es
+el punto: un respaldo que comparte disco con la base no protege de que el
+disco falle.
+
+| Dónde | Qué | Cuándo |
+|---|---|---|
+| Servidor | `scripts/respaldo.sh` escribe el dump **y lo vuelve a abrir** para contar sus tablas | 3:15, por `cron` |
+| Servidor | `/opt/epic-wallet/respaldos/` · 7 diarios, 4 semanales, 6 mensuales | — |
+| PC de Gustavo | `scripts/traer_respaldos.ps1` se trae lo que falte a `D:\Respaldos\Epic_Wallet` | 8:00, por el Programador de tareas |
+
+**La PC tira del servidor; el servidor no empuja.** Si empujara, necesitaría
+una credencial de la PC guardada en su disco, y quien entrara al servidor
+entraría también a la PC. Tirando, la credencial nunca sale de la PC. De
+yapa: si la PC estuvo una semana apagada, al prenderse se trae la semana.
+
+En la PC **no hay retención**: se guarda todo lo que bajó, incluso lo que el
+servidor ya descartó.
+
+```powershell
+# instalar la tarea programada, una sola vez
+powershell -ExecutionPolicy Bypass -File scripts\instalar_tarea_respaldos.ps1
+
+# traer ahora, sin esperar a mañana
+powershell -ExecutionPolicy Bypass -File scripts\traer_respaldos.ps1
+
+Get-ScheduledTaskInfo "Epic Wallet - traer respaldos"   # cuándo corrió y cómo salió
+Get-Content D:\Respaldos\Epic_Wallet\traer_respaldos.log -Tail 20
+```
+
 ### Variables de entorno
 
 Se copian de `.env.example` y se completan. `python scripts/check_db.py` verifica que esté todo, sin imprimir ningún secreto. La lista completa está en la sección 11 del documento técnico.
@@ -245,6 +276,8 @@ python scripts/load_history.py --dry-run              # carga de histórico, sin
 # Respaldo y restauración
 ./scripts/respaldo.sh                                 # dump verificado
 ./scripts/restaurar.sh <archivo>                      # restaurar, probado de verdad
+# y en la PC de Gustavo, no en el servidor:
+powershell -File scripts\traer_respaldos.ps1          # traer la copia de afuera
 
 # Cuentas
 docker compose exec api python -m app.cli recuperar <email>   # link de contraseña nueva
