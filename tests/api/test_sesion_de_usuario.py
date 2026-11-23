@@ -52,6 +52,52 @@ sin_base = pytest.mark.skipif(
 )
 
 
+# ===================================================================
+#  DE DÓNDE SALEN LAS DOS CUENTAS DE ESTA PRUEBA
+#
+#  ESTE FIXTURE BORRA PERFILES, y `profiles` es el padre de todo con
+#  `on delete cascade`: borrar un perfil se lleva las categorías, los
+#  meses, los movimientos, los totales, las inversiones, los pasivos y
+#  las preferencias de esa cuenta.
+#
+#  Hasta el 2026-11-10 elegía así:
+#
+#      select id from auth.users order by created_at desc limit 2
+#
+#  o sea **las dos cuentas más nuevas de la base**. Contra la base de
+#  producción eso son dos PERSONAS REALES: el 2026-11-10 esta prueba
+#  borró el historial completo de dos cuentas de verdad. No es una
+#  hipótesis, pasó, y por eso esta nota es tan larga.
+#
+#  Ahora sólo acepta cuentas descartables —las que crea la propia
+#  batería, con correo `@example.com`— y si no hay dos, se saltea. Una
+#  cuenta de una persona no puede entrar acá de ninguna manera.
+# ===================================================================
+
+DOMINIO_DESCARTABLE = "%@example.com"
+
+
+def _dos_cuentas_descartables(motor) -> tuple[str, str]:
+    """Dos cuentas de prueba, nunca una real. Se saltea si no hay."""
+    with lectura(motor) as con:
+        ids = [
+            str(f[0])
+            for f in con.execute(
+                text(
+                    "select id from auth.users where email like :patron "
+                    "order by created_at desc limit 2"
+                ),
+                {"patron": DOMINIO_DESCARTABLE},
+            )
+        ]
+    if len(ids) < 2:
+        pytest.skip(
+            "hacen falta dos cuentas descartables (@example.com); "
+            "esta prueba NO puede usar cuentas reales"
+        )
+    return ids[0], ids[1]
+
+
 @pytest.fixture(scope="module")
 def db():
     from api.app.core import db as modulo
@@ -63,13 +109,7 @@ def db():
 def dos_perfiles(db) -> Iterator[tuple[str, str]]:
     """Dos perfiles de cuentas distintas, con una categoría propia cada
     una para poder comprobar que no se cruzan."""
-    with lectura(db.motor) as con:
-        ids = [
-            str(f[0])
-            for f in con.execute(text("select id from auth.users order by created_at desc limit 2"))
-        ]
-    if len(ids) < 2:
-        pytest.skip("hacen falta dos cuentas en auth.users")
+    ids = _dos_cuentas_descartables(db.motor)
 
     a, b = ids
     marca = uuid.uuid4().hex[:8]
