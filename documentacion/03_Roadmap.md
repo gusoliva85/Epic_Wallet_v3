@@ -281,7 +281,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** te registrás y entrás desde el celular, la sesión se renueva sola sin que lo notes, y una segunda cuenta no ve ni un dato de la primera.
 
-- [~] **F17-T01 · Las claves y la verificación**
+- [x] **F17-T01 · Las claves y la verificación**
   **Tipo:** Backend · **Ref:** Técnico §8
   **Hacer:** par de claves ES256 (P-256) del proyecto; la privada firma, la pública verifica. `core/security.py` deja de usar el cliente JWKS y verifica con la pública del entorno: sin viaje de red y sin depender de que un servicio ajeno responda. Los claims no cambian (`sub`, `aud: authenticated`, `exp`, `email`), así que el resto del backend no se toca.
   **Aceptación:** · un token nuestro se verifica · uno firmado con otra clave se rechaza · uno vencido da «la sesión expiró» · ningún endpoint privado quedó accesible sin token.
@@ -290,15 +290,26 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *El par se generó **dentro del servidor** y la privada no salió de ahí. `scripts/generar_claves.py` queda para rehacerlo; imprime en pantalla y no escribe archivos, para que nadie termine con una copia olvidada en su disco.*
   *Se adelanta a F16-T03, que no podía terminarse antes: las pruebas de API necesitan firmar sus propios tokens, y hasta acá el backend sólo aceptaba los de un emisor ajeno.*
 
-- [ ] **F17-T02 · Los endpoints de sesión**
+- [~] **F17-T02 · Los endpoints de sesión**
   **Tipo:** Backend
   **Hacer:** `signup`, `login`, `refresh`, `logout` y `cambiar-clave` bajo `/api/auth`. Contraseñas con bcrypt —el mismo algoritmo que usa el proveedor anterior, que es lo que permite importar los hashes sin que nadie resetee nada—. Token de acceso de una hora; token de renovación rotatorio, guardado hasheado, de 30 días. Los mensajes de error **no distinguen** «no existe el usuario» de «contraseña equivocada», ni acá ni en el registro.
   **Aceptación:** · se crea una cuenta y entra · la cuenta nueva aparece con su tablero vacío y sus 21 categorías · un token de renovación usado dos veces se rechaza · ningún mensaje revela si un email tiene cuenta.
+  *`/api/auth/signup`, `/login`, `/refresh`, `/logout` y `PUT /password`. Las cuatro primeras son públicas y están declaradas como tales en `test_api_protegida.py`; la quinta pide sesión.*
+  *Tabla `refresh_tokens` con **familia**: todos los tokens que descienden de un login la comparten. Si uno ya usado reaparece se corta la cadena entera —no se puede saber si lo presenta el legítimo o quien lo copió—, y las otras sesiones de la cuenta no se tocan. 29 pruebas nuevas.*
+  *Ni el texto ni el reloj delatan qué correos tienen cuenta: contra un email desconocido se verifica igual contra un hash de relleno.*
+  *bcrypt a propósito, que es lo que usaba el proveedor anterior: sus hashes entran tal cual en F19 y nadie restablece su contraseña.*
+  *Un error que encontró la prueba y no el diseño: el 401 por token repetido revertía la transacción y deshacía la revocación. La respuesta decía 401 y la sesión robada seguía viva.*
 
-- [ ] **F17-T03 · `auth.js` nuevo**
+- [~] **F17-T03 · `auth.js` nuevo**
   **Tipo:** Frontend · **Ref:** Técnico §8.7
   **Hacer:** reemplazar la librería del proveedor conservando **la misma superficie pública del módulo**, para que las otras 50 pantallas no se enteren. Las tres cosas que daba la librería y hay que sostener: renovación silenciosa antes del vencimiento, **una sola renovación en vuelo** aunque lleguen dos peticiones juntas, y sincronía entre pestañas por el evento `storage`.
   **Aceptación:** · entrar, salir y recargar funcionan en el celular · dejar la aplicación dormida una hora y volver no pide entrar de nuevo · cerrar sesión en una pestaña cierra la otra · dos peticiones simultáneas con el token vencido disparan una sola renovación.
+  *Misma superficie pública del módulo: cambiaron **dos** archivos de pantalla, no cincuenta. 35 pruebas, 676 JS en verde.*
+  *La renovación única en vuelo dejó de ser una optimización y pasó a ser obligatoria: con tokens rotatorios, dos renovaciones simultáneas hacen que el servidor tome la segunda por robada y corte la sesión. Abrir dos pantallas a la vez cerraría la sesión.*
+  *Sin red **no** se borra la sesión: el token de renovación sigue siendo bueno y lo único que pasó es que alguien entró al subte.*
+  *El cambio de contraseña pasa a ser una sola petición. Antes la pantalla verificaba la actual con `entrar()` y después cambiaba, con un instante en el medio; ahora las dos van juntas y verifica el servidor.*
+  *Se fueron del repositorio `@supabase/auth-js`, `web/src/js/vendor/auth-js.js` y `scripts/preparar-auth.mjs`.*
+  *Queda para T04 el camino del enlace de recuperación (`verificarEnlace`), y para T06 `scripts/generar-config.mjs`, que todavía escribe un `config.js` con la URL del proveedor aunque nadie lo lea.*
 
 - [ ] **F17-T04 · Recuperar la contraseña sin correo**
   **Tipo:** Backend · **Ref:** General §48.1
@@ -360,7 +371,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Ejecutada de verdad el 2026-11-23 con una cuenta de QA de 40 movimientos: 11 de 11 tablas iguales, y la aplicación levantó contra la base restaurada (`/api/health` → `connected`). La cuenta y la base de prueba se borraron al terminar.*
   *Tres negativas probadas: apuntar a la base real sin el permiso, un dump truncado —que además **no llega a borrar la base de destino**, porque se verifica antes—, y restaurar un respaldo viejo sobre un origen con 5 filas nuevas, que marca `transactions 45 vs 40 <- DIFIERE` y falla.*
 
-- [~] **F18-T04 · El portón: no se migra sin respaldo fresco**
+- [x] **F18-T04 · El portón: no se migra sin respaldo fresco**
   **Tipo:** Base
   **Hacer:** que `migrations/env.py` se niegue a correr contra la base real si no hay un respaldo verificado de las últimas horas. Hoy «respaldo primero» es una regla escrita que depende de que alguien se acuerde.
   **Aceptación:** · migrar sin respaldo fresco falla y dice por qué · con respaldo fresco corre normal · se puede saltear sólo con una variable explícita, que queda registrada.
