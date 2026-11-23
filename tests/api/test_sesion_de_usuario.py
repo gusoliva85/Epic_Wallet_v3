@@ -77,24 +77,22 @@ DOMINIO_DESCARTABLE = "%@example.com"
 
 
 def _dos_cuentas_descartables(motor) -> tuple[str, str]:
-    """Dos cuentas de prueba, nunca una real. Se saltea si no hay."""
-    with lectura(motor) as con:
-        ids = [
-            str(f[0])
-            for f in con.execute(
-                text(
-                    "select id from auth.users where email like :patron "
-                    "order by created_at desc limit 2"
-                ),
-                {"patron": DOMINIO_DESCARTABLE},
-            )
-        ]
-    if len(ids) < 2:
-        pytest.skip(
-            "hacen falta dos cuentas descartables (@example.com); "
-            "esta prueba NO puede usar cuentas reales"
-        )
-    return ids[0], ids[1]
+    """Dos cuentas descartables, creadas por esta misma batería.
+
+    Hasta F16-T03 esta función **buscaba** cuentas ya existentes y se
+    salteaba la prueba si no encontraba dos. Era la corrección de
+    urgencia del accidente del 2026-11-10, cuando elegía «las dos
+    cuentas más nuevas de la base» y, contra la base real, le borró el
+    historial completo a dos personas.
+
+    El efecto no buscado fue que las once pruebas de aislamiento —las
+    más importantes de todas— se salteaban en silencio casi siempre.
+    Ahora las cuentas se crean acá: son descartables por construcción,
+    no por suerte, y las pruebas corren siempre.
+    """
+    a = crear_cuenta(motor)
+    b = crear_cuenta(motor)
+    return a.uid, b.uid
 
 
 @pytest.fixture(scope="module")
