@@ -244,6 +244,7 @@ def test_la_lista_de_publicas_no_crecio_sin_que_nadie_lo_note() -> None:
         "/api/auth/login",
         "/api/auth/refresh",
         "/api/auth/logout",
+        "/api/auth/reset",
     } == PUBLICAS, "cambió la lista de rutas públicas; cada una tiene que justificarse"
 
 
