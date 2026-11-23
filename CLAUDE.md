@@ -32,7 +32,8 @@ Esta carpeta apunta a `Epic_Wallet_v3` y no tiene forma de alcanzar el repositor
 2. **Dentro de la tarea: cálculo → backend → frontend.** Funciones puras con sus tests, después el endpoint, después la interfaz.
 3. **Se para y se espera.** Al terminar una tarea: publicarla en Contabo, decirle a Gustavo **qué tocar y qué tendría que ver**, y **detenerse ahí**. No se empieza la siguiente hasta que él conteste. La tarea queda en `- [~]` y pasa a `- [x]` **sólo cuando él lo dice**.
 4. **Se prueba en `https://13-140-36-93.sslip.io`, desde el celular.** Las pruebas automáticas corren contra la base local de pruebas y nunca contra datos reales; Gustavo prueba en Contabo. Son dos cosas distintas y no se confunden.
-5. **Escribir corto.** Las entradas del roadmap son «qué hacer» y «cómo se verifica». Sin ensayos, sin relato de los errores encontrados.
+5. **Un respaldo por tarea, antes de empezar.** Si la tarea toca la base o los datos: **respaldo primero, una sola vez, antes del primer cambio.** No uno por cambio. Si al terminar funciona, se sigue; si no, se vuelve todo atrás con ese archivo. El respaldo del día va al servidor **y** a la carpeta de respaldos.
+6. **Escribir corto.** Las entradas del roadmap son «qué hacer» y «cómo se verifica». Sin ensayos, sin relato de los errores encontrados.
 
 > La regla 3 se incumplió durante F14 a F17: se avisaba qué probar pero se seguía con la tarea siguiente sin esperar. Explicitada el 2026-11-23 a pedido de Gustavo.
 
@@ -58,6 +59,7 @@ Criterio para el futuro: *si el test falla, ¿me enteré de algo que la pantalla
 
 - **Las dos naturalezas de mes.** Un mes `open` saca sus totales de `transactions`; un mes `historical` de sus propios campos y devuelve **`transactions: null`** — distinto de `[]`. Nunca se inventan movimientos para un mes consolidado.
 - **Aislamiento entre cuentas.** `user_id` en toda consulta **y RLS activo** en cada tabla de datos de usuario, incluidas las nuevas. Es la única exigencia de seguridad que no se negocia. `auth.uid()` ahora es una función nuestra, pero las políticas no cambian.
+- **El `.env` de la carpeta de trabajo tiene credenciales de producción de la versión anterior**, incluida la clave que se saltea el aislamiento. Ninguna prueba las usa desde F16-T03 y **no se usan para nada**. Si siguen ahí, se las ignora; no son una puerta habilitada.
 - **Los datos reales que Gustavo ya cargó no se tocan.** Ningún fix, migración ni script corre un `DELETE`, `TRUNCATE` o `DROP` contra la base real sin explicar antes qué se va a borrar (tabla, filas, motivo) y esperar su confirmación explícita — nunca como efecto secundario de otra cosa. No aplica a las cuentas de prueba que se crean y se borran dentro de una misma tarea de QA, ni a lo que la aplicación ya le permite hacer desde la interfaz (borrar un movimiento, vender una inversión — Reglas 10 y 11 del documento general): eso sigue funcionando como está diseñado.
 - **Jarvis convive en el mismo servidor.** Base propia, red propia, volumen propio. Epic Wallet no comparte base con nadie y no toca los contenedores de Jarvis.
 - **Importes en `numeric(14,2)`** en la base y `Decimal` en Python. Nunca `float`.
