@@ -52,10 +52,23 @@ down_revision: str | None = "c3e6a94d2f15"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-# Los privilegios por defecto son del rol que CREA el objeto, y las
-# migraciones corren como `postgres`. Los de `supabase_admin` no se
-# tocan: no es nuestro rol y no crea nuestros objetos.
-ROL = "postgres"
+# Los privilegios por defecto son del rol que CREA el objeto, o sea el
+# que corre esta migración.
+
+
+def _duenio() -> str:
+    """El rol que corre la migración.
+
+    Hasta F16 acá había una constante con `postgres` escrito a mano,
+    porque así se llamaba el rol del proveedor anterior. En el servidor
+    propio el usuario es otro y la migración fallaba con «role
+    "postgres" does not exist». Se pregunta en lugar de suponerlo.
+    """
+    from sqlalchemy import text
+
+    rol = op.get_bind().execute(text("select current_user")).scalar()
+    assert rol, "no se pudo determinar el usuario de la conexión"
+    return str(rol)
 
 
 def _esquema() -> str:
@@ -66,7 +79,8 @@ def _esquema() -> str:
 
 def _por_defecto(esquema: str, sentencia: str) -> None:
     op.execute(
-        f'alter default privileges for role {ROL} in schema "{esquema}" {sentencia};'
+        f'alter default privileges for role "{_duenio()}" in schema "{esquema}" '
+        f"{sentencia};"
     )
 
 

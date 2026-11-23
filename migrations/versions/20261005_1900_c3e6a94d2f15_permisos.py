@@ -70,8 +70,26 @@ def _esquema() -> str:
     return esquema
 
 
+def _duenio() -> str:
+    """El rol que crea las tablas, o sea el que corre esta migración.
+
+    Hasta F16 acá decía `postgres` escrito a mano, porque así se
+    llamaba el rol del proveedor anterior. En el servidor propio el
+    usuario es otro y la migración fallaba con «role "postgres" does
+    not exist». Preguntarlo en lugar de suponerlo arregla eso y saca
+    una suposición escondida: los privilegios por defecto son del rol
+    que crea el objeto, y ese rol es siempre este.
+    """
+    from sqlalchemy import text
+
+    rol = op.get_bind().execute(text("select current_user")).scalar()
+    assert rol, "no se pudo determinar el usuario de la conexión"
+    return str(rol)
+
+
 def upgrade() -> None:
     esquema = _esquema()
+    duenio = _duenio()
 
     # 1 · `anon` no tiene nada que hacer en nuestras tablas. La
     #     aplicación nunca actúa como `anon`: el backend se conecta y
@@ -109,20 +127,19 @@ def upgrade() -> None:
     #     arreglo habría que repetirlo en cada migración nueva, y
     #     alguna vez nos olvidaríamos.
     #
-    #     Los privilegios por defecto son del rol que crea el objeto, y
-    #     las migraciones corren como `postgres`, así que alcanza con
-    #     cambiar los de `postgres`. No se tocan los de `supabase_admin`
-    #     —no es nuestro rol— y no hace falta: no crea nuestras tablas.
+    #     Los privilegios por defecto son del rol que crea el objeto,
+    #     así que alcanza con cambiar los del rol que corre esta
+    #     migración. Ver `_duenio()`.
     op.execute(
-        f'alter default privileges for role postgres in schema "{esquema}" '
+        f'alter default privileges for role "{duenio}" in schema "{esquema}" '
         "revoke all on tables from anon;"
     )
     op.execute(
-        f'alter default privileges for role postgres in schema "{esquema}" '
+        f'alter default privileges for role "{duenio}" in schema "{esquema}" '
         "revoke all on tables from authenticated;"
     )
     op.execute(
-        f'alter default privileges for role postgres in schema "{esquema}" '
+        f'alter default privileges for role "{duenio}" in schema "{esquema}" '
         "revoke all on sequences from anon;"
     )
 
@@ -144,17 +161,18 @@ def downgrade() -> None:
     tablas viejas, los da a mano sabiendo lo que hace.
     """
     esquema = _esquema()
+    duenio = _duenio()
 
     op.execute(
-        f'alter default privileges for role postgres in schema "{esquema}" '
+        f'alter default privileges for role "{duenio}" in schema "{esquema}" '
         "grant all on tables to anon;"
     )
     op.execute(
-        f'alter default privileges for role postgres in schema "{esquema}" '
+        f'alter default privileges for role "{duenio}" in schema "{esquema}" '
         "grant all on tables to authenticated;"
     )
     op.execute(
-        f'alter default privileges for role postgres in schema "{esquema}" '
+        f'alter default privileges for role "{duenio}" in schema "{esquema}" '
         "grant all on sequences to anon;"
     )
 
