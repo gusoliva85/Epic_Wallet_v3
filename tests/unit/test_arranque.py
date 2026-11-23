@@ -12,7 +12,6 @@ reales en producción y siguen vigentes.
 from __future__ import annotations
 
 import importlib
-import re
 from pathlib import Path
 
 import pytest
@@ -90,24 +89,42 @@ def test_sqlite_no_necesita_esquema(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.unit
-def test_el_motor_no_usa_sentencias_preparadas() -> None:
-    """psycopg3 prepara sola una consulta repetida, y la sentencia queda
-    guardada en la conexión DEL SERVIDOR.
+def test_el_motor_usa_un_pool_de_verdad() -> None:
+    """La API es un proceso largo que habla directo con su Postgres.
 
-    Con el pooler en modo transacción, esa conexión se le entrega
-    después a otro cliente que no sabe que existe: la próxima vez que se
-    prepare el mismo nombre, Postgres responde «prepared statement
-    "_pg3_0" already exists» y la petición falla.
+    Hasta F15 el motor usaba `NullPool` —una conexión nueva por
+    operación, descartada al terminar— porque cada petición corría en
+    un proceso efímero y del otro lado había un pooler que ya hacía
+    ese trabajo. Nada de eso sigue siendo cierto, y abrir una conexión
+    cuesta más que cualquier consulta de este proyecto.
 
-    Apareció de verdad en F02-T05, en cuanto las pruebas repitieron las
-    mismas consultas. En producción habría aparecido sola con el uso, de
-    forma intermitente y muy difícil de atribuir.
+    Este test existe para que nadie lo vuelva a poner sin darse cuenta
+    de que estaría pagando una conexión nueva por consulta.
     """
-    fuente = (RAIZ / "api" / "app" / "core" / "db.py").read_text(encoding="utf-8")
-    sin_comentarios = re.sub(r"^\s*#.*$", "", fuente, flags=re.M)
-    assert '"prepare_threshold": None' in sin_comentarios, (
-        "el motor tiene que desactivar las sentencias preparadas"
+    from sqlalchemy.pool import NullPool
+
+    from app.core import db
+
+    # Se mira el motor armado, no el texto del archivo: los docstrings
+    # nombran `NullPool` para explicar por qué ya no está.
+    assert not isinstance(db.motor.pool, NullPool), (
+        "el motor no debe usar NullPool: la API es un proceso largo con base propia"
     )
+    assert db.motor.pool.size() > 0, "el pool tiene que tener conexiones"
+
+
+@pytest.mark.unit
+def test_el_motor_no_exige_el_puerto_del_pooler() -> None:
+    """`validar_coherencia` avisaba si el puerto no era 6543, el del
+    pooler en modo transacción. Ahora lo normal es 5432, contra la base
+    del mismo servidor: ese aviso avisaría al revés."""
+    from app.core.config import Settings
+
+    s = Settings(  # type: ignore[call-arg]
+        DATABASE_URL="postgresql+psycopg://u:p@db:5432/epic_wallet",
+        APP_ENV="production",
+    )
+    assert not any("6543" in a for a in s.validar_coherencia())
 
 
 @pytest.mark.unit

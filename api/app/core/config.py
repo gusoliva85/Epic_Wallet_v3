@@ -1,6 +1,7 @@
 """Configuración de la aplicación, leída del entorno.
 
-Las variables vienen de Vercel en producción y de .env en local.
+Las variables vienen del entorno del contenedor en el servidor y de
+.env en la máquina de desarrollo.
 Ninguna tiene valor por defecto si es un secreto: si falta, la
 aplicación no arranca, en lugar de arrancar a medias.
 
@@ -20,9 +21,9 @@ Entorno = Literal["development", "preview", "production"]
 
 # Ruta absoluta al .env de la raíz: config.py está en api/app/core/.
 # Relativa al directorio actual fallaría según desde dónde se arranque
-# (uvicorn desde api/, pytest desde la raíz, Vercel desde otro lugar).
-# En Vercel no existe .env y las variables vienen del entorno: que el
-# archivo falte no es un problema.
+# (uvicorn desde api/, pytest desde la raíz). En el contenedor no hay
+# .env y las variables llegan por el entorno: que el archivo falte no
+# es un problema.
 RAIZ = Path(__file__).resolve().parents[3]
 ARCHIVO_ENV = RAIZ / ".env"
 
@@ -43,7 +44,10 @@ class Settings(BaseSettings):
     DB_SCHEMA: str = "public"
 
     # --- Supabase ---
-    SUPABASE_URL: str
+    # Sin valor obligatorio desde F15: el servidor propio arranca sin
+    # ella. Mientras esté vacía nadie puede iniciar sesión, y
+    # `validar_coherencia` lo dice en el arranque. F17 la saca del todo.
+    SUPABASE_URL: str = ""
     SUPABASE_ANON_KEY: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
     # No se usa para verificar: el proyecto firma con ES256 y la clave
@@ -113,14 +117,21 @@ class Settings(BaseSettings):
         return self.APP_ENV == "production"
 
     def validar_coherencia(self) -> list[str]:
-        """Avisos de configuración sospechosa, sin impedir el arranque."""
+        """Avisos de configuración sospechosa, sin impedir el arranque.
+
+        Hasta F15 el primer aviso era el contrario: exigía el puerto
+        6543, el del pooler en modo transacción. Ahora la API habla
+        directo con su Postgres, así que lo normal es 5432 y lo raro
+        sería lo otro.
+        """
         avisos: list[str] = []
-        if not self.es_sqlite and ":6543" not in self.DATABASE_URL:
+        if self.es_produccion and not self.SUPABASE_URL:
             avisos.append(
-                "DATABASE_URL no usa el pooler (6543): en serverless se agotan "
-                "las conexiones directas"
+                "SUPABASE_URL vacía: no hay de dónde sacar las claves para "
+                "verificar los tokens, así que nadie puede iniciar sesión. "
+                "Es lo esperado hasta F17, que trae la autenticación propia"
             )
-        if self.es_produccion and not self.SUPABASE_ANON_KEY:
+        if self.es_produccion and self.SUPABASE_URL and not self.SUPABASE_ANON_KEY:
             avisos.append("SUPABASE_ANON_KEY vacía: el frontend no podría autenticar")
         return avisos
 

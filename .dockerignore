@@ -1,0 +1,23 @@
+# Lo que no entra a ninguna imagen.
+.git/
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Secretos: las variables entran por el entorno del contenedor, nunca
+# horneadas en la imagen.
+.env
+*.pem
+*.key
+
+# Documentación, pruebas y material que no se sirve.
+documentacion/
+docs/
+capturas/
+tests/
+respaldos/

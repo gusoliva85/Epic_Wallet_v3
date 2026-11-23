@@ -4,7 +4,7 @@ Uso:  python scripts/check_db.py
 
 Lee .env del directorio del proyecto y comprueba:
   1. que estén todas las variables requeridas
-  2. que DATABASE_URL apunte al pooler (6543) y use el driver psycopg
+  2. que DATABASE_URL use el driver psycopg y el puerto de Postgres
   3. que DB_SCHEMA sea 'public': el proyecto usa un solo esquema para
      los tres entornos (02_Documento_Tecnico §4.1.1)
   4. que la conexión funcione, con versión de Postgres y latencia
@@ -92,31 +92,26 @@ def revisar_database_url(url: str) -> None:
         problemas.append(f"el driver debe ser postgresql+psycopg, no {partes.scheme}")
         print(f"{BAD}driver {partes.scheme} · tiene que ser postgresql+psycopg")
 
+    # Hasta F15 esto exigía el puerto 6543, el de un pooler en modo
+    # transacción. La API ahora habla directo con su Postgres, así que
+    # lo normal es 5432 y lo raro sería lo otro.
     puerto = partes.port
-    if puerto == 6543:
-        print(f"{OK}puerto 6543 (pooler en modo transaction)")
-    elif puerto == 5432:
-        problemas.append("usa la conexión directa (5432) en lugar del pooler (6543)")
-        print(f"{BAD}puerto 5432 · es la conexión directa; Vercel necesita el pooler (6543)")
+    if puerto == 5432:
+        print(f"{OK}puerto 5432 (Postgres)")
+    elif puerto is None:
+        avisos.append("DATABASE_URL no declara puerto")
+        print(f"{WARN}sin puerto · se asume 5432")
     else:
         avisos.append(f"puerto inesperado: {puerto}")
-        print(f"{WARN}puerto {puerto} · se esperaba 6543")
+        print(f"{WARN}puerto {puerto} · se esperaba 5432")
 
-    if partes.hostname and "pooler.supabase.com" in partes.hostname:
+    # En el servidor el host es el nombre del contenedor de la base, en
+    # la red interna del compose. En la máquina de desarrollo, localhost.
+    if partes.hostname:
         print(f"{OK}host {partes.hostname}")
-        region = partes.hostname.split(".")[0].replace("aws-0-", "").replace("aws-1-", "")
-        cercanas = {"sa-east-1": "São Paulo"}
-        if region in cercanas:
-            print(f"{OK}región {region} ({cercanas[region]}) · la más cercana a Argentina")
-        else:
-            print(f"{WARN}región {region} · lejos de Argentina, ver §20 del documento técnico")
-            avisos.append(
-                f"la base está en {region}: la función de Vercel tiene que correr en la misma "
-                f"región para que la latencia no se multiplique por consulta"
-            )
     else:
-        avisos.append("el host no parece el pooler de Supabase")
-        print(f"{WARN}host {partes.hostname}")
+        problemas.append("DATABASE_URL no trae host")
+        print(f"{BAD}sin host")
 
     if not partes.password:
         problemas.append("DATABASE_URL no trae contraseña")

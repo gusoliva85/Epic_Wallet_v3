@@ -1,11 +1,14 @@
 """Motor y sesiones de SQLAlchemy.
 
-Dos decisiones que importan en serverless:
+1. **Pool normal.** La API es un proceso largo que habla directo con
+   su Postgres, en la misma máquina. Mantiene un puñado de conexiones
+   abiertas y las reusa: abrir una conexión nueva cuesta más que
+   cualquier consulta de este proyecto.
 
-1. **`NullPool`**: cada invocación de la función de Vercel es un
-   proceso que puede morir en cualquier momento. Mantener un pool
-   propio sólo acumularía conexiones muertas contra el pooler de
-   Supabase, que ya hace de pool del lado del servidor.
+   Hasta F15 esto era un `NullPool`, porque cada petición corría en un
+   proceso efímero que podía morir en cualquier momento y del otro lado
+   había un pooler que ya hacía de pool. Nada de eso sigue siendo
+   cierto.
 
 2. **`search_path` por sesión**: fija el esquema de `DB_SCHEMA`, así
    las consultas sin esquema explícito caen donde deben
@@ -35,27 +38,20 @@ def crear_motor() -> Engine:
         "echo": settings.LOG_LEVEL == "DEBUG",
     }
     if not settings.es_sqlite:
-        from sqlalchemy.pool import NullPool
-
-        opciones["poolclass"] = NullPool
+        # Pocos usuarios conocidos y un solo proceso de API: cinco
+        # conexiones sobran, y `max_overflow` cubre un pico sin dejar
+        # que una ráfaga abra conexiones sin límite.
+        opciones["pool_size"] = 5
+        opciones["max_overflow"] = 5
+        # Postgres puede cortar una conexión inactiva. Reciclarlas
+        # antes evita que la primera consulta después de un rato de
+        # silencio falle una vez y ande la siguiente.
+        opciones["pool_recycle"] = 1800
+        opciones["pool_timeout"] = 10
         opciones["connect_args"] = {
             "connect_timeout": 10,
-            # Identifica las conexiones en el panel de Supabase.
+            # Identifica las conexiones en `pg_stat_activity`.
             "application_name": f"epic-wallet-{settings.APP_ENV}",
-            # SIN sentencias preparadas. psycopg3 prepara sola una
-            # consulta después de unas cuantas repeticiones, y la
-            # sentencia queda guardada en la conexión DEL SERVIDOR. Con
-            # el pooler en modo transacción, esa conexión se le entrega
-            # después a otro cliente que no sabe que existe: la próxima
-            # vez que se prepare el mismo nombre, Postgres responde
-            # «prepared statement "_pg3_0" already exists» y la
-            # petición falla.
-            #
-            # No es teórico: apareció en esta tarea, en cuanto las
-            # pruebas repitieron las mismas consultas. En producción
-            # habría aparecido sola con el uso, de forma intermitente y
-            # muy difícil de atribuir.
-            "prepare_threshold": None,
         }
     return create_engine(settings.DATABASE_URL, **opciones)
 
@@ -68,12 +64,12 @@ if settings.esquema and not settings.es_sqlite:
     def _preparar_conexion(dbapi_conn, _registro) -> None:
         """Cada conexión nueva arranca limpia y apuntando a nuestro esquema.
 
-        El `reset role` no es paranoia: el pooler está en modo
-        transacción y reparte las conexiones del servidor entre
-        clientes. Si alguien —nosotros con un error, otro cliente, un
-        script de mantenimiento— deja un `set role` de sesión puesto,
-        esa conexión vuelve al pool con el rol cambiado y se la entrega
-        a quien siga.
+        El `reset role` no es paranoia: ahora el pool es nuestro, pero
+        las conexiones igual se reusan entre peticiones de usuarios
+        distintos. Si alguien —nosotros con un error, un script de
+        mantenimiento— deja un `set role` de sesión puesto, esa
+        conexión vuelve al pool con el rol cambiado y se la entrega a
+        quien siga.
 
         Pasó de verdad: una prueba de mutación de F02-T05 cambió
         `set local role` por `set role` para comprobar que la diferencia
@@ -92,10 +88,10 @@ FabricaDeSesiones = sessionmaker(bind=motor, autoflush=False, expire_on_commit=F
 def _limpiar_rol(sesion: Session) -> None:
     """Deja la transacción con el rol de la aplicación.
 
-    Hace falta además del `reset role` de la conexión: el pooler asigna
-    la conexión del servidor **por transacción**, así que la que
-    atiende esta transacción puede no ser la misma que se limpió al
-    conectarse.
+    Hace falta además del `reset role` de la conexión: esa limpieza
+    corre una sola vez, al abrirla. Una conexión reusada ya pasó por
+    otras peticiones, y esta línea garantiza que la transacción arranca
+    siempre desde el mismo lugar.
     """
     sesion.execute(text("reset role"))
 
@@ -204,11 +200,14 @@ def activar_usuario(sesion: Session, user_id: str) -> None:
        puestas, no ve ninguna fila.
 
     Las dos van como **LOCAL**, o sea atadas a la transacción. No es un
-    detalle: el pooler está en modo transacción, así que la misma
-    conexión física atiende peticiones de usuarios distintos una detrás
-    de otra. Con un `set` de sesión, el usuario de una petición quedaría
-    activo para la siguiente — una filtración de datos entre cuentas.
-    Al terminar la transacción, Postgres los descarta solo.
+    detalle: la misma conexión física atiende peticiones de usuarios
+    distintos una detrás de otra, porque el pool las reusa. Con un
+    `set` de sesión, el usuario de una petición quedaría activo para la
+    siguiente — una filtración de datos entre cuentas. Al terminar la
+    transacción, Postgres los descarta solo.
+
+    Esto valía con el pooler de antes y vale igual ahora: lo único que
+    cambió es quién reusa las conexiones, no que se reusen.
     """
     uid = _usuario_valido(user_id)
 

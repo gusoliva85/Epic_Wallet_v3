@@ -1,0 +1,37 @@
+# ============================================================
+#  Lo que cambia en el servidor: la conexión al proxy de borde.
+#
+#  No se usa solo. Va encima de docker-compose.yml, y el `.env`
+#  del servidor lo deja fijado:
+#
+#      COMPOSE_FILE=docker-compose.yml:docker-compose.servidor.yml
+#
+#  Así en el servidor también alcanza con `docker compose up -d`.
+# ============================================================
+
+services:
+  api:
+    networks:
+      default:
+      # El borde la alcanza por este nombre. `api` a secas chocaría
+      # con la de cualquier otro proyecto del servidor.
+      edge:
+        aliases:
+          - epicwallet-api
+
+  web:
+    volumes:
+      - web_dist:/destino
+
+networks:
+  default:
+  edge:
+    external: true
+    name: edge
+
+volumes:
+  # Nombre fijo para que el compose del borde lo pueda montar: sin
+  # esto Docker lo llamaría `epic-wallet_web_dist` y el borde tendría
+  # que adivinarlo.
+  web_dist:
+    name: epicwallet_web

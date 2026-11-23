@@ -1,6 +1,6 @@
 # ============================================================
-#  Dependencias de PRODUCCIÓN — las instala Vercel
-#  para la función Python de api/index.py
+#  Dependencias de PRODUCCIÓN — las instala la imagen de la API
+#  (api/Dockerfile).
 #
 #  Mantener en sincronía con [project.dependencies] de
 #  pyproject.toml. Para desarrollo: pip install -e ".[dev]"
@@ -8,6 +8,9 @@
 
 # --- API ---
 fastapi>=0.115,<1.0
+# El servidor ASGI. Antes lo ponía la plataforma; ahora el arranque
+# del contenedor es `uvicorn app.main:app` y tiene que estar acá.
+uvicorn[standard]>=0.30,<1.0
 pydantic>=2.9,<3.0
 pydantic-settings>=2.5,<3.0
 

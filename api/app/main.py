@@ -1,7 +1,8 @@
 """Creación de la aplicación FastAPI.
 
-Punto de entrada real: `api/index.py`, que es lo que ejecuta Vercel.
-En local: `uvicorn app.main:app --reload --port 8000` desde `api/`.
+Punto de entrada: `uvicorn app.main:app`, que es lo que arranca el
+contenedor. En la máquina de desarrollo, lo mismo con `--reload`
+desde `api/`.
 
 Referencia: 02_Documento_Tecnico.md §5, §9, §16.1
 """
@@ -90,7 +91,7 @@ def crear_app() -> FastAPI:
 
     registrar_manejadores(app)
 
-    # Todas las rutas bajo /api. Vercel reescribe /api/* a esta función.
+    # Todas las rutas bajo /api. El proxy de borde manda /api/* acá.
     #
     # `/api/health` es la ÚNICA pública: sirve para saber si el
     # despliegue vive, y pedirle una sesión para eso no tendría sentido.
