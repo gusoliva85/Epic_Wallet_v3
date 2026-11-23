@@ -263,6 +263,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Lo único que hubo que ajustar: dos migraciones tenían `postgres` escrito a mano —el nombre del rol del proveedor anterior— y fallaban con «role postgres does not exist». Ahora leen `current_user`, que es exactamente el rol cuyos privilegios por defecto hay que cambiar.*
 
 - [ ] **F16-T03 · Las pruebas, contra la base local**
+  *Se corre después de F17-T01, y no antes: estas pruebas necesitan firmar sus propios tokens, y hasta esa tarea el backend sólo aceptaba los de un emisor ajeno. La dependencia no estaba vista cuando se escribió el orden.*
   **Tipo:** QA
   **Hacer:** `tests/api/` hoy pega contra el servidor real del proveedor con su clave de servicio. Pasa a levantar su base de prueba local y a firmar sus propios tokens. Se borra `tests/api/ayudas_auth.py`, que existía sólo para confirmar correos por la API de administración ajena.
   **Aceptación:** · `pytest` completo en verde **sin una sola credencial externa en el entorno** · ninguna prueba abre una conexión a internet.
@@ -275,11 +276,14 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** te registrás y entrás desde el celular, la sesión se renueva sola sin que lo notes, y una segunda cuenta no ve ni un dato de la primera.
 
-- [ ] **F17-T01 · Las claves y la verificación**
+- [~] **F17-T01 · Las claves y la verificación**
   **Tipo:** Backend · **Ref:** Técnico §8
   **Hacer:** par de claves ES256 (P-256) del proyecto; la privada firma, la pública verifica. `core/security.py` deja de usar el cliente JWKS y verifica con la pública del entorno: sin viaje de red y sin depender de que un servicio ajeno responda. Los claims no cambian (`sub`, `aud: authenticated`, `exp`, `email`), así que el resto del backend no se toca.
   **Aceptación:** · un token nuestro se verifica · uno firmado con otra clave se rechaza · uno vencido da «la sesión expiró» · ningún endpoint privado quedó accesible sin token.
   *Se conserva la firma asimétrica por el mismo motivo de siempre: con un secreto compartido, quien lo tenga puede fabricar sesiones. Acá sólo se puede verificar.*
+  *Hecho, y probado contra el servidor: un token firmado con la clave del proyecto pasa la puerta; uno firmado con otra clave, uno vencido, uno con basura adentro y uno ausente dan 401, y los mensajes distinguen «la sesión expiró» de «la sesión no es válida».*
+  *El par se generó **dentro del servidor** y la privada no salió de ahí. `scripts/generar_claves.py` queda para rehacerlo; imprime en pantalla y no escribe archivos, para que nadie termine con una copia olvidada en su disco.*
+  *Se adelanta a F16-T03, que no podía terminarse antes: las pruebas de API necesitan firmar sus propios tokens, y hasta acá el backend sólo aceptaba los de un emisor ajeno.*
 
 - [ ] **F17-T02 · Los endpoints de sesión**
   **Tipo:** Backend
