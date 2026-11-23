@@ -184,17 +184,17 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 - [~] **F14-T03 · Este roadmap**
   **Tipo:** Infra
   **Hacer:** fases 0 a 13 resumidas, las 9 tareas abiertas preservadas, las fases 14 a 19 detalladas, cero referencias a proveedores externos.
-  **Aceptación:** · `./scripts/sin_proveedores.sh` pasa · las 9 tareas abiertas siguen estando con sus criterios de aceptación.
+  **Aceptación:** · `./scripts/sin_proveedores.sh --docs` pasa · las 9 tareas abiertas siguen estando con sus criterios de aceptación.
 
 - [~] **F14-T04 · El Documento Técnico**
   **Tipo:** Infra
   **Hacer:** reescribir §4 (base de datos), §8 (autenticación), §11 (variables de entorno), §16 (despliegue), §17 (seguridad) y §18 (respaldo) para el servidor propio. El resto —modelo de datos, API, cálculo, estilo— no se toca.
-  **Aceptación:** · `./scripts/sin_proveedores.sh` pasa · un lector que no estuvo en estas conversaciones puede levantar el proyecto siguiéndolo.
+  **Aceptación:** · `./scripts/sin_proveedores.sh --docs` pasa · un lector que no estuvo en estas conversaciones puede levantar el proyecto siguiéndolo.
 
 - [~] **F14-T05 · El README**
   **Tipo:** Infra
   **Hacer:** puesta en marcha local y en el servidor, sin proveedores externos.
-  **Aceptación:** · `./scripts/sin_proveedores.sh` pasa · los comandos del README funcionan tal como están escritos.
+  **Aceptación:** · `./scripts/sin_proveedores.sh --docs` pasa · los comandos del README funcionan tal como están escritos.
 
 - [ ] **F14-T06 · Sacar el proveedor externo del frontend y de la configuración**
   **Tipo:** Infra
@@ -216,11 +216,13 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Aceptación:** · `swapon --show` muestra 2 GB y sobrevive a un reinicio · el servidor puede clonar el repositorio solo, sin credenciales de nadie.
   *El firewall y las actualizaciones automáticas ya estaban bien configurados: `ufw` declara 22, 80 y 443 en IPv4 e IPv6, con política `deny` de entrada, y `unattended-upgrades` está activo con los orígenes de seguridad. No hizo falta tocarlos.*
 
-- [ ] **F15-T02 · Proxy de borde compartido**
+- [~] **F15-T02 · Proxy de borde compartido**
   **Tipo:** Infra
   **Hacer:** sacar Caddy del compose de Jarvis y dejarlo en `/opt/edge/` como único dueño de 80 y 443, con un archivo de sitio por proyecto en `conf.d/`. Red externa compartida; Jarvis y Epic Wallet se conectan a ella. El compose anterior de Jarvis se conserva para poder volver atrás.
   **Aceptación:** · Jarvis responde igual que antes · `https://13-140-36-93.sslip.io` da candado válido · reiniciar un proyecto no afecta al otro.
-  *Se hace ahora porque Jarvis está parado y sin dominio. Con Jarvis productivo, el mismo cambio es una ventana de mantenimiento.*
+  *Hecho. El certificado lo emitió Let's Encrypt para `13-140-36-93.sslip.io`, vence el 21/02/2027 y lo renueva Caddy solo. Jarvis no tiene dominio: queda como sitio por defecto del puerto 80, así que la IP pelada responde igual que antes y el kiosco de la Raspberry no se entera. En la red compartida la API de Jarvis se alcanza como `jarvis-api`, porque `api` a secas chocaría con la de Epic Wallet.*
+  *Corrección sobre el supuesto de partida: Jarvis **no** estaba parado, estaba corriendo. El cambio se hizo igual, con respaldo previo en `/opt/jarvis/docker-compose.yml.antes-del-borde` y unos segundos de corte.*
+  *Los archivos de `/opt/edge/` no se versionan acá: son compartidos con Jarvis y este repositorio es sólo de Epic Wallet. **F18 los incluye en el respaldo.***
 
 - [ ] **F15-T03 · El compose de Epic Wallet**
   **Tipo:** Infra
@@ -290,6 +292,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Hacer:** rehacer el barrido completo contra la autenticación nueva: con el token de una cuenta, intentar leer y escribir por identificador directo los recursos de la otra, en todos los endpoints.
   **Aceptación:** · ningún recurso ajeno es accesible, ni pasando su `id` a mano · RLS bloquea incluso salteando el filtro del endpoint · la prueba queda automatizada.
 
+- [ ] **F17-T06 · La reja final**
+  **Tipo:** QA
+  **Hacer:** correr `./scripts/sin_proveedores.sh` **sin argumentos**, sobre todo el repositorio, y limpiar lo que quede: variables, dependencias, comentarios y URLs de prueba. Hasta acá sólo se exigía `--docs`, porque el código todavía dependía del proveedor anterior.
+  **Aceptación:** · el verificador pasa sobre todo el repositorio · `pytest` y `npm test` en verde.
+  *Cuando esta pasa, el script y `04_Migracion_a_Contabo.md` —las dos únicas excepciones— ya no tienen razón de existir. Se borran en F19.*
+
 ---
 
 # FASE 18 — Respaldos
@@ -316,8 +324,8 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 - [ ] **F18-T04 · Jarvis también**
   **Tipo:** Infra
-  **Hacer:** agregar la base de Jarvis al mismo mecanismo. Es la misma tarea con una base más, y hoy no tiene ninguna copia.
-  **Aceptación:** · el respaldo diario incluye las dos bases · la restauración de Jarvis también se probó.
+  **Hacer:** agregar la base de Jarvis al mismo mecanismo. Es la misma tarea con una base más, y hoy no tiene ninguna copia. Incluir también la configuración del proxy de borde (`/opt/edge/`), que no vive en ningún repositorio.
+  **Aceptación:** · el respaldo diario incluye las dos bases y `/opt/edge/` · la restauración de Jarvis también se probó.
 
 ---
 

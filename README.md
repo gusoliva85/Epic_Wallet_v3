@@ -203,7 +203,8 @@ pytest tests/unit -v        # sólo la lógica de cálculo
 npm test                    # frontend, con node --test
 ruff check . && ruff format --check .
 mypy api
-./scripts/sin_proveedores.sh   # que nada quede atado a un servicio externo
+./scripts/sin_proveedores.sh --docs   # la documentación, limpia
+./scripts/sin_proveedores.sh          # todo el repo · reja final de F17, hoy falla a propósito
 ```
 
 Se testea **lo que da un número o protege un dato**: las funciones de `services/calc.py`, el recálculo del mes, los casos borde y que una cuenta no vea los datos de otra.
