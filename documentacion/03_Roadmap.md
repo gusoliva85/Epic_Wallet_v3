@@ -328,10 +328,14 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **El agujero que la justifica:** `scripts/respaldo.sh` y `scripts/restaurar.sh` se citan en `CLAUDE.md` y en el README —incluido el procedimiento de migración, «respaldo primero»— y **nunca se escribieron**. Hoy ese primer paso fallaría.
 
-- [ ] **F18-T01 · El respaldo diario, verificado**
+- [~] **F18-T01 · El respaldo diario, verificado**
   **Tipo:** Infra
   **Hacer:** `scripts/respaldo.sh` con `pg_dump -Fc`, nocturno, retención de 7 diarios, 4 semanales y 6 mensuales. El script **abre el archivo que acaba de escribir y lista sus tablas**, y falla ruidosamente si no abre. Un dump que nadie leyó no es un respaldo.
   **Aceptación:** · a la mañana siguiente hay un archivo nuevo · un dump corrupto a propósito hace fallar el script · la retención borra lo viejo y no lo que hay que guardar.
+  *Implementado y probado en el servidor. Seis casos de archivo malo detectados: truncado, basura aleatoria, vacío, inexistente, fuera de la carpeta, y el bueno pasa. Exigiéndole 999 tablas, el script **borra el respaldo que no sirve** y no toca `ultimo.json`. Con 12 archivos en `diario/`, la retención deja 7 y borra los 6 más viejos. El respaldo de tarea (`--etiqueta`) sobrevive a tres corridas diarias.*
+  *Corre por `cron` a las 3:15 **hora de Argentina** —declarada con `CRON_TZ`, porque el servidor está en hora europea—, con registro en `/var/log/epic-wallet-respaldo.log`.*
+  *Dos errores que encontró la prueba y no el diseño: `--solo-verificar` con una ruta relativa decía que el archivo estaba corrupto cuando lo que estaba mal era la ruta, y `docker compose exec -T` se come la entrada estándar, así que el script invocado por una tubería se comía sus propias líneas sin dar error.*
+  *Falta la copia fuera del servidor: eso es F18-T02.*
 
 - [ ] **F18-T02 · La copia en la PC de Gustavo**
   **Tipo:** Infra
