@@ -144,6 +144,29 @@ de emergencia es `MIGRAR_SIN_RESPALDO=si-entiendo-el-riesgo`, que avisa fuerte.
 
 `DB_SCHEMA` y `APP_ENV` van explícitos a propósito: `migrations/env.py` los exige y no asume nada. Migrar es la operación destructiva del proyecto.
 
+### Recuperar una contraseña
+
+No hay correo saliente, a propósito. El enlace se genera a mano, dentro del
+servidor, y se entrega por donde se pueda:
+
+```bash
+docker compose exec api python -m app.cli recuperar gustavo@ejemplo.com
+```
+
+Vale **30 minutos y una sola vez**, se guarda hasheado, se quema antes de tocar
+nada y al usarse corta todas las sesiones abiertas de esa cuenta. Pedir uno
+nuevo invalida el anterior.
+
+**Esto es más chico que un «olvidé mi contraseña» por correo, no más grande.**
+Un formulario de recuperación es una puerta que cualquiera puede tocar desde
+internet y que depende enteramente de que el buzón de la persona esté a salvo —
+y el buzón es justo lo que más se roba. Acá esa puerta no existe: para que se
+emita un enlace hay que entrar al servidor por SSH.
+
+El costo, dicho claro: **quien puede correr ese comando puede tomar cualquier
+cuenta.** A esta escala no agrega riesgo, porque con acceso de root a la máquina
+la base entera ya está a la vista.
+
 ### Los respaldos
 
 Son tres piezas y cada una vive en un lado distinto. Que estén separadas es

@@ -311,10 +311,16 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Se fueron del repositorio `@supabase/auth-js`, `web/src/js/vendor/auth-js.js` y `scripts/preparar-auth.mjs`.*
   *Queda para T04 el camino del enlace de recuperación (`verificarEnlace`), y para T06 `scripts/generar-config.mjs`, que todavía escribe un `config.js` con la URL del proveedor aunque nadie lo lea.*
 
-- [ ] **F17-T04 · Recuperar la contraseña sin correo**
+- [~] **F17-T04 · Recuperar la contraseña sin correo**
   **Tipo:** Backend · **Ref:** General §48.1
   **Hacer:** `python -m app.cli recuperar <email>` imprime un link de un solo uso, válido 30 minutos, contra la pantalla `#/nueva-clave` **que ya existe**. El link se entrega a mano. El token se guarda hasheado y se quema al usarse.
   **Aceptación:** · el link abre la pantalla y permite poner una contraseña nueva · usarlo dos veces falla · a los 31 minutos falla · cambiar la contraseña desde Ajustes sigue pidiendo la actual.
+  *`api/app/cli.py` + tabla `password_resets` + `POST /api/auth/reset`. El enlace lleva la misma forma que ya leía `enlace-correo.js`, así que esa pantalla no se tocó.*
+  ***El enlace no se canjea por una sesión.** El camino obvio —enlace → sesión abierta → cambiar la clave— es peor: quien lo intercepte entra a la cuenta aunque no cambie nada. Acá sirve para una sola cosa y se gasta en esa misma petición.*
+  *Se quema **antes** de tocar la contraseña: un enlace que sobrevive a un intento fallido es una llave que se puede volver a probar.*
+  *Pedir uno nuevo invalida el anterior. Si no, pedir tres veces porque el primero no llegó dejaría tres llaves vivas en vez de reemplazarlas.*
+  *Los tres rechazos —no existe, ya se usó, venció— son indistinguibles.*
+  *Probado en el servidor de punta a punta: el comando imprime el enlace, canjearlo cambia la clave y abre sesión, usarlo dos veces da 401, la contraseña vieja deja de servir, y un correo inexistente avisa en la consola (ahí sí: el único que puede correr esto es Gustavo, y necesita saber si se equivocó al escribirlo).*
 
 - [ ] **F17-T05 · Aislamiento entre cuentas, de punta a punta**
   **Tipo:** QA · **Ref:** Técnico §6.5
