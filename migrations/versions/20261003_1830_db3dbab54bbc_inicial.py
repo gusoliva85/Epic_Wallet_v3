@@ -91,11 +91,17 @@ def upgrade() -> None:
     # ---------------------------------------------------------------
     # 3 · La tabla de cuentas
     #
-    # Cinco columnas: lo que `profiles` necesita para su clave foránea
-    # y lo que la Fase 17 necesita para autenticar. `encrypted_password`
-    # guarda un hash bcrypt, con el mismo formato que el proveedor
-    # anterior — por eso nadie tiene que resetear su contraseña cuando
-    # los datos se muden.
+    # Lo que `profiles` necesita para su clave foránea, lo que la Fase
+    # 17 necesita para autenticar, y `raw_user_meta_data`, que lee el
+    # trigger `crear_perfil_y_categorias` para sacar el nombre a
+    # mostrar. Esa última no estaba en el plan y la encontró la prueba
+    # de alta: sin ella el trigger falla con «record "new" has no
+    # field "raw_user_meta_data"» y la cuenta nueva nace sin perfil y
+    # sin sus 21 categorías.
+    #
+    # `encrypted_password` guarda un hash bcrypt, con el mismo formato
+    # que el proveedor anterior — por eso nadie tiene que resetear su
+    # contraseña cuando los datos se muden.
     # ---------------------------------------------------------------
     op.execute(
         """
@@ -104,6 +110,7 @@ def upgrade() -> None:
             email              text        not null unique,
             encrypted_password text        not null,
             email_confirmed_at timestamptz,
+            raw_user_meta_data jsonb       not null default '{}'::jsonb,
             created_at         timestamptz not null default now()
         );
         """
