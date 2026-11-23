@@ -69,6 +69,15 @@ services:
       # vacío la aplicación levanta y se ve, pero nadie inicia sesión.
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      # Dónde buscar la constancia del último respaldo. La leen el
+      # portón de las migraciones (F18-T04) y /api/health (F18-T06).
+      RESPALDOS_DIR: /respaldos
+    volumes:
+      # Sólo lectura, y a propósito: la api lee la constancia que dejó
+      # `respaldo.sh`, nunca la escribe. Si pudiera escribirla, un
+      # error en la api podría declarar un respaldo que no existe y el
+      # portón dejaría pasar la migración.
+      - ./respaldos:/respaldos:ro
     depends_on:
       db:
         condition: service_healthy

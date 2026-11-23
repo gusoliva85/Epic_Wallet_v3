@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 import sys
+from datetime import UTC, datetime
 from logging.config import fileConfig
 from pathlib import Path
 
@@ -103,6 +104,59 @@ if APP_ENV == "development" and ESQUEMA == "public":
         "migrarlo de verdad, pasá APP_ENV=production explícito en la "
         "línea de comando (ver CLAUDE.md § Migraciones).",
     )
+
+
+# ==================================================================
+#  El portón: no se migra sin respaldo fresco · F18-T04
+# ==================================================================
+def exigir_respaldo() -> None:
+    """Se niega a migrar la base real si no hay un respaldo reciente.
+
+    Hasta acá, «respaldo primero» era una regla escrita en CLAUDE.md
+    que dependía de que alguien se acordara. Migrar es la única
+    operación del proyecto que no se puede deshacer salvo por otro
+    respaldo, así que la regla pasa a ser una condición.
+
+    No se exige nada si la base se llama de prueba: ahí no hay qué
+    perder, y pedir un respaldo para cada corrida de los tests haría
+    que la protección molestara hasta que alguien la saque.
+    """
+    if ES_SQLITE:
+        return
+
+    from app.core import respaldos
+
+    if respaldos.es_descartable(URL):
+        return
+
+    maximo = float(os.getenv("RESPALDO_MAXIMO_HORAS", "").strip() or respaldos.MAXIMO_DE_HORAS)
+    veredicto = respaldos.evaluar(respaldos.leer_constancia(), datetime.now(UTC), maximo)
+
+    if veredicto.hay_red:
+        print(f"  portón: {veredicto.motivo}")
+        return
+
+    # La salida de emergencia existe porque habrá un día en que haya
+    # que migrar sin poder respaldar, y una protección sin salida se
+    # termina sacando del código. Pero deja rastro y hay que escribirla
+    # entera: no se activa por descuido.
+    if os.getenv("MIGRAR_SIN_RESPALDO") == "si-entiendo-el-riesgo":
+        print(
+            "\n  !!  MIGRANDO SIN RESPALDO FRESCO  !!\n"
+            f"  !!  {veredicto.motivo}\n"
+            "  !!  Si esta migración sale mal, no hay con qué volver atrás.\n",
+            file=sys.stderr,
+        )
+        return
+
+    abortar(
+        f"no se migra: {veredicto.motivo}.",
+        "Migrar es la operación que no tiene vuelta atrás. Antes:\n"
+        "      ./scripts/respaldo.sh\n"
+        "  y volvé a correr esto. Si de verdad hay que migrar sin red:\n"
+        "      MIGRAR_SIN_RESPALDO=si-entiendo-el-riesgo alembic upgrade head",
+    )
+
 
 config.set_main_option("sqlalchemy.url", URL)
 
@@ -199,6 +253,9 @@ def migrar_online() -> None:
 
 
 if context.is_offline_mode():
+    # El modo offline sólo imprime el SQL: no toca la base, así que no
+    # hay nada que respaldar.
     migrar_offline()
 else:
+    exigir_respaldo()
     migrar_online()
