@@ -171,6 +171,14 @@ def renovar(sesion: Session, token: str) -> Sesion:
             fila.user_id,
             cortados,
         )
+        # Se confirma ACÁ, antes de levantar el 401.
+        #
+        # `get_session()` revierte la transacción ante cualquier
+        # excepción, y un `ErrorDeApi` es una. Sin este commit, el
+        # corte de la cadena se deshacía junto con el rechazo: la
+        # respuesta decía 401 y la sesión robada seguía viva. Lo
+        # encontró la prueba, no el diseño.
+        sesion.commit()
         raise _sin_sesion("La sesión no es válida.")
 
     if fila.revocado:
