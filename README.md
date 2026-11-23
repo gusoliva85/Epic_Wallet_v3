@@ -151,6 +151,13 @@ disco falle.
 | Servidor | `/opt/epic-wallet/respaldos/` · 7 diarios, 4 semanales, 6 mensuales | — |
 | PC de Gustavo | `scripts/traer_respaldos.ps1` se trae lo que falte a `D:\Respaldos\Epic_Wallet` | 8:00, por el Programador de tareas |
 
+`scripts/restaurar.sh` cierra el circuito. Por defecto restaura en
+`epic_wallet_restaurado` —una base aparte que crea y pisa—, nunca encima de la
+real: para eso hace falta `--sobre-la-real` y escribir el nombre de la base a
+mano. Al terminar **cuenta las filas de cada tabla contra el origen** y falla si
+una sola difiere, porque «`pg_restore` no dio error» no es lo mismo que «los
+datos están».
+
 **La PC tira del servidor; el servidor no empuja.** Si empujara, necesitaría
 una credencial de la PC guardada en su disco, y quien entrara al servidor
 entraría también a la PC. Tirando, la credencial nunca sale de la PC. De
@@ -275,7 +282,8 @@ python scripts/load_history.py --dry-run              # carga de histórico, sin
 
 # Respaldo y restauración
 ./scripts/respaldo.sh                                 # dump verificado
-./scripts/restaurar.sh <archivo>                      # restaurar, probado de verdad
+./scripts/restaurar.sh <archivo>                      # restaurar en una base aparte
+./scripts/restaurar.sh <archivo> --sobre-la-real      # restaurar ENCIMA de la base real
 # y en la PC de Gustavo, no en el servidor:
 powershell -File scripts\traer_respaldos.ps1          # traer la copia de afuera
 

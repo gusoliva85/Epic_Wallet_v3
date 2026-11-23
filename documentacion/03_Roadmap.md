@@ -324,6 +324,8 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** hay copias diarias verificadas, una copia fuera del servidor, una restauración hecha de verdad, y la base guarda sola la versión anterior de cada fila que se toca.
 
+**T05, T06 y T07 se posponen hasta después del corte (2026-11-23).** Protegen datos que todavía no están en el servidor. Hecha la restauración y puesto el portón, lo que falta para que la aplicación se use es el login propio (F17) y traer los datos (F19).
+
 **Se adelanta sobre F17 por decisión de Gustavo (2026-11-23).** Es independiente del login propio, y así la red existe **antes** de que haya algo que perder y antes de las dos etapas donde se puede romper algo: la autenticación nueva (F17) y la importación (F19).
 
 **El agujero que la justifica:** `scripts/respaldo.sh` y `scripts/restaurar.sh` se citan en `CLAUDE.md` y en el README —incluido el procedimiento de migración, «respaldo primero»— y **nunca se escribieron**. Hoy ese primer paso fallaría.
@@ -348,11 +350,15 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Baja por un archivo temporal y lo renombra recién al final, así una bajada cortada no deja un archivo con el nombre bueno y el contenido malo. En la PC no hay retención: se acumula todo.*
   *Acá se comprueba el tamaño y la firma `PGDMP`: abrir el dump y contar sus tablas ya lo hizo el servidor, y repetirlo exigiría instalar Postgres en Windows.*
 
-- [ ] **F18-T03 · La restauración, probada**
+- [~] **F18-T03 · La restauración, probada**
   **Tipo:** QA
   **Hacer:** `scripts/restaurar.sh` de un comando, y **ejecutarlo de verdad** sobre una base vacía a partir del dump de la noche anterior.
   **Aceptación:** · la base restaurada tiene las mismas filas que la original, tabla por tabla · la aplicación levanta contra ella y el tablero muestra los mismos números · **el procedimiento quedó escrito y ejecutado, no sólo escrito**.
   *Esta es la tarea que justifica toda la mudanza. Un respaldo que nunca se restauró no es un respaldo.*
+  *`scripts/restaurar.sh`. Restaura en `epic_wallet_restaurado`, una base aparte que crea y pisa; para la base real hace falta `--sobre-la-real` **y** escribir su nombre a mano.*
+  *Lo que decide si salió bien no es el código de `pg_restore` —que avisa de cosas que no son errores— sino **contar las filas de cada tabla** contra el origen. Si una sola difiere, falla.*
+  *Ejecutada de verdad el 2026-11-23 con una cuenta de QA de 40 movimientos: 11 de 11 tablas iguales, y la aplicación levantó contra la base restaurada (`/api/health` → `connected`). La cuenta y la base de prueba se borraron al terminar.*
+  *Tres negativas probadas: apuntar a la base real sin el permiso, un dump truncado —que además **no llega a borrar la base de destino**, porque se verifica antes—, y restaurar un respaldo viejo sobre un origen con 5 filas nuevas, que marca `transactions 45 vs 40 <- DIFIERE` y falla.*
 
 - [ ] **F18-T04 · El portón: no se migra sin respaldo fresco**
   **Tipo:** Base
