@@ -247,15 +247,20 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** `alembic upgrade head` sobre una base vacía deja el esquema completo, con RLS activo, y las pruebas de aislamiento pasan.
 
-- [ ] **F16-T01 · El shim de `auth`**
+- [~] **F16-T01 · El shim de `auth`**
   **Tipo:** Base · **Ref:** `04_Migracion_a_Contabo.md`
   **Hacer:** migración nueva que crea el esquema `auth`, los roles `anon` y `authenticated`, la función `auth.uid()` —lee el mismo GUC `request.jwt.claims` que ya setea `core/db.py`— y la tabla `auth.users` (`id`, `email`, `encrypted_password`, `email_confirmed_at`, `created_at`). El rol de la aplicación recibe `grant authenticated`, sin lo cual `set local role` falla.
   **Aceptación:** · `select auth.uid()` devuelve el uuid de los claims y `null` sin claims · `profiles.id` sigue con su clave foránea en cascada · el trigger que crea el perfil y las 21 categorías sigue disparando al dar de alta un usuario.
+  *Hecho, y verificado en el servidor: sin claims devuelve nulo, con claims devuelve el uuid, y dar de alta dos cuentas creó dos perfiles y 21 categorías cada una. Las cuentas de prueba se borraron.*
+  *Va dentro de la revisión inicial, que estaba vacía, y no en una migración nueva: la segunda migración de la cadena ya declara una clave foránea contra `auth.users`, y una migración nueva sólo puede ir al final.*
+  *Dos cosas que el enunciado no tenía: `auth.users` necesita además `raw_user_meta_data` —el trigger la lee para el nombre a mostrar, y sin ella la cuenta nace sin perfil— y la tabla queda con RLS activo y forzado, para que una cuenta no pueda leer la fila ni el hash de otra.*
 
-- [ ] **F16-T02 · Las 12 migraciones, limpias, sobre Postgres puro**
+- [~] **F16-T02 · Las 12 migraciones, limpias, sobre Postgres puro**
   **Tipo:** Base
   **Hacer:** correr la cadena completa sobre una base vacía y ajustar lo mínimo que falle. Las políticas RLS **no se tocan**: si alguna hay que cambiarla, es señal de que el shim está mal.
   **Aceptación:** · `alembic upgrade head` y `downgrade base` corren sin error sobre una base vacía · las 9 tablas quedan con RLS activo y forzado · ninguna política fue modificada.
+  *Hecho. La cadena completa sube, baja y vuelve a subir. Las 9 tablas quedan con RLS activo y forzado, y hay 9 políticas. Ninguna política se tocó.*
+  *Lo único que hubo que ajustar: dos migraciones tenían `postgres` escrito a mano —el nombre del rol del proveedor anterior— y fallaban con «role postgres does not exist». Ahora leen `current_user`, que es exactamente el rol cuyos privilegios por defecto hay que cambiar.*
 
 - [ ] **F16-T03 · Las pruebas, contra la base local**
   **Tipo:** QA
