@@ -29,6 +29,7 @@ documentación vieja y **no sirve para verificar nada**.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import Annotated, Final
 
@@ -90,6 +91,56 @@ def clave_de_verificacion() -> str:
             "JWT_PUBLIC_KEY no está configurada: no hay con qué verificar las sesiones"
         )
     return clave
+
+
+# Cuánto vale un token de acceso. Una hora es el valor que ya usaba el
+# proyecto y con el que está calibrado el margen de renovación del
+# frontend. Corto a propósito: como no se puede revocar —se verifica
+# con la clave pública, sin consultar la base—, lo único que limita el
+# daño de uno robado es que venza pronto. Lo que sí se revoca es el
+# token de renovación, que vive en una tabla.
+VIGENCIA_DEL_ACCESO = 3600
+
+
+class ClaveDeFirmaError(RuntimeError):
+    """No hay `JWT_PRIVATE_KEY` configurada."""
+
+
+def clave_de_firma() -> str:
+    """La clave privada con la que se emiten las sesiones.
+
+    Es el secreto más caro del proyecto: quien la tenga puede fabricar
+    la sesión de cualquier usuario sin saber su contraseña. Vive sólo
+    en el `.env` del servidor.
+    """
+    clave = get_settings().clave_privada
+    if not clave:
+        raise ClaveDeFirmaError(
+            "JWT_PRIVATE_KEY no está configurada: no hay con qué emitir sesiones"
+        )
+    return clave
+
+
+def emitir_acceso(
+    uid: str, correo: str | None = None, vigencia: int = VIGENCIA_DEL_ACCESO
+) -> tuple[str, int]:
+    """Firma un token de acceso. Devuelve (token, segundos de vida).
+
+    Los claims son los mismos que ya verificaba `verificar()` desde
+    F02-T01 —`sub`, `aud`, `exp`, `iat`, `email`—, y eso es deliberado:
+    el resto del backend no se entera de que ahora los emitimos
+    nosotros.
+    """
+    ahora = int(time.time())
+    carga: dict[str, object] = {
+        "sub": uid,
+        "aud": AUDIENCIA,
+        "iat": ahora,
+        "exp": ahora + vigencia,
+    }
+    if correo:
+        carga["email"] = correo
+    return jwt.encode(carga, clave_de_firma(), algorithm=ALGORITMO), vigencia
 
 
 def _sin_sesion(detalle: str) -> ErrorDeApi:

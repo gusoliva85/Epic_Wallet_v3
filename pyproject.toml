@@ -17,7 +17,8 @@ dependencies = [
     "psycopg[binary]>=3.2,<4.0",
     "alembic>=1.13,<2.0",
     # --- autenticación ---
-    "PyJWT[crypto]>=2.9,<3.0",   # [crypto] para ES256: Supabase firma con claves asimétricas
+    "PyJWT[crypto]>=2.9,<3.0",   # [crypto] para ES256: las sesiones se firman con claves asimétricas
+    "bcrypt>=4.2,<5.0",          # el mismo algoritmo del proveedor anterior: sus hashes se importan tal cual
     # --- cliente HTTP (proveedores de cotizaciones) ---
     "httpx>=0.27,<1.0",
     # --- servidor ASGI ---

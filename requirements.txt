@@ -21,6 +21,10 @@ alembic>=1.13,<2.0
 
 # --- autenticación ---
 PyJWT[crypto]>=2.9,<3.0
+# Hash de contraseñas. Es el MISMO algoritmo que usaba el proveedor
+# anterior, y no es una coincidencia: permite importar sus hashes tal
+# cual en F19 y que nadie tenga que restablecer su contraseña.
+bcrypt>=4.2,<5.0
 
 # --- cliente HTTP (proveedores de cotizaciones) ---
 httpx>=0.27,<1.0

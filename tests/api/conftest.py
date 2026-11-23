@@ -36,7 +36,11 @@ if entorno.URL_BASE:
     os.environ["DATABASE_URL"] = entorno.URL_BASE
 os.environ["DB_SCHEMA"] = entorno.ESQUEMA
 os.environ["JWT_PUBLIC_KEY"] = entorno.CLAVE_PUBLICA
-os.environ["JWT_PRIVATE_KEY"] = ""
+# Desde F17-T02 la aplicación también EMITE sesiones, así que
+# necesita la privada. Es la del par efímero que genera la batería
+# al arrancar y que vive sólo en memoria: no es la del servidor y
+# no sirve fuera de esta corrida.
+os.environ["JWT_PRIVATE_KEY"] = entorno.CLAVE_PRIVADA
 # Que no quede ninguna puerta abierta hacia afuera.
 for variable in (
     "SUPABASE_URL",

@@ -16,6 +16,7 @@ from .liability import Liability
 from .month import Month
 from .monthly_category_total import MonthlyCategoryTotal
 from .profile import Profile
+from .refresh_token import RefreshToken
 from .transaction import Transaction
 
 __all__ = [
@@ -28,6 +29,7 @@ __all__ = [
     "Month",
     "MonthlyCategoryTotal",
     "Profile",
+    "RefreshToken",
     "Transaction",
     "esquema_actual",
     "metadata",

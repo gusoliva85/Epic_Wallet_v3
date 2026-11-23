@@ -21,6 +21,7 @@ from .core.config import settings
 from .core.errors import registrar_manejadores
 from .core.security import current_user_id
 from .routers import (
+    auth,
     categories,
     dashboard,
     dues,
@@ -96,6 +97,13 @@ def crear_app() -> FastAPI:
     # `/api/health` es la ÚNICA pública: sirve para saber si el
     # despliegue vive, y pedirle una sesión para eso no tendría sentido.
     app.include_router(health.router, prefix="/api")
+
+    # `/api/auth` también es pública, y no puede no serlo: quien va a
+    # entrar todavía no tiene token. Es la única otra excepción, y cada
+    # endpoint de ahí valida por su cuenta lo que los demás dan por
+    # hecho. La excepción de la excepción es `PUT /auth/password`, que
+    # pide la sesión con su propia dependencia.
+    app.include_router(auth.router, prefix="/api")
 
     # Y todo lo demás cuelga de un enrutador que exige la sesión. La
     # dependencia está acá y no en cada endpoint a propósito: una ruta
