@@ -34,6 +34,10 @@ pytestmark = pytest.mark.api
 #   eso no tendría sentido.
 # - `/api/auth/signup`, `/login`, `/refresh`: quien los llama todavía
 #   no tiene token. No pueden no ser públicas.
+# - `/api/auth/reset`: quien llega ahí, por definición, no puede
+#   entrar. Lo que lo protege no es una sesión: el token tiene 32 bytes
+#   de azar, vale media hora, se quema al usarse y no hay forma de
+#   pedir uno desde afuera.
 # - `/api/auth/logout`: cerrar sesión tiene que terminar bien siempre,
 #   incluso con el token de acceso ya vencido. Si pidiera sesión, una
 #   sesión vencida no se podría cerrar.
@@ -46,6 +50,7 @@ PUBLICAS = {
     "/api/auth/login",
     "/api/auth/refresh",
     "/api/auth/logout",
+    "/api/auth/reset",
 }
 
 METODOS_IGNORADOS = {"head", "options"}

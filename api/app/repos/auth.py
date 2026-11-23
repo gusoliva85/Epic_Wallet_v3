@@ -233,3 +233,73 @@ def borrar_vencidas(sesion: Session, dias_de_gracia: int = 7) -> int:
         {"dias": dias_de_gracia},
     )
     return _cuantas(resultado)
+
+
+# ===================================================================
+#  password_resets · F17-T04
+# ===================================================================
+
+
+@dataclass(frozen=True)
+class Recuperacion:
+    """Una fila de `password_resets`, ya juzgada."""
+
+    id: str
+    user_id: str
+    vencido: bool
+    usado: bool
+
+    @property
+    def sirve(self) -> bool:
+        return not (self.vencido or self.usado)
+
+
+def guardar_recuperacion(sesion: Session, *, user_id: str, huella: str, vence: dt.datetime) -> None:
+    sesion.execute(
+        text(
+            "insert into password_resets (user_id, token_hash, expires_at) "
+            "values (:uid, :huella, :vence)"
+        ),
+        {"uid": user_id, "huella": huella, "vence": vence},
+    )
+
+
+def anular_recuperaciones(sesion: Session, user_id: str) -> int:
+    """Quema los enlaces anteriores de esa cuenta.
+
+    Pedir un enlace nuevo invalida el viejo. Si no, cada pedido dejaría
+    otra llave viva durante media hora, y pedir tres veces porque el
+    primero no llegó multiplicaría las puertas abiertas en vez de
+    reemplazarlas.
+    """
+    return _cuantas(
+        sesion.execute(
+            text(
+                "update password_resets set used_at = now() "
+                "where user_id = :uid and used_at is null"
+            ),
+            {"uid": user_id},
+        )
+    )
+
+
+def buscar_recuperacion(sesion: Session, huella: str) -> Recuperacion | None:
+    fila = sesion.execute(
+        text(
+            "select id::text, user_id::text, "
+            "       expires_at <= now() as vencido, "
+            "       used_at is not null as usado "
+            "from password_resets where token_hash = :huella"
+        ),
+        {"huella": huella},
+    ).first()
+    if fila is None:
+        return None
+    return Recuperacion(id=fila[0], user_id=fila[1], vencido=bool(fila[2]), usado=bool(fila[3]))
+
+
+def quemar_recuperacion(sesion: Session, id_recuperacion: str) -> None:
+    sesion.execute(
+        text("update password_resets set used_at = now() where id = :id"),
+        {"id": id_recuperacion},
+    )

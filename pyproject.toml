@@ -85,6 +85,7 @@ ignore = [
 "scripts/**" = ["T20"]           # los scripts informan por consola
 "migrations/env.py" = ["T20", "E402"]  # herramienta de consola; importa tras fijar el entorno
 "api/app/core/config.py" = ["N805"]
+"api/app/cli.py" = ["T20"]          # es una herramienta de consola: imprimir es su trabajo
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

@@ -115,6 +115,7 @@ function servidor() {
     if (url.includes("/api/auth/signup")) return responder(201, respuestaDeSesion());
     if (url.includes("/api/auth/logout")) return responder(204, null);
     if (url.includes("/api/auth/password")) return responder(200, respuestaDeSesion());
+    if (url.includes("/api/auth/reset")) return responder(200, respuestaDeSesion());
     return responder(404, { error: { code: "NOT_FOUND", message: "no configurado" } });
   };
 
@@ -570,5 +571,76 @@ describe("lo que el resto de la aplicación no tiene que saber", () => {
     for (const l of red.llamadas) {
       assert.match(l.url, /\/api\/auth\//, `salió a otro lado: ${l.url}`);
     }
+  });
+});
+
+describe("el enlace de contraseña nueva · F17-T04", () => {
+  test("tomar el enlace NO abre sesión", async () => {
+    /* El camino obvio sería «enlace → sesión → cambiar la contraseña»,
+       y es peor: dejaría una sesión viva apenas con el enlace, así que
+       quien lo intercepte entra a la cuenta aunque no cambie nada. */
+    const { auth, dom, red } = await montar();
+
+    const r = await auth.verificarEnlace("un-token-de-enlace", "recovery");
+
+    assert.equal(r.ok, true);
+    assert.equal(dom.window.localStorage.getItem(CLAVE_DE_SESION), null, "abrió sesión");
+    assert.equal(red.llamadas.length, 0, "salió a la red sin tener nada que preguntar");
+    assert.equal(auth.recuperacionEnCurso(), true);
+  });
+
+  test("un enlace vacío o de otro tipo no se toma", async () => {
+    const { auth } = await montar();
+    assert.equal((await auth.verificarEnlace("", "recovery")).ok, false);
+    assert.equal((await auth.verificarEnlace("algo", "signup")).ok, false);
+    assert.equal(auth.recuperacionEnCurso(), false);
+  });
+
+  test("después del enlace, la contraseña nueva va sin la actual", async () => {
+    const { auth, red } = await montar();
+    await auth.verificarEnlace("un-token-de-enlace", "recovery");
+
+    const r = await auth.actualizarUsuario({ password: "clave-nueva-123" });
+    assert.equal(r.ok, true);
+
+    const llamada = red.llamadas.find((l) => l.url.includes("/reset"));
+    assert.ok(llamada, "no canjeó el enlace");
+    assert.equal(llamada.cuerpo.token, "un-token-de-enlace");
+    assert.equal(llamada.cuerpo.new_password, "clave-nueva-123");
+  });
+
+  test("al canjearlo queda la sesión abierta y el enlace olvidado", async () => {
+    const { auth, dom } = await montar();
+    await auth.verificarEnlace("un-token-de-enlace", "recovery");
+    await auth.actualizarUsuario({ password: "clave-nueva-123" });
+
+    assert.ok(dom.window.localStorage.getItem(CLAVE_DE_SESION), "no dejó la sesión abierta");
+    assert.equal(auth.recuperacionEnCurso(), false);
+  });
+
+  test("un enlace que el servidor rechaza no se reintenta", async () => {
+    const red = servidor();
+    red.respuestas.set("/api/auth/reset", () => [
+      401,
+      errorDeApi("UNAUTHENTICATED", "El enlace no sirve o ya venció. Pedí uno nuevo."),
+    ]);
+    const { auth } = await montar({ red });
+    await auth.verificarEnlace("un-token-vencido", "recovery");
+
+    const r = await auth.actualizarUsuario({ password: "clave-nueva-123" });
+    assert.equal(r.ok, false);
+    assert.match(r.mensaje, /enlace/i);
+
+    // Y ya no queda nada guardado con qué volver a probar.
+    assert.equal(auth.recuperacionEnCurso(), false);
+    const segundo = await auth.actualizarUsuario({ password: "clave-nueva-123" });
+    assert.match(segundo.mensaje, /actual/i);
+  });
+
+  test("sin enlace en curso, cambiar sin la actual no sale a la red", async () => {
+    const { auth, red } = await montar({ almacenado: guardado() });
+    const r = await auth.actualizarUsuario({ password: "clave-nueva-123" });
+    assert.equal(r.ok, false);
+    assert.equal(red.llamadas.filter((l) => l.url.includes("/reset")).length, 0);
   });
 });

@@ -69,6 +69,18 @@ class Salida(_Base):
     refresh_token: str | None = Field(default=None, max_length=500)
 
 
+class Restablecimiento(_Base):
+    """El canje de un enlace de contraseña nueva.
+
+    Se llama `token` y no `token_hash` como en la URL: en la barra de
+    direcciones el nombre venía del proveedor anterior y la pantalla lo
+    lee de ahí, pero lo que viaja es el token, no su hash.
+    """
+
+    token: str = Field(..., min_length=1, max_length=500)
+    new_password: str = Field(..., min_length=1, max_length=200)
+
+
 class CambioDeClave(_Base):
     current_password: str = Field(..., min_length=1, max_length=200)
     new_password: str = Field(..., min_length=1, max_length=200)

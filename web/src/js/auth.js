@@ -339,8 +339,6 @@ export async function salir() {
  * pantalla explica el procedimiento. Que devuelva `ok` también evita
  * que la respuesta diga si ese correo tiene cuenta.
  *
- * F17-T04 le da el endpoint que le falta.
- *
  * @param {string} _email
  * @param {string} [_volverA]
  * @returns {Promise<{ok: true}>}
@@ -367,14 +365,28 @@ export async function actualizarUsuario(cambios) {
   if (!cambios?.password) {
     return { ok: false, mensaje: MENSAJES.generico };
   }
+  // Sin la contraseña actual, el único camino legítimo es el enlace de
+  // recuperación. Si hay uno en curso se canjea; si no, no hay con qué.
   if (!cambios.actual) {
-    // Es el camino del enlace de recuperación, que todavía no existe.
-    // Decirlo así —y no «algo no funcionó»— es lo que evita que alguien
-    // pierda media hora buscando una falla que es una tarea pendiente.
-    return {
-      ok: false,
-      mensaje: "Para cambiar la contraseña hace falta la actual.",
-    };
+    const enlace = tokenDeRecuperacion();
+    if (!enlace) {
+      return {
+        ok: false,
+        mensaje: "Para cambiar la contraseña hace falta la actual.",
+      };
+    }
+    try {
+      const datos = await pedir("/reset", {
+        token: enlace,
+        new_password: cambios.password,
+      });
+      // El enlace ya se quemó del otro lado: no se reintenta.
+      olvidarRecuperacion();
+      return abrir(datos);
+    } catch (e) {
+      olvidarRecuperacion();
+      return falla(e);
+    }
   }
   try {
     const datos = await pedir(
@@ -407,6 +419,11 @@ export async function actualizarUsuario(cambios) {
    marca muere con la pestaña, no queda esperando semanas. */
 const CLAVE_DE_RECUPERACION = "epic-wallet-recuperacion";
 
+/* El token del enlace, mientras dura el flujo. Va al lado de la marca
+   y en el mismo `sessionStorage`, por los mismos motivos: muere con la
+   pestaña y sobrevive a una recarga a mitad de camino. */
+const CLAVE_DEL_TOKEN = "epic-wallet-token-recuperacion";
+
 /** Avisa que se entró por un enlace de recuperación. */
 export function marcarRecuperacion() {
   try {
@@ -430,24 +447,50 @@ export function recuperacionEnCurso() {
 export function olvidarRecuperacion() {
   try {
     globalThis.sessionStorage?.removeItem(CLAVE_DE_RECUPERACION);
+    globalThis.sessionStorage?.removeItem(CLAVE_DEL_TOKEN);
   } catch {
     // Nada que limpiar si no hay almacenamiento.
   }
 }
 
+/** El token del enlace que se está usando, o `null`. */
+function tokenDeRecuperacion() {
+  try {
+    return globalThis.sessionStorage?.getItem(CLAVE_DEL_TOKEN) || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Canjea el token de un enlace de recuperación por una sesión.
+ * Toma el token de un enlace de recuperación.
  *
- * El endpoint lo trae F17-T04. Hasta entonces devuelve el mismo error
- * que un enlace vencido, que es lo que corresponde: no hay enlace
- * válido posible todavía.
+ * **No lo canjea por una sesión, y eso es deliberado.** El camino
+ * obvio sería «enlace → sesión abierta → cambiar la contraseña», y es
+ * peor: deja una sesión viva apenas con el enlace, así que quien lo
+ * intercepte entra a la cuenta aunque no llegue a cambiar nada. Acá el
+ * enlace sólo sirve para una cosa —poner una contraseña nueva— y se
+ * gasta en esa misma petición.
  *
- * @param {string} _token
- * @param {string} [_tipo]
+ * Por eso no sale a la red: no hay nada que preguntar todavía. El
+ * token se guarda y lo usa `actualizarUsuario()`. Si no servía, se
+ * entera ahí.
+ *
+ * @param {string} token
+ * @param {string} [tipo]
  * @returns {Promise<Exito | Falla>}
  */
-export async function verificarEnlace(_token, _tipo) {
-  return { ok: false, mensaje: MENSAJES.enlace };
+export async function verificarEnlace(token, tipo = "recovery") {
+  if (!token || tipo !== "recovery") {
+    return { ok: false, mensaje: MENSAJES.enlace };
+  }
+  try {
+    globalThis.sessionStorage?.setItem(CLAVE_DEL_TOKEN, token);
+  } catch {
+    return { ok: false, mensaje: MENSAJES.enlace };
+  }
+  marcarRecuperacion();
+  return { ok: true, usuario: { id: "", email: null } };
 }
 
 /**

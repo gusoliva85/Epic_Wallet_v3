@@ -47,6 +47,14 @@ log = logging.getLogger("epic_wallet")
 # que la usa de vez en cuando sin que le pida la contraseña de nuevo.
 DIAS_DE_RENOVACION = 30
 
+# Cuánto vale un enlace de contraseña nueva.
+#
+# Media hora, y es un equilibrio real. Más corto y el enlace se vence
+# entre que Gustavo lo manda y la persona lo abre —que puede estar
+# trabajando, o con el teléfono en el bolsillo—. Más largo y una llave
+# de la cuenta queda dando vueltas en un chat durante horas.
+MINUTOS_DE_RECUPERACION = 30
+
 # El mismo texto para los dos casos. Está acá, una sola vez, para que
 # no se pueda separar sin querer en un cambio futuro.
 CREDENCIALES = "El email o la contraseña no son correctos."
@@ -261,5 +269,74 @@ def cambiar_clave(sesion: Session, user_id: str, actual: str, nueva: str) -> Ses
     repo.cambiar_clave(sesion, user_id, claves.hashear_clave(nueva))
     repo.revocar_todas_las_del_usuario(sesion, user_id, "cambió la contraseña")
     log.info("Contraseña cambiada: %s", user_id)
+
+    return _emitir(sesion, uid=usuario.id, correo=usuario.email, familia=None)
+
+
+# ===================================================================
+#  Recuperar la contraseña, sin correo · F17-T04
+# ===================================================================
+
+
+def emitir_enlace(sesion: Session, correo: str) -> str | None:
+    """Un token de un solo uso para esa cuenta, o `None` si no existe.
+
+    Devuelve `None` en vez de levantar un error porque quien llama es
+    la línea de comandos, no un endpoint: acá no hay nadie a quien
+    ocultarle si el correo existe. Gustavo, que es el único que puede
+    correr esto, necesita saber si se equivocó al escribirlo.
+
+    **No hay ningún endpoint que haga esto.** Es la diferencia con un
+    «olvidé mi contraseña» de formulario: no existe una puerta que
+    alguien de afuera pueda tocar.
+    """
+    usuario = repo.buscar_por_correo(sesion, correo)
+    if usuario is None:
+        return None
+
+    # Pedir uno nuevo quema los anteriores.
+    repo.anular_recuperaciones(sesion, usuario.id)
+
+    token = claves.generar_token_opaco()
+    repo.guardar_recuperacion(
+        sesion,
+        user_id=usuario.id,
+        huella=claves.huella(token),
+        vence=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=MINUTOS_DE_RECUPERACION),
+    )
+    log.info("Enlace de contraseña nueva emitido para %s", usuario.id)
+    return token
+
+
+def restablecer(sesion: Session, token: str, nueva: str) -> Sesion:
+    """Canjea el enlace por una contraseña nueva y una sesión.
+
+    Los tres rechazos —no existe, ya se usó, venció— dicen lo mismo.
+    Distinguirlos le contaría a quien prueba un enlace si alguna vez
+    fue válido.
+
+    Al terminar se caen **todas** las sesiones de la cuenta. Es el
+    punto: si alguien había entrado con la contraseña vieja, recuperar
+    la cuenta tiene que echarlo.
+    """
+    motivo = claves.clave_invalida(nueva)
+    if motivo:
+        raise ErrorDeApi(status.HTTP_400_BAD_REQUEST, VALIDATION_ERROR, motivo)
+
+    fila = repo.buscar_recuperacion(sesion, claves.huella(token))
+    if fila is None or not fila.sirve:
+        raise _sin_sesion("El enlace no sirve o ya venció. Pedí uno nuevo.")
+
+    usuario = repo.buscar_por_id(sesion, fila.user_id)
+    if usuario is None:
+        raise _sin_sesion("El enlace no sirve o ya venció. Pedí uno nuevo.")
+
+    # Se quema ANTES de cambiar nada: si algo falla después, el enlace
+    # igual dejó de servir. Un enlace que sobrevive a un intento es una
+    # llave que se puede volver a probar.
+    repo.quemar_recuperacion(sesion, fila.id)
+    repo.cambiar_clave(sesion, usuario.id, claves.hashear_clave(nueva))
+    repo.revocar_todas_las_del_usuario(sesion, usuario.id, "recuperó la contraseña")
+    log.info("Contraseña restablecida por enlace: %s", usuario.id)
 
     return _emitir(sesion, uid=usuario.id, correo=usuario.email, familia=None)

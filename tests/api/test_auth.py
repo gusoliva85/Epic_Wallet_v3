@@ -316,3 +316,159 @@ def test_el_token_de_renovacion_no_se_guarda_en_claro(cuenta, motor):
     assert huellas
     assert cuenta["refresh_token"] not in huellas
     assert all(len(h) == 64 for h in huellas)
+
+
+# ===================================================================
+#  Recuperar la contraseña sin correo · F17-T04
+# ===================================================================
+
+
+def _enlace_para(motor, correo: str) -> str | None:
+    """El token que imprimiría `python -m app.cli recuperar`.
+
+    Se llama al servicio y no a la línea de comandos: lo que importa
+    probar es qué emite y qué vale, no cómo se imprime.
+    """
+    from api.app.services import sesiones
+    from sqlalchemy.orm import Session
+
+    with Session(motor) as s:
+        s.execute(text("reset role"))
+        token = sesiones.emitir_enlace(s, correo)
+        s.commit()
+    return token
+
+
+def test_el_enlace_pone_una_clave_nueva_y_deja_adentro(cuenta, cliente, motor):
+    enlace = _enlace_para(motor, cuenta["correo"])
+    assert enlace
+
+    r = cliente.post("/api/auth/reset", json={"token": enlace, "new_password": "clave-nueva-123"})
+    assert r.status_code == 200, r.text
+    assert r.json()["user"]["id"] == cuenta["user"]["id"]
+
+    # Y con la nueva se entra; con la vieja, no.
+    assert (
+        cliente.post(
+            "/api/auth/login",
+            json={"email": cuenta["correo"], "password": "clave-nueva-123"},
+        ).status_code
+        == 200
+    )
+    assert (
+        cliente.post(
+            "/api/auth/login", json={"email": cuenta["correo"], "password": CLAVE}
+        ).status_code
+        == 401
+    )
+
+
+def test_el_enlace_sirve_una_sola_vez(cuenta, cliente, motor):
+    enlace = _enlace_para(motor, cuenta["correo"])
+    assert (
+        cliente.post(
+            "/api/auth/reset", json={"token": enlace, "new_password": "clave-nueva-123"}
+        ).status_code
+        == 200
+    )
+    segundo = cliente.post(
+        "/api/auth/reset", json={"token": enlace, "new_password": "otra-clave-456"}
+    )
+    assert segundo.status_code == 401
+
+
+def test_un_enlace_vencido_no_sirve(cuenta, cliente, motor):
+    """Se envejece la fila en vez de esperar media hora."""
+    enlace = _enlace_para(motor, cuenta["correo"])
+    with motor.begin() as con:
+        con.execute(text("reset role"))
+        con.execute(
+            text(
+                "update password_resets set expires_at = now() - interval '1 minute' "
+                "where user_id = :uid"
+            ),
+            {"uid": cuenta["user"]["id"]},
+        )
+    r = cliente.post("/api/auth/reset", json={"token": enlace, "new_password": "clave-nueva-123"})
+    assert r.status_code == 401
+
+
+def test_pedir_un_enlace_nuevo_quema_el_anterior(cuenta, cliente, motor):
+    """Si no, pedir tres veces porque el primero no llegó dejaría tres
+    llaves vivas en vez de reemplazarlas."""
+    primero = _enlace_para(motor, cuenta["correo"])
+    segundo = _enlace_para(motor, cuenta["correo"])
+    assert primero != segundo
+
+    assert (
+        cliente.post(
+            "/api/auth/reset", json={"token": primero, "new_password": "clave-nueva-123"}
+        ).status_code
+        == 401
+    )
+    assert (
+        cliente.post(
+            "/api/auth/reset", json={"token": segundo, "new_password": "clave-nueva-123"}
+        ).status_code
+        == 200
+    )
+
+
+def test_los_tres_rechazos_dicen_lo_mismo(cuenta, cliente, motor):
+    """«no existe», «ya se usó» y «venció» tienen que ser
+    indistinguibles: separarlos le contaría a quien prueba un enlace si
+    alguna vez fue válido."""
+    enlace = _enlace_para(motor, cuenta["correo"])
+    cliente.post("/api/auth/reset", json={"token": enlace, "new_password": "clave-nueva-123"})
+
+    usado = cliente.post(
+        "/api/auth/reset", json={"token": enlace, "new_password": "otra-clave-456"}
+    )
+    inventado = cliente.post(
+        "/api/auth/reset", json={"token": "no-existe-este", "new_password": "otra-clave-456"}
+    )
+    assert usado.json()["error"] == inventado.json()["error"]
+
+
+def test_el_enlace_corta_todas_las_sesiones_abiertas(cuenta, cliente, motor):
+    """Es el punto de recuperar una cuenta: si alguien había entrado
+    con la contraseña vieja, tiene que quedar afuera."""
+    otra = cliente.post(
+        "/api/auth/login", json={"email": cuenta["correo"], "password": CLAVE}
+    ).json()
+
+    enlace = _enlace_para(motor, cuenta["correo"])
+    cliente.post("/api/auth/reset", json={"token": enlace, "new_password": "clave-nueva-123"})
+
+    assert (
+        cliente.post("/api/auth/refresh", json={"refresh_token": otra["refresh_token"]}).status_code
+        == 401
+    )
+
+
+def test_el_enlace_tambien_exige_el_minimo_de_la_clave(cuenta, cliente, motor):
+    enlace = _enlace_para(motor, cuenta["correo"])
+    assert (
+        cliente.post("/api/auth/reset", json={"token": enlace, "new_password": "corta"}).status_code
+        == 400
+    )
+
+
+def test_no_se_emite_enlace_para_una_cuenta_que_no_existe(motor):
+    assert _enlace_para(motor, "nadie.aca@example.com") is None
+
+
+def test_el_enlace_no_se_guarda_en_claro(cuenta, motor):
+    enlace = _enlace_para(motor, cuenta["correo"])
+    with motor.begin() as con:
+        con.execute(text("reset role"))
+        huellas = [
+            f[0]
+            for f in con.execute(
+                text("select token_hash from password_resets where user_id = :uid"),
+                {"uid": cuenta["user"]["id"]},
+            ).all()
+        ]
+    assert huellas
+    assert enlace not in huellas
+    assert all(len(h) == 64 for h in huellas)

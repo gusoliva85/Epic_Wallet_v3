@@ -15,6 +15,7 @@ from .investment import Investment
 from .liability import Liability
 from .month import Month
 from .monthly_category_total import MonthlyCategoryTotal
+from .password_reset import PasswordReset
 from .profile import Profile
 from .refresh_token import RefreshToken
 from .transaction import Transaction
@@ -28,6 +29,7 @@ __all__ = [
     "Liability",
     "Month",
     "MonthlyCategoryTotal",
+    "PasswordReset",
     "Profile",
     "RefreshToken",
     "Transaction",

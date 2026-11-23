@@ -33,6 +33,7 @@ from ..schemas.auth import (
     Credenciales,
     Renovacion,
     RespuestaDeSesion,
+    Restablecimiento,
     Salida,
     UsuarioDeLaSesion,
 )
@@ -104,6 +105,23 @@ def logout(datos: Salida, db: Db) -> None:
     con la pantalla trabada y la sesión abierta.
     """
     sesiones.salir(db, datos.refresh_token)
+
+
+@router.post(
+    "/reset",
+    response_model=RespuestaDeSesion,
+    summary="Poner una contraseña nueva con un enlace",
+)
+def reset(datos: Restablecimiento, db: Db) -> RespuestaDeSesion:
+    """Canjea un enlace de un solo uso por una contraseña nueva.
+
+    Es público porque quien llega acá, por definición, no puede entrar.
+    Lo que lo protege no es una sesión: es que el token tiene 32 bytes
+    de azar, vale media hora, se quema al usarse y **no hay forma de
+    pedir uno desde afuera**. Los enlaces los emite `app.cli` dentro
+    del servidor.
+    """
+    return _respuesta(sesiones.restablecer(db, datos.token, datos.new_password))
 
 
 @router.put(
