@@ -72,7 +72,7 @@ Criterio para el futuro: *si el test falla, ¿me enteré de algo que la pantalla
 
 Hay un solo esquema, así que **una migración toca los datos reales**.
 
-> **`scripts/respaldo.sh` y `scripts/restaurar.sh` todavía no existen** —los escribe F18—. Hasta entonces el paso 1 de abajo no se puede ejecutar, y por lo tanto **no se migra la base real**. F18-T04 hace que el propio Alembic se niegue a correr sin un respaldo fresco, para que esto deje de depender de que alguien se acuerde.
+> **El paso 1 ya no es optativo.** Desde F18-T04, `migrations/env.py` se niega a migrar la base real si no hay una constancia de respaldo **verificada y de las últimas 3 horas**. El respaldo nocturno no alcanza: lo que se exige es el del momento. Para saltearlo hace falta `MIGRAR_SIN_RESPALDO=si-entiendo-el-riesgo`, que avisa fuerte y queda en el registro.
 
 ```bash
 # 1 · respaldo primero, y verificar que el archivo tiene algo adentro

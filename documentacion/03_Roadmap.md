@@ -340,7 +340,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Aprobado por Gustavo el 2026-11-23: corrió el respaldo, vio las 11 tablas verificadas y comprobó que un archivo truncado da FALLA.*
   *Falta la copia fuera del servidor: eso es F18-T02.*
 
-- [~] **F18-T02 · La copia en la PC de Gustavo**
+- [x] **F18-T02 · La copia en la PC de Gustavo**
   **Tipo:** Infra
   **Hacer:** una tarea programada de Windows que se trae el respaldo del día. **La PC tira del servidor**, no al revés: así el servidor no necesita ninguna credencial de la PC, y si la PC estuvo apagada, al volver se trae todos los pendientes. Una copia en el mismo disco que la base no es una copia.
   **Aceptación:** · el archivo del día aparece en la PC sin que nadie haga nada · se abre desde la PC · apagar la PC tres días y prenderla trae los tres.
@@ -350,7 +350,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Baja por un archivo temporal y lo renombra recién al final, así una bajada cortada no deja un archivo con el nombre bueno y el contenido malo. En la PC no hay retención: se acumula todo.*
   *Acá se comprueba el tamaño y la firma `PGDMP`: abrir el dump y contar sus tablas ya lo hizo el servidor, y repetirlo exigiría instalar Postgres en Windows.*
 
-- [~] **F18-T03 · La restauración, probada**
+- [x] **F18-T03 · La restauración, probada**
   **Tipo:** QA
   **Hacer:** `scripts/restaurar.sh` de un comando, y **ejecutarlo de verdad** sobre una base vacía a partir del dump de la noche anterior.
   **Aceptación:** · la base restaurada tiene las mismas filas que la original, tabla por tabla · la aplicación levanta contra ella y el tablero muestra los mismos números · **el procedimiento quedó escrito y ejecutado, no sólo escrito**.
@@ -360,11 +360,16 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Ejecutada de verdad el 2026-11-23 con una cuenta de QA de 40 movimientos: 11 de 11 tablas iguales, y la aplicación levantó contra la base restaurada (`/api/health` → `connected`). La cuenta y la base de prueba se borraron al terminar.*
   *Tres negativas probadas: apuntar a la base real sin el permiso, un dump truncado —que además **no llega a borrar la base de destino**, porque se verifica antes—, y restaurar un respaldo viejo sobre un origen con 5 filas nuevas, que marca `transactions 45 vs 40 <- DIFIERE` y falla.*
 
-- [ ] **F18-T04 · El portón: no se migra sin respaldo fresco**
+- [~] **F18-T04 · El portón: no se migra sin respaldo fresco**
   **Tipo:** Base
   **Hacer:** que `migrations/env.py` se niegue a correr contra la base real si no hay un respaldo verificado de las últimas horas. Hoy «respaldo primero» es una regla escrita que depende de que alguien se acuerde.
   **Aceptación:** · migrar sin respaldo fresco falla y dice por qué · con respaldo fresco corre normal · se puede saltear sólo con una variable explícita, que queda registrada.
   *Una regla que depende de la memoria de alguien no es una protección.*
+  *`migrations/env.py` llama a `exigir_respaldo()` antes de migrar en línea. El modo offline no se toca: sólo imprime SQL.*
+  *La decisión vive en `api/app/core/respaldos.py` como funciones puras, con 18 tests. La reusa `/api/health` en F18-T06.*
+  *Tres horas, no veinticuatro: con el nocturno de las 3:15 alcanzando, migrar a la noche podría perder el día entero de carga. Lo que se exige es el respaldo del momento.*
+  *La api monta `./respaldos` de **sólo lectura**: lee la constancia y no puede escribirla. Si pudiera, un error en la api declararía un respaldo inexistente y el portón dejaría pasar.*
+  *Siete casos probados en el servidor contra la base real: sin constancia, de 17 h, fresca pero no verificada → las tres se niegan; `MIGRAR_SIN_RESPALDO=si-entiendo-el-riesgo` pasa avisando por stderr; cualquier otro valor no; con respaldo recién tomado migra; y una base `_test` no pide nada.*
 
 - [ ] **F18-T05 · Registro de cambios: deshacer fila por fila**
   **Tipo:** Base

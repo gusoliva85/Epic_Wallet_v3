@@ -137,6 +137,11 @@ DB_SCHEMA=public APP_ENV=production alembic upgrade head
 curl -s https://13-140-36-93.sslip.io/api/health   # 4 · verificar
 ```
 
+El paso 1 **no se puede saltear**: desde F18-T04, Alembic se niega a migrar la
+base real si no hay una constancia verificada de las últimas 3 horas. El
+respaldo nocturno no alcanza —lo que se exige es el del momento—, y la salida
+de emergencia es `MIGRAR_SIN_RESPALDO=si-entiendo-el-riesgo`, que avisa fuerte.
+
 `DB_SCHEMA` y `APP_ENV` van explícitos a propósito: `migrations/env.py` los exige y no asume nada. Migrar es la operación destructiva del proyecto.
 
 ### Los respaldos
