@@ -210,13 +210,13 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** abrís `https://13-140-36-93.sslip.io` desde el celular y responde la aplicación, con certificado válido; Jarvis sigue levantando como antes.
 
-- [~] **F15-T01 · Base del servidor**
+- [x] **F15-T01 · Base del servidor**
   **Tipo:** Infra
   **Hacer:** 2 GB de swap con `vm.swappiness=10`; clave de despliegue **generada dentro del servidor**, para que la privada no viaje, y su pública cargada en el repositorio.
   **Aceptación:** · `swapon --show` muestra 2 GB y sobrevive a un reinicio · el servidor puede clonar el repositorio solo, sin credenciales de nadie.
   *El firewall y las actualizaciones automáticas ya estaban bien configurados: `ufw` declara 22, 80 y 443 en IPv4 e IPv6, con política `deny` de entrada, y `unattended-upgrades` está activo con los orígenes de seguridad. No hizo falta tocarlos.*
 
-- [~] **F15-T02 · Proxy de borde compartido**
+- [x] **F15-T02 · Proxy de borde compartido**
   **Tipo:** Infra
   **Hacer:** sacar Caddy del compose de Jarvis y dejarlo en `/opt/edge/` como único dueño de 80 y 443, con un archivo de sitio por proyecto en `conf.d/`. Red externa compartida; Jarvis y Epic Wallet se conectan a ella. El compose anterior de Jarvis se conserva para poder volver atrás.
   **Aceptación:** · Jarvis responde igual que antes · `https://13-140-36-93.sslip.io` da candado válido · reiniciar un proyecto no afecta al otro.
@@ -224,14 +224,14 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Corrección sobre el supuesto de partida: Jarvis **no** estaba parado, estaba corriendo. El cambio se hizo igual, con respaldo previo en `/opt/jarvis/docker-compose.yml.antes-del-borde` y unos segundos de corte.*
   *Los archivos de `/opt/edge/` no se versionan acá: son compartidos con Jarvis y este repositorio es sólo de Epic Wallet. **F18 los incluye en el respaldo.***
 
-- [~] **F15-T03 · El compose de Epic Wallet**
+- [x] **F15-T03 · El compose de Epic Wallet**
   **Tipo:** Infra
   **Hacer:** `/opt/epic-wallet/` con Postgres 17 y la API, red propia, volumen propio, **sin publicar ningún puerto al exterior** —sólo el proxy habla con ellos—. Los estáticos de `web/` los sirve Caddy. Bases separadas de Jarvis, que sigue con su Postgres 16.
   **Aceptación:** · `docker compose ps` muestra los dos contenedores sanos · `/api/health` responde a través del proxy · `ss -tlnp` no muestra Postgres escuchando afuera.
   *Hecho. Son tres servicios, no dos: `db` y `api` quedan corriendo y `web` compila el frontend al volumen que sirve el borde y termina. El `.env` del servidor fija `COMPOSE_FILE`, así que allá también alcanza con `docker compose up -d`. La contraseña de Postgres se generó dentro del servidor.*
   *La base está **vacía**: las tablas las crea F16-T02. Hasta entonces `/api/health` responde pero cualquier endpoint de datos falla.*
 
-- [~] **F15-T04 · Adaptar el backend a un servidor que no es serverless**
+- [x] **F15-T04 · Adaptar el backend a un servidor que no es serverless**
   **Tipo:** Backend
   **Hacer:** en `core/db.py`, sacar `NullPool` y `prepare_threshold=None` —existían por un pooler en modo transacción que ya no está— y poner un pool normal; corregir el aviso de `validar_coherencia` que exige el puerto del pooler. Borrar los tres archivos de despliegue heredados que lista `04_Migracion_a_Contabo.md`; el arranque pasa a ser `uvicorn` dentro del contenedor.
   **Aceptación:** · la API levanta en el servidor · `pytest` en verde · ningún archivo de despliegue del proveedor anterior queda en el repositorio.
