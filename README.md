@@ -288,6 +288,16 @@ El esquema lo crea sola la primera corrida. `TEST_DATABASE_URL` **no** cae por d
 
 El override de desarrollo publica la base en `127.0.0.1` y en ninguna otra interfaz. **El servidor no usa ese archivo:** allá la base sigue sin puertos.
 
+Para correrlas **en el servidor**, contra `epic_wallet_test`:
+
+```bash
+ssh jarvis-vps
+cd /opt/epic-wallet && ./scripts/pruebas_en_el_servidor.sh
+./scripts/pruebas_en_el_servidor.sh tests/api/test_aislamiento_f17.py -v   # una sola
+```
+
+Monta una copia del repositorio **sin el `.env`**: así el contenedor puede leer el código y, al mismo tiempo, no tiene forma de alcanzar la base real. Allá falla siempre `test_el_env_con_los_secretos_no_esta_rastreado`, que corre `git ls-files` y la imagen no tiene git; es el único rojo esperado.
+
 Se testea **lo que da un número o protege un dato**: las funciones de `services/calc.py`, el recálculo del mes, los casos borde y que una cuenta no vea los datos de otra.
 
 **No se testea** la estructura del HTML, los tokens de CSS, el contraste ni la configuración del despliegue: eso se verifica mirando la pantalla en el celular. **No hay exigencia de cobertura.** El criterio es: *si el test falla, ¿me enteré de algo que la pantalla no me hubiera mostrado?*

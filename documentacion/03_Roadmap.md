@@ -322,10 +322,17 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Los tres rechazos —no existe, ya se usó, venció— son indistinguibles.*
   *Probado en el servidor de punta a punta: el comando imprime el enlace, canjearlo cambia la clave y abre sesión, usarlo dos veces da 401, la contraseña vieja deja de servir, y un correo inexistente avisa en la consola (ahí sí: el único que puede correr esto es Gustavo, y necesita saber si se equivocó al escribirlo).*
 
-- [ ] **F17-T05 · Aislamiento entre cuentas, de punta a punta**
+- [~] **F17-T05 · Aislamiento entre cuentas, de punta a punta**
   **Tipo:** QA · **Ref:** Técnico §6.5
   **Hacer:** rehacer el barrido completo contra la autenticación nueva: con el token de una cuenta, intentar leer y escribir por identificador directo los recursos de la otra, en todos los endpoints.
   **Aceptación:** · ningún recurso ajeno es accesible, ni pasando su `id` a mano · RLS bloquea incluso salteando el filtro del endpoint · la prueba queda automatizada.
+  *`tests/api/test_aislamiento_f17.py`, 16 pruebas. Las cuentas se crean con `POST /api/auth/signup` y el token es **el que emitió el servidor**, no uno que la batería se firma a sí misma: eso es lo que F11-T04 no podía probar.*
+  *La lista de endpoints con id **se importa** de F11-T04 en vez de copiarse. Allá hay una prueba que la compara contra el esquema OpenAPI; una lista duplicada se queda vieja en silencio.*
+  *Lo que no existía antes: renovar, salir, cambiar la contraseña y canjear un enlace, cruzados entre dos cuentas. Cerrar la sesión de una no deja afuera a la otra, y un enlace de recuperación sirve para una sola cuenta.*
+  *RLS se comprueba **sin pasar por la API**: con el rol y los claims de B, se intenta leer y escribir las filas de A en las once tablas de datos de usuario, descubiertas de `information_schema` —una tabla nueva entra sola— y exigiendo `enable`, `force` y política en todas.*
+  *Se verificó rompiendo a propósito la política de `categories` en la base de pruebas: las tres pruebas de RLS fallaron, y con la política restaurada volvieron al verde. Un aislamiento en verde que no sabe fallar no prueba nada.*
+  *Lo encontró esa rotura a propósito: el intento era un `delete` y lo frenaba una clave foránea, no RLS, y el código tomaba cualquier error por «bloqueado». Ahora el intento es un `update` que no cambia nada y sólo «permiso denegado» cuenta como bloqueo.*
+  *`scripts/pruebas_en_el_servidor.sh` corre la batería en Contabo contra `epic_wallet_test`, montando una copia del repositorio sin el `.env`: desde esa corrida no hay forma de alcanzar la base real.*
 
 - [ ] **F17-T06 · La reja final**
   **Tipo:** QA
