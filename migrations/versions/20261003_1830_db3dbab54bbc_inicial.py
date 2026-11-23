@@ -109,22 +109,11 @@ def upgrade() -> None:
         """
     )
 
-    # Que una cuenta no pueda leer la fila de otra, ni su hash.
-    op.execute("alter table auth.users enable row level security;")
-    op.execute("alter table auth.users force row level security;")
-    op.execute("drop policy if exists own_user on auth.users;")
-    op.execute(
-        """
-        create policy own_user on auth.users
-          for select
-          to authenticated
-          using (id = (select auth.uid()));
-        """
-    )
-    op.execute("grant select on auth.users to authenticated;")
-
     # ---------------------------------------------------------------
     # 4 · La función que sostiene todas las políticas RLS
+    #
+    # Va ANTES del RLS de abajo: la política de `auth.users` la
+    # llama, y Postgres valida la expresión al crear la política.
     #
     # `stable` y no `volatile`: dentro de una consulta el valor no
     # cambia, así que Postgres puede evaluarla una sola vez en lugar de
@@ -148,6 +137,22 @@ def upgrade() -> None:
         """
     )
     op.execute("grant execute on function auth.uid() to anon, authenticated;")
+
+    # ---------------------------------------------------------------
+    # 5 · Que una cuenta no pueda leer la fila de otra, ni su hash
+    # ---------------------------------------------------------------
+    op.execute("alter table auth.users enable row level security;")
+    op.execute("alter table auth.users force row level security;")
+    op.execute("drop policy if exists own_user on auth.users;")
+    op.execute(
+        """
+        create policy own_user on auth.users
+          for select
+          to authenticated
+          using (id = (select auth.uid()));
+        """
+    )
+    op.execute("grant select on auth.users to authenticated;")
 
 
 def downgrade() -> None:
