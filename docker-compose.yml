@@ -56,6 +56,11 @@ services:
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-}
       PRICE_PROVIDER_ORDER: ${PRICE_PROVIDER_ORDER:-manual}
       PRICE_REFRESH_COOLDOWN_MINUTES: ${PRICE_REFRESH_COOLDOWN_MINUTES:-15}
+      # Par de claves con el que se verifican (y desde F17-T02, se
+      # firman) las sesiones. La privada no se registra en ningún lado
+      # y sólo vive en el .env del servidor, que es 0600.
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
       # Vacías hasta F17, que trae la autenticación propia. Con esto
       # vacío la aplicación levanta y se ve, pero nadie inicia sesión.
       SUPABASE_URL: ${SUPABASE_URL:-}
