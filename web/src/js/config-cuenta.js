@@ -13,15 +13,16 @@
    visible sí vive en `profiles`, así que su lectura y su escritura
    pasan por `GET`/`PATCH /api/me`, ahora a través de `api.js`.
 
-   El cambio de contraseña va en dos pasos. Supabase no pide la
-   contraseña actual para cambiarla —el token ya prueba quién sos—,
-   así que si hay que exigirla hay que verificarla a mano: primero se
-   intenta `entrar()` con la actual (el mismo camino que el login) y
-   sólo si eso funciona se llama a `actualizarUsuario()`. Es el
-   criterio de aceptación de la tarea: "con la actual equivocada no se
-   cambia nada". */
+   El cambio de contraseña va en UN paso desde F17-T03. Antes eran dos
+   —verificar la actual intentando entrar con ella, y recién después
+   cambiarla— porque el proveedor no pedía la contraseña actual: el
+   token ya probaba quién sos, así que exigirla había que hacerlo a
+   mano desde acá. Nuestro backend la pide en la misma petición, y
+   quien verifica es él. El criterio de aceptación no cambió —"con la
+   actual equivocada no se cambia nada"—, cambió dónde se sostiene:
+   ahora en el servidor, que es donde no se puede saltear. */
 
-import { usuarioActual, entrar, actualizarUsuario } from "./auth.js";
+import { usuarioActual, actualizarUsuario } from "./auth.js";
 import { conectarOjito } from "./acceso.js";
 import { toast } from "./components/toast.js";
 import { api, ApiError, cerrarSesion } from "./api.js";
@@ -221,23 +222,28 @@ async function alCambiarClave(evento) {
       return;
     }
 
-    // Paso 1: verificar la actual intentando entrar con ella. Si la
-    // sesión sigue siendo válida, `entrar()` de paso la renueva —no
-    // hace daño, es la misma cuenta—; si no, no toca la sesión que ya
-    // había y acá se corta sin llamar a `actualizarUsuario`.
-    const verificacion = await entrar(usuario.email, actual.value);
-    if (!verificacion.ok) {
-      mostrarErrorClave("La contraseña actual no es correcta.");
-      actual.focus();
-      actual.select();
-      return;
-    }
-
-    // Paso 2: recién acá se cambia.
-    const r = await actualizarUsuario({ password: nueva.value });
+    // Un solo paso desde F17-T03.
+    //
+    // Antes eran dos: primero `entrar()` con la contraseña actual para
+    // verificarla, y sólo si eso salía bien, `actualizarUsuario()`.
+    // Ahora el backend recibe las dos en la misma petición y verifica
+    // adentro, así que no queda un instante entre «verifiqué» y
+    // «cambié». El criterio de aceptación es el mismo —con la actual
+    // equivocada no se cambia nada— y lo sostiene el servidor, que es
+    // donde no se puede saltear.
+    const r = await actualizarUsuario({
+      password: nueva.value,
+      actual: actual.value,
+    });
     if (!r.ok) {
+      const esLaActual = /actual/i.test(r.mensaje);
       mostrarErrorClave(r.mensaje);
-      nueva.focus();
+      if (esLaActual) {
+        actual.focus();
+        actual.select();
+      } else {
+        nueva.focus();
+      }
       return;
     }
 

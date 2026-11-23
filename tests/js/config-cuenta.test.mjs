@@ -79,14 +79,12 @@ function htmlDeSesion() {
  * @param {object} opciones
  * @param {{id?:string, email?:string}|null} [opciones.usuario] lo que
  *   devuelve `usuarioActual()`; `null` simula sin sesión.
- * @param {(email:string, clave:string) => Promise<object>} [opciones.entrar]
  * @param {(cambios:object) => Promise<object>} [opciones.actualizarUsuario]
  * @param {() => Promise<object>} [opciones.apiGet] respuesta de `api.get("/me")`.
  * @param {(path:string, datos:object) => Promise<object>} [opciones.apiPatch]
  */
 async function montar({
   usuario = { id: "u1", email: "gustavo@example.com" },
-  entrar = async () => ({ ok: true, usuario: { id: "u1" } }),
   actualizarUsuario = async () => ({ ok: true, usuario: { id: "u1" } }),
   apiGet = async () => ({ display_name: "Gustavo" }),
   apiPatch = async () => ({ display_name: "Gustavo" }),
@@ -103,7 +101,6 @@ async function montar({
   globalThis.CustomEvent = dom.window.CustomEvent;
 
   const llamadas = {
-    entrar: [],
     actualizarUsuario: [],
     apiGet: [],
     apiPatch: [],
@@ -113,10 +110,6 @@ async function montar({
 
   globalThis.__espia = {
     usuarioActual: async () => usuario,
-    entrar: async (...a) => {
-      llamadas.entrar.push(a);
-      return entrar(...a);
-    },
     actualizarUsuario: async (...a) => {
       llamadas.actualizarUsuario.push(a);
       return actualizarUsuario(...a);
@@ -143,7 +136,7 @@ async function cargarConDobles() {
   let codigo = readFileSync(resolve(RAIZ, "web", "src", "js", "config-cuenta.js"), "utf8");
   codigo = codigo
     .replace(
-      'import { usuarioActual, entrar, actualizarUsuario } from "./auth.js";',
+      'import { usuarioActual, actualizarUsuario } from "./auth.js";',
       "const usuarioActual = (...a) => globalThis.__espia.usuarioActual(...a);\n" +
         "const entrar = (...a) => globalThis.__espia.entrar(...a);\n" +
         "const actualizarUsuario = (...a) => globalThis.__espia.actualizarUsuario(...a);",
@@ -299,10 +292,12 @@ describe("cambiar la contraseña", () => {
     $(dom, "clave-nueva2").value = nueva;
   }
 
-  test("con la actual correcta, la nueva se aplica y sirve para entrar", async () => {
-    /* "Sirve para entrar" se verifica acá por lo que SÍ se llama:
-       `actualizarUsuario({password: ...})` es la llamada real de
-       Supabase que cambia la contraseña de la cuenta. */
+  test("manda la actual y la nueva en la misma llamada", async () => {
+    /* Desde F17-T03 es UNA sola llamada. Antes eran dos —`entrar()`
+       para verificar la actual y después `actualizarUsuario()`— porque
+       el proveedor no pedía la contraseña actual. Ahora la pide el
+       backend, y mandarlas juntas elimina el instante entre
+       «verifiqué» y «cambié». */
     const { dom, llamadas } = await montar();
     await esperar(10);
     completar(dom);
@@ -310,18 +305,22 @@ describe("cambiar la contraseña", () => {
     enviar(dom, "form-clave");
     await esperar(50);
 
-    assert.equal(llamadas.entrar.length, 1, "no verificó la contraseña actual");
-    assert.deepEqual(llamadas.entrar[0], ["gustavo@example.com", "clave-vieja-123"]);
     assert.equal(llamadas.actualizarUsuario.length, 1);
-    assert.deepEqual(llamadas.actualizarUsuario[0], [{ password: "clave-nueva-456" }]);
+    assert.deepEqual(llamadas.actualizarUsuario[0], [
+      { password: "clave-nueva-456", actual: "clave-vieja-123" },
+    ]);
   });
 
   test("con la actual equivocada, no se cambia nada", async () => {
-    /* El criterio de aceptación central de la tarea: `entrar()` falla
-       y `actualizarUsuario` —la llamada que de verdad cambia algo en
-       Supabase— no se tiene que llamar ni una vez. */
+    /* El criterio de aceptación central de la tarea. Lo que cambió es
+       quién lo sostiene: ahora el servidor, que rechaza la petición.
+       La pantalla sólo tiene que mostrar el motivo y devolver el foco
+       al campo que está mal. */
     const { dom, llamadas } = await montar({
-      entrar: async () => ({ ok: false, mensaje: "El email o la contraseña no son correctos." }),
+      actualizarUsuario: async () => ({
+        ok: false,
+        mensaje: "La contraseña actual no es correcta.",
+      }),
     });
     await esperar(10);
     completar(dom);
@@ -329,8 +328,9 @@ describe("cambiar la contraseña", () => {
     enviar(dom, "form-clave");
     await esperar(50);
 
-    assert.equal(llamadas.actualizarUsuario.length, 0, "cambió la contraseña igual");
+    assert.equal(llamadas.actualizarUsuario.length, 1);
     assert.match($(dom, "clave-error").textContent, /actual.*no es correcta/i);
+    assert.equal($(dom, "clave-actual").value, "clave-vieja-123", "borró lo escrito");
   });
 
   test("al cambiar bien, borra los tres campos y avisa con un toast", async () => {
@@ -357,7 +357,11 @@ describe("cambiar la contraseña", () => {
     enviar(dom, "form-clave");
     await tick();
 
-    assert.equal(llamadas.entrar.length, 0, "verificó la actual antes de chequear que coincidan");
+    assert.equal(
+      llamadas.actualizarUsuario.length,
+      0,
+      "salió a la red antes de chequear que las nuevas coincidan",
+    );
     assert.match($(dom, "clave-error").textContent, /no coinciden/i);
   });
 
@@ -382,7 +386,7 @@ describe("cambiar la contraseña", () => {
     enviar(dom, "form-clave");
     await tick();
 
-    assert.equal(llamadas.entrar.length, 0);
+    assert.equal(llamadas.actualizarUsuario.length, 0);
     assert.match($(dom, "clave-error").textContent, /8 caracteres/);
   });
 
@@ -398,7 +402,7 @@ describe("cambiar la contraseña", () => {
 
   test("no permite envíos dobles", async () => {
     const { dom, llamadas } = await montar({
-      entrar: async () => {
+      actualizarUsuario: async () => {
         await new Promise((listo) => setTimeout(listo, 30));
         return { ok: true, usuario: { id: "u1" } };
       },
@@ -411,7 +415,11 @@ describe("cambiar la contraseña", () => {
     enviar(dom, "form-clave");
     await esperar(150);
 
-    assert.equal(llamadas.entrar.length, 1, `hubo ${llamadas.entrar.length} intentos y tenía que haber 1`);
+    assert.equal(
+      llamadas.actualizarUsuario.length,
+      1,
+      `hubo ${llamadas.actualizarUsuario.length} intentos y tenía que haber 1`,
+    );
   });
 });
 

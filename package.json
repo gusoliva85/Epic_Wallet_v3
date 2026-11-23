@@ -14,8 +14,7 @@
     "dev:tailwind": "tailwindcss -i web/src/app.css -o web/public/app.css --watch",
     "test": "node --test --test-force-exit \"tests/js/*.test.mjs\"",
     "capturas": "node scripts/capturas.mjs",
-    "config": "node scripts/generar-config.mjs",
-    "auth:vendor": "node scripts/preparar-auth.mjs"
+    "config": "node scripts/generar-config.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.0",
@@ -26,8 +25,5 @@
   },
   "engines": {
     "node": ">=20"
-  },
-  "dependencies": {
-    "@supabase/auth-js": "^2.117.2"
   }
 }
