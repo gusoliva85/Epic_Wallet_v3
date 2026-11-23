@@ -224,16 +224,20 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Corrección sobre el supuesto de partida: Jarvis **no** estaba parado, estaba corriendo. El cambio se hizo igual, con respaldo previo en `/opt/jarvis/docker-compose.yml.antes-del-borde` y unos segundos de corte.*
   *Los archivos de `/opt/edge/` no se versionan acá: son compartidos con Jarvis y este repositorio es sólo de Epic Wallet. **F18 los incluye en el respaldo.***
 
-- [ ] **F15-T03 · El compose de Epic Wallet**
+- [~] **F15-T03 · El compose de Epic Wallet**
   **Tipo:** Infra
   **Hacer:** `/opt/epic-wallet/` con Postgres 17 y la API, red propia, volumen propio, **sin publicar ningún puerto al exterior** —sólo el proxy habla con ellos—. Los estáticos de `web/` los sirve Caddy. Bases separadas de Jarvis, que sigue con su Postgres 16.
   **Aceptación:** · `docker compose ps` muestra los dos contenedores sanos · `/api/health` responde a través del proxy · `ss -tlnp` no muestra Postgres escuchando afuera.
+  *Hecho. Son tres servicios, no dos: `db` y `api` quedan corriendo y `web` compila el frontend al volumen que sirve el borde y termina. El `.env` del servidor fija `COMPOSE_FILE`, así que allá también alcanza con `docker compose up -d`. La contraseña de Postgres se generó dentro del servidor.*
+  *La base está **vacía**: las tablas las crea F16-T02. Hasta entonces `/api/health` responde pero cualquier endpoint de datos falla.*
 
-- [ ] **F15-T04 · Adaptar el backend a un servidor que no es serverless**
+- [~] **F15-T04 · Adaptar el backend a un servidor que no es serverless**
   **Tipo:** Backend
   **Hacer:** en `core/db.py`, sacar `NullPool` y `prepare_threshold=None` —existían por un pooler en modo transacción que ya no está— y poner un pool normal; corregir el aviso de `validar_coherencia` que exige el puerto del pooler. Borrar los tres archivos de despliegue heredados que lista `04_Migracion_a_Contabo.md`; el arranque pasa a ser `uvicorn` dentro del contenedor.
   **Aceptación:** · la API levanta en el servidor · `pytest` en verde · ningún archivo de despliegue del proveedor anterior queda en el repositorio.
   *Entra en el mismo commit que F15-T03, para que el proyecto nunca quede sin forma de desplegarse.*
+  *Hecho. Dos cosas que no estaban en el enunciado y hacían falta: `uvicorn` pasa a dependencia de producción —lo ponía la plataforma— y la URL del proveedor de autenticación deja de ser una variable obligatoria, para que el servidor arranque sin ella. Las cabeceras y la CSP que vivían en el archivo de despliegue de la plataforma anterior se mudaron al proxy de borde; `connect-src` ya no nombra ningún dominio ajeno.*
+  *`pytest` se corrió **sin `tests/api/`**, que todavía pega contra el servidor real: 237 unitarios y 670 de frontend en verde. La suite completa vuelve a ser exigible en F16-T03.*
 
 ---
 
