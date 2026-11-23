@@ -26,9 +26,27 @@ from tests.api.entorno import Cuenta, crear_cuenta
 
 pytestmark = pytest.mark.api
 
-# La única ruta pública, y el motivo: sirve para saber si el despliegue
-# vive, así que pedirle una sesión no tendría sentido.
-PUBLICAS = {"/api/health"}
+# Las rutas públicas, y el motivo de cada una. La lista es corta a
+# propósito y está acá, en la prueba, para que agregar una sea una
+# decisión que alguien escribe y no un descuido que nadie ve.
+#
+# - `/api/health`: dice si el despliegue vive. Pedirle una sesión para
+#   eso no tendría sentido.
+# - `/api/auth/signup`, `/login`, `/refresh`: quien los llama todavía
+#   no tiene token. No pueden no ser públicas.
+# - `/api/auth/logout`: cerrar sesión tiene que terminar bien siempre,
+#   incluso con el token de acceso ya vencido. Si pidiera sesión, una
+#   sesión vencida no se podría cerrar.
+#
+# `PUT /api/auth/password` NO está acá: pide sesión por su cuenta, y el
+# barrido de abajo lo comprueba junto con todas las demás.
+PUBLICAS = {
+    "/api/health",
+    "/api/auth/signup",
+    "/api/auth/login",
+    "/api/auth/refresh",
+    "/api/auth/logout",
+}
 
 METODOS_IGNORADOS = {"head", "options"}
 
@@ -197,14 +215,41 @@ def test_health_es_publica(cliente: TestClient) -> None:
     assert r.json()["status"] in {"ok", "degraded"}
 
 
-def test_solo_health_es_publica() -> None:
+def test_las_de_sesion_son_publicas(cliente: TestClient) -> None:
+    """Sin token tienen que contestar algo que no sea 401.
+
+    Lo que se comprueba es que **llegan al endpoint**: un 422 por
+    cuerpo vacío sirve igual que un 200. Lo que no puede pasar es que
+    el guardia del enrutador las haya atrapado, porque entonces nadie
+    podría entrar nunca.
+    """
+    for ruta in ["/api/auth/signup", "/api/auth/login", "/api/auth/refresh"]:
+        r = cliente.post(ruta, json={})
+        assert r.status_code != 401, f"{ruta} pide sesión, y nadie podría entrar"
+
+
+def test_la_lista_de_publicas_no_crecio_sin_que_nadie_lo_note() -> None:
     """Si alguien agrega otra ruta pública, que sea una decisión y no un
-    descuido: esta prueba obliga a declararla acá."""
+    descuido: esta prueba obliga a declararla arriba, con su motivo."""
     privadas = {r for r, _ in rutas_registradas() if r not in PUBLICAS}
     assert privadas, "no hay ninguna ruta privada: algo se rompió en el registro"
-    assert {"/api/health"} == PUBLICAS, (
-        "cambió la lista de rutas públicas; cada una tiene que justificarse"
+    assert {
+        "/api/health",
+        "/api/auth/signup",
+        "/api/auth/login",
+        "/api/auth/refresh",
+        "/api/auth/logout",
+    } == PUBLICAS, "cambió la lista de rutas públicas; cada una tiene que justificarse"
+
+
+def test_cambiar_la_contrasenia_no_es_publica(cliente: TestClient) -> None:
+    """Es la excepción de la excepción: vive bajo /api/auth pero exige
+    sesión por su cuenta."""
+    r = cliente.put(
+        "/api/auth/password",
+        json={"current_password": "x", "new_password": "y"},
     )
+    assert r.status_code == 401
 
 
 # --------------------------------- una ruta nueva nace protegida
