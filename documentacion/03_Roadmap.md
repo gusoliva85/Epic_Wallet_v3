@@ -334,7 +334,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Lo encontró esa rotura a propósito: el intento era un `delete` y lo frenaba una clave foránea, no RLS, y el código tomaba cualquier error por «bloqueado». Ahora el intento es un `update` que no cambia nada y sólo «permiso denegado» cuenta como bloqueo.*
   *`scripts/pruebas_en_el_servidor.sh` corre la batería en Contabo contra `epic_wallet_test`, montando una copia del repositorio sin el `.env`: desde esa corrida no hay forma de alcanzar la base real.*
 
-- [~] **F17-T06 · La reja final**
+- [x] **F17-T06 · La reja final**
   **Tipo:** QA
   **Hacer:** correr `./scripts/sin_proveedores.sh` **sin argumentos**, sobre todo el repositorio, y limpiar lo que quede: variables, dependencias, comentarios y URLs de prueba. Hasta acá sólo se exigía `--docs`, porque el código todavía dependía del proveedor anterior.
   **Aceptación:** · el verificador pasa sobre todo el repositorio · `pytest` y `npm test` en verde.
@@ -430,10 +430,16 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** usás la 3.0 todos los días y los números coinciden con los de antes.
 
-- [ ] **F19-T01 · Bajar los datos**
+- [~] **F19-T01 · Bajar los datos**
   **Tipo:** QA
   **Hacer:** `pg_dump` del esquema de datos y de la tabla de usuarios desde la versión anterior, más el `GET /api/export?format=json` como red de seguridad legible. **Sólo lectura**: no se le escribe nada.
   **Aceptación:** · los dos dumps abren y listan sus tablas · el JSON se puede leer · la versión anterior quedó exactamente como estaba.
+  *`scripts/bajar_datos_anteriores.ps1`. **Lo corre Gustavo en su máquina**, no el servidor: las credenciales de la versión anterior viven en `D:\Respaldos\Epic_Wallet\credenciales_2.0.env`, fuera de los dos repositorios, y así no tienen que viajar a ningún lado. `pg_dump` sale de la imagen oficial de Postgres por Docker; no hay nada que instalar.*
+  ***Sólo lectura, y la base lo garantiza:*** *la conexión se abre con `default_transaction_read_only=on`, así que un `INSERT`, `UPDATE` o `DELETE` que llegue por ahí lo rechaza el servidor, no el script. Si el host no acepta ese parámetro, avisa fuerte y sigue; lo único que corre son `pg_dump` y un `copy … to`.*
+  ***El detalle que haría fallar todo:*** *la `DATABASE_URL` de la aplicación apunta al pooler en modo **transacción** (6543), donde no hay sesión y `pg_dump` falla con un error que no explica por qué. El script detecta el puerto y usa 5432, el de **sesión**, con el mismo usuario y la misma clave.*
+  *Baja cuatro cosas: el esquema de datos entero, las filas de `auth.users` tal como están allá, **un CSV con las seis columnas que tiene la `auth.users` de la 3.0** —allá son unas 35, así que un restore directo no encajaría— y **los conteos de filas tabla por tabla**, que son la prueba de aceptación de T02 y hay que tomarlos antes de importar, no después.*
+  *El `encrypted_password` viaja tal cual: es un hash bcrypt y la 3.0 usa bcrypt a propósito (F17-T02), así que nadie restablece su contraseña.*
+  *El JSON legible no sale de acá: se baja desde la 2.0, Ajustes → Respaldo → Exportar JSON. Un clic y sin credenciales.*
 
 - [ ] **F19-T02 · Importar y verificar**
   **Tipo:** QA
