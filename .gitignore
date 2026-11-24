@@ -45,6 +45,13 @@ pnpm-debug.log*
 web/public/app.css
 web/public/app.css.map
 
+# ─────────────────────────────── Consultas con datos reales
+# `scripts/consultas_usuario.sql` lleva el uuid de una cuenta de verdad
+# escrito adentro. No es una credencial —no da acceso a nada—, pero es
+# el identificador de una persona y no tiene por qué estar acá.
+# Se versionó por accidente en F17-T06, con un `git add -A`.
+scripts/consultas_usuario.sql
+
 # ─────────────────────────────── Pruebas de interfaz
 /playwright-report/
 /test-results/
