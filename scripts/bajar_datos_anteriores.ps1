@@ -17,10 +17,26 @@
 #  oficial de Postgres por Docker, asi que no hay nada que
 #  instalar.
 #
+#  BAJA LAS TRES CUENTAS, NO UNA
+#  No pasa por la aplicacion: lee las tablas enteras, asi que trae las
+#  filas de Gustavo, de Nelida y de Diego juntas. El "Exportar JSON" de
+#  Ajustes -> Respaldo es otra cosa: ese pasa por la API y devuelve solo
+#  la cuenta de quien lo toca.
+#
+#  EL CORTE QUE EVITA UN ARCHIVO HUECO
+#  Las once tablas tienen `force row level security`: una fila se ve
+#  solo si la politica la deja pasar, y las politicas comparan contra
+#  `auth.uid()`, que sale del token. Una conexion de psql no tiene
+#  token. Si el usuario con el que entramos no puede saltear RLS, el
+#  dump NO da error: abre perfecto, lista las once tablas y no trae una
+#  sola fila. El script lo comprueba antes de empezar y corta, y despues
+#  vuelve a comprobarlo contando filas.
+#
 #  QUE DEJA, en D:\Respaldos\Epic_Wallet\anterior\
-#    datos_<fecha>.dump      el esquema de datos entero
+#    datos_<fecha>.dump      el esquema de datos entero, con las filas
 #    usuarios_<fecha>.dump   las filas de auth.users, tal como estan alla
 #    usuarios_<fecha>.csv    las 6 columnas que tiene NUESTRA auth.users
+#    esquema_<fecha>.sql     el esquema en texto, para comparar
 #    conteos_<fecha>.txt     cuantas filas tiene cada tabla
 #
 #  Los dos .dump son la materia prima. El .csv es lo que entra
@@ -191,6 +207,49 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host ""
 
+# ------------------------------------------------ el corte que importa
+#
+# LAS ONCE TABLAS TIENEN `force row level security`.
+#
+# Eso significa que cada fila solo se ve si la politica la deja pasar, y
+# las politicas comparan contra `auth.uid()`, que sale del token. Una
+# conexion de `psql` no tiene token: `auth.uid()` es NULL y NINGUNA
+# politica da verdadero.
+#
+# Si el usuario con el que entramos no puede saltear RLS, el resultado
+# no es un error: es un dump que abre perfecto, lista las once tablas
+# y NO TRAE UNA SOLA FILA. Se descubriria al importar, o peor, mas
+# tarde. Por eso esto corta y no avisa.
+Decir "Comprobando que este usuario vea las filas de las tres cuentas..."
+$quien = Correr "docker" ($comunes + @(
+    "psql", $conexion, "--no-psqlrc", "-At", "-F", "|", "-c",
+    "select current_user, rolsuper, rolbypassrls from pg_roles where rolname = current_user"
+))
+if ($LASTEXITCODE -ne 0) {
+    Mal "no se pudo averiguar con que permisos entramos"
+    $quien | Select-Object -Last 6 | ForEach-Object { Write-Host "      $_" }
+    exit 1
+}
+$partes = ($quien | Select-Object -First 1).Split('|')
+$soy      = $partes[0]
+$esSuper  = $partes[1] -eq 't'
+$salteaRls = $partes[2] -eq 't'
+
+if ($esSuper -or $salteaRls) {
+    Bien "entramos como '$soy', que ve todas las filas de todas las cuentas"
+} else {
+    Mal "el usuario '$soy' NO puede saltear RLS"
+    Decir ""
+    Decir "Con este usuario el dump saldria VACIO y sin dar ningun error:"
+    Decir "las tablas tienen RLS forzado y sin token ninguna fila pasa."
+    Decir ""
+    Decir "Hace falta la cadena de conexion del usuario administrador"
+    Decir "(el del panel, el mismo que usa su editor de SQL). Pasamela"
+    Decir "sin la clave y la vemos."
+    exit 1
+}
+Write-Host ""
+
 $problemas = 0
 
 function Paso {
@@ -251,9 +310,35 @@ if ($LASTEXITCODE -ne 0) {
     $problemas++
 } else {
     $csv | Set-Content -Path (Join-Path $Destino $nombreCsv) -Encoding UTF8
-    $cuantos = [math]::Max(0, ($csv | Measure-Object).Count - 1)
-    Bien "$nombreCsv - $cuantos cuenta(s)"
+    $cuantas = [math]::Max(0, ($csv | Measure-Object).Count - 1)
+    if ($cuantas -eq 0) {
+        Mal "$nombreCsv salio sin ninguna cuenta"
+        Decir "Eso no puede ser: la version anterior tiene cuentas en uso."
+        $problemas++
+    } else {
+        Bien "$nombreCsv - $cuantas cuenta(s)"
+        # Los correos, para que se vea con los ojos que estan las tres.
+        # El hash de la contrasenia es la segunda columna y NO se imprime.
+        $csv | Select-Object -Skip 1 | ForEach-Object {
+            $correo = ($_ -split ',')[1]
+            Write-Host "        - $correo"
+        }
+    }
 }
+
+# -------------------------- 6b - el esquema en texto, para comparar
+#
+# No es para restaurar: es para poder poner los dos esquemas uno al
+# lado del otro antes de importar. La 3.0 agrego tablas y pudo cambiar
+# alguna columna; si algo no encaja, conviene verlo leyendo un archivo
+# y no a mitad de un restore.
+$nombreEsquema = "esquema_$fecha.sql"
+Paso "4 - el esquema en texto (para comparar, no para restaurar)..." @(
+    "pg_dump", $conexion,
+    "--schema-only", "--no-owner", "--no-privileges",
+    "--schema=public",
+    "--file=/salida/$nombreEsquema"
+) $nombreEsquema | Out-Null
 
 # -------------------------- 7 - los conteos, ANTES de importar
 #
@@ -273,7 +358,7 @@ order by tabla
 "@
 
 $nombreConteos = "conteos_$fecha.txt"
-Decir "4 - cuantas filas tiene cada tabla..."
+Decir "5 - cuantas filas tiene cada tabla..."
 $conteos = Correr "docker" ($comunes + @("psql", $conexion, "--no-psqlrc", "-c", $sqlConteos))
 if ($LASTEXITCODE -ne 0) {
     Mal "no se pudieron contar las filas"
@@ -284,6 +369,29 @@ if ($LASTEXITCODE -ne 0) {
     Bien $nombreConteos
     Write-Host ""
     $conteos | ForEach-Object { Write-Host "      $_" }
+
+    # El control que detecta el dump vacio sin tener que abrirlo.
+    #
+    # `transactions` y `profiles` son las dos tablas que NO pueden estar
+    # en cero en un sistema que se usa todos los dias. Si vienen en cero,
+    # lo que paso es que las filas no se estan viendo --no que no existan--,
+    # y seguir seria llevarse un archivo que parece bien y esta hueco.
+    $enCero = @()
+    foreach ($linea in $conteos) {
+        if ($linea -match '^\s*(transactions|profiles|months|categories)\s*\|\s*(\d+)\s*$') {
+            if ([int]$Matches[2] -eq 0) { $enCero += $Matches[1] }
+        }
+    }
+    Write-Host ""
+    if ($enCero.Count -gt 0) {
+        Mal "estas tablas vinieron en CERO: $($enCero -join ', ')"
+        Decir "En un sistema que se usa todos los dias eso no puede pasar."
+        Decir "Lo mas probable es que las filas no se esten viendo, no que"
+        Decir "no existan. El dump que quedo no sirve: no lo importes."
+        $problemas++
+    } else {
+        Bien "las tablas principales traen filas: el dump no esta hueco"
+    }
 }
 
 # -------------------------- 8 - que los dumps de verdad abran
@@ -310,10 +418,12 @@ if ($problemas -eq 0) {
     Write-Host "  LISTO - los datos estan en $Destino" -ForegroundColor Green
     Write-Host ""
     Write-Host "  No se escribio nada en la version anterior."
-    Write-Host "  Falta el paso que no se hace desde aca: entrar a la 2.0"
-    Write-Host "  en el celular o la PC, Ajustes -> Respaldo -> Exportar"
-    Write-Host "  JSON, y guardar ese archivo en la misma carpeta. Es la"
-    Write-Host "  copia que se puede leer con los ojos si algo no cuadra."
+    Write-Host ""
+    Write-Host "  Esto trae LAS TRES CUENTAS. El 'Exportar JSON' de"
+    Write-Host "  Ajustes -> Respaldo no reemplaza a esto: ese pasa por la"
+    Write-Host "  API y devuelve solo la cuenta de quien lo toca. Sirve"
+    Write-Host "  como control aparte, para leer tus numeros con los ojos"
+    Write-Host "  y compararlos despues de importar."
 } else {
     Write-Host "  FALLA - $problemas paso(s) no salieron" -ForegroundColor Red
     Write-Host "  No se escribio nada en la version anterior."
