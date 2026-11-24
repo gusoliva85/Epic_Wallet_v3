@@ -40,8 +40,15 @@ import bcrypt
 
 # Costo de bcrypt. 12 son ~250 ms en el servidor: suficiente para que
 # probar contraseñas a mano sea inviable, y poco para que entrar no se
-# sienta lento. Es también el costo con el que vienen los hashes del
-# proveedor anterior, así que no hay que recalcular nada al importar.
+# sienta lento.
+#
+# Los hashes que vienen de la versión anterior son `$2a$` con costo
+# **10**, no 12: acá decía otra cosa y era falso. No importa, y es el
+# punto de elegir bcrypt: el costo y la variante viajan dentro del
+# propio hash, así que `verificar_clave` los lee de ahí y los verifica
+# igual. Nadie recalcula nada al importar y nadie restablece su
+# contraseña. Lo único que cambia es que una cuenta vieja se verifica
+# un poco más rápido que una nueva, hasta que cambie su contraseña.
 COSTO = 12
 
 # Mínimo de una contraseña. Ocho es lo que pedía la 2.0 y lo que dice
