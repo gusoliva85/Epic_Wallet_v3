@@ -334,10 +334,20 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Lo encontró esa rotura a propósito: el intento era un `delete` y lo frenaba una clave foránea, no RLS, y el código tomaba cualquier error por «bloqueado». Ahora el intento es un `update` que no cambia nada y sólo «permiso denegado» cuenta como bloqueo.*
   *`scripts/pruebas_en_el_servidor.sh` corre la batería en Contabo contra `epic_wallet_test`, montando una copia del repositorio sin el `.env`: desde esa corrida no hay forma de alcanzar la base real.*
 
-- [ ] **F17-T06 · La reja final**
+- [~] **F17-T06 · La reja final**
   **Tipo:** QA
   **Hacer:** correr `./scripts/sin_proveedores.sh` **sin argumentos**, sobre todo el repositorio, y limpiar lo que quede: variables, dependencias, comentarios y URLs de prueba. Hasta acá sólo se exigía `--docs`, porque el código todavía dependía del proveedor anterior.
   **Aceptación:** · el verificador pasa sobre todo el repositorio · `pytest` y `npm test` en verde.
+  *Pasa. Eran **84 archivos**. La batería del servidor queda en **569 en verde, 3 salteadas y ninguna roja** —el rojo conocido de `git` desapareció—, y 681 en JS.*
+  *Se fue el código que ya no hacía nada: los cuatro ajustes `SUPABASE_*` de `config.py` con su validador, el bloque del `.env.example`, dos variables del compose, `.vercel/` del gitignore, la dependencia que seguía viva en `package-lock.json` y `scripts/verificar_auth.py`, que verificaba la configuración del proveedor contra su proyecto real.*
+  *Y el que podía esconder una falla: las tres ramas «rate limit» de `test_alta_de_cuenta.py`. `_registrar` es local y no puede devolver eso, así que lo único que podían hacer era saltearse una prueba que falló de verdad.*
+  *`load_history.py` entra por `POST /api/auth/login` en vez del endpoint del proveedor: es lo que va a usar la importación de F19.*
+  ***`test_secretos_fuera_del_frontend.py` cuida ahora `JWT_PRIVATE_KEY` y `DATABASE_URL`.*** Cuidaba la clave de servicio del proveedor, que ya no existe. Lo que hay hoy es peor si se escapa: con la privada se fabrica la sesión de cualquier usuario, sin contraseña y sin dejar rastro. Busca por **forma** (el encabezado de un PEM, una cadena de conexión) y por **valor**, porque la forma no cubre una contraseña de base.*
+  *Un error real que destapó esa reescritura: `_del_env` buscaba el valor con `\s*` alrededor del `=`, y `\s` incluye el salto de línea. Con la variable vacía leía la línea de abajo, así que la prueba comparaba contra otro secreto.*
+  *`test_security.py` exige que la firma siga siendo **asimétrica** —ni `HS256` ni un secreto compartido en `security.py`— en lugar de nombrar una variable borrada. Es la misma protección, dicha de una forma que no caduca.*
+  *En las cinco migraciones aplicadas se reescribió **sólo la prosa**: el diff no toca una línea de DDL.*
+  *`models/supabase.py` pasó a `models/auth_users.py`: `auth.users` es nuestra desde F16-T01.*
+  *Queda una cosa a propósito, anotada en `web/src/js/enlace-correo.js`: el camino del enlace con `?code=` está **inerte**, porque la librería que hacía ese canje se fue en F17-T03. No se borró porque no abre nada —sin token no se cambia ninguna contraseña— y borrarlo es una limpieza de pantalla, no de esta tarea.*
   *Cuando esta pasa, el script y `04_Migracion_a_Contabo.md` —las dos únicas excepciones— ya no tienen razón de existir. Se borran en F19.*
 
 ---
