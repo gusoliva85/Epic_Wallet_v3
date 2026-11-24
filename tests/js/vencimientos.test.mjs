@@ -115,7 +115,7 @@ const ITEMS = [
 
 function montar(hash = "#/vencimientos") {
   const dom = new JSDOM(HTML, {
-    url: `https://epic-wallet-v2.vercel.app/${hash}`,
+    url: `https://epic-wallet.test/${hash}`,
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);
@@ -160,7 +160,7 @@ async function cargarConDobles() {
       'const EVENTO_VENCIMIENTOS = "vencimientos:alertas";',
     )
     // Lo mismo con el nombre del evento de ruta: cargar `router.js`
-    // arrastraría la sesión de Supabase.
+    // arrastraría la sesión guardada.
     .replace(
       'import { EVENTO as EVENTO_RUTA } from "./router.js";',
       'const EVENTO_RUTA = "epic:ruta";',

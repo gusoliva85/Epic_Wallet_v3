@@ -13,9 +13,9 @@ Tres cosas, y las tres importan:
    que impide que una cuenta vea los datos de otra. Sin esto, cualquier
    consulta con un token válido devolvería TODAS las filas: alcanzaría
    con crear una cuenta para ver las finanzas de los demás.
-3. El trigger de `updated_at`. Va en la base y no en la aplicación para
-   que también cambie cuando una fila se toca desde SQL o desde el
-   panel de Supabase.
+3. El trigger de `updated_at`. Va en la base y no en la aplicación
+   para que también cambie cuando una fila se toca desde SQL, sin
+   pasar por la API.
 """
 
 from collections.abc import Sequence
@@ -128,16 +128,15 @@ def upgrade() -> None:
     # falla con «permission denied for schema» antes de que RLS llegue
     # a filtrar nada.
     #
-    # En `public` Supabase ya los da solo a las tablas creadas desde su
-    # editor; una tabla creada por Alembic, y cualquier tabla en `dev`,
-    # los necesita explícitos.
+    # Una tabla creada por Alembic los necesita explícitos: no los
+    # hereda de nada.
     op.execute(f'grant usage on schema "{esquema}" to authenticated;')
     op.execute(f'grant select, insert, update, delete on "{esquema}".profiles to authenticated;')
     # `anon` NO: un visitante sin sesión no tiene nada que hacer acá.
 
     # Una sola política para las cuatro operaciones: cada uno ve y toca
-    # su fila y nada más. `auth.uid()` lo resuelve Supabase a partir del
-    # token que la aplicación propaga en cada sesión (F02-T05).
+    # su fila y nada más. `auth.uid()` lee el `sub` de los claims que
+    # la aplicación propaga en cada sesión (F02-T05).
     op.execute(
         f"""
         create policy own_profile on "{esquema}".profiles

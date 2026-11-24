@@ -36,7 +36,8 @@ import { LOGIN } from "./nav.js";
    propio o un proveedor con remitente verificado. Se decidió no
    contratar nada por ahora: a la escala del proyecto —pocos usuarios
    conocidos— quien se olvida la contraseña le escribe a quien le dio
-   la cuenta, y se la cambia a mano desde el panel de Supabase.
+   la cuenta, y le pasa un enlace de un solo uso emitido con
+   `python -m app.cli recuperar` dentro del servidor (F17-T04).
 
    Lo que se ve es, entonces, el mensaje; el formulario queda oculto.
 

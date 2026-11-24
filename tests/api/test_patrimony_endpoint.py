@@ -1,7 +1,7 @@
 """`GET /api/patrimony` · F09-T03.
 
-Se prueba contra la API real, con `TestClient` y cuentas reales de
-Supabase — mismo criterio que `test_dashboard_endpoint.py`.
+Se prueba contra la API real, con `TestClient` y cuentas reales de la
+base de pruebas — mismo criterio que `test_dashboard_endpoint.py`.
 
 Los tres criterios de aceptación de la tarea, cada uno con su prueba:
 el endpoint devuelve la composición y el total

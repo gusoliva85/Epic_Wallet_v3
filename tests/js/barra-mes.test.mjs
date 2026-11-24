@@ -6,7 +6,7 @@
    `cache-meses.js` se dobla con la técnica de `router.test.mjs`
    (reescribir la línea de `import` antes de cargar el módulo por una
    `data:` URL): así se prueba la barra sola, sin que haga falta un
-   `fetch` real ni una cuenta de Supabase. Lo que SÍ es real es el
+   `fetch` real ni una cuenta en la base. Lo que SÍ es real es el
    contrato: la API manda los meses más nuevo primero (F03-T03), así
    que las listas de prueba están ordenadas así a propósito.
 
@@ -61,7 +61,7 @@ async function cargarModulo() {
 function montarDom() {
   const dom = new JSDOM(
     `<!doctype html><html><body>${htmlDeLaBarra()}</body></html>`,
-    { url: "https://epic-wallet-v2.vercel.app/" },
+    { url: "https://epic-wallet.test/" },
   );
 
   globalThis.window = dom.window;

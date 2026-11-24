@@ -224,7 +224,7 @@ const HTML_INICIO = `<!doctype html><html><body>
 
 async function montar({ apiGet } = {}) {
   const dom = new JSDOM(HTML_INICIO, {
-    url: "https://epic-wallet-v2.vercel.app/#/inicio",
+    url: "https://epic-wallet.test/#/inicio",
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);

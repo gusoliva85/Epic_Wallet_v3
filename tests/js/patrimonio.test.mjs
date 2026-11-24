@@ -87,7 +87,7 @@ function respuestaBase() {
 
 async function montar({ apiGet } = {}) {
   const dom = new JSDOM(`<!doctype html><html><body>${htmlDePatrimonio()}</body></html>`, {
-    url: "https://epic-wallet-v2.vercel.app/#/patrimonio",
+    url: "https://epic-wallet.test/#/patrimonio",
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);

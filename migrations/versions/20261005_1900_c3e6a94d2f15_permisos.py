@@ -1,4 +1,4 @@
-"""permisos: sacarle a `anon` lo que Supabase le regala en `public`
+"""permisos: sacarle a `anon` lo que el proveedor anterior le regalaba
 
 ID de revisión: c3e6a94d2f15
 Revisión anterior: b2d5f8a31c94
@@ -9,27 +9,28 @@ Referencia: 02_Documento_Tecnico.md §6.1 · F02-T16
 Esto apareció al migrar producción y comparar los dos esquemas, y no
 estaba previsto.
 
-Supabase trae configurado, de fábrica:
+La base del proveedor anterior venía configurada, de fábrica, así:
 
     alter default privileges in schema public
       grant all on tables to anon, authenticated, service_role;
 
-Así que **toda tabla que creemos en `public` nace con todos los
-privilegios para `anon`**, el rol con el que actúa la clave anónima —la
-que viaja dentro del paquete del navegador y por lo tanto conoce
-cualquiera. En `dev` no pasa, porque ese esquema lo creamos nosotros y
-los privilegios por defecto son por esquema. De ahí que el problema
-estuviera invisible hasta tener los dos lados para comparar.
+Con eso, **toda tabla creada en `public` nacía con todos los
+privilegios para `anon`**, el rol con el que actuaba la clave pública
+—la que viajaba dentro del paquete del navegador y por lo tanto
+conocía cualquiera—. En el esquema `dev` no pasaba, porque ese lo
+creamos nosotros y los privilegios por defecto son por esquema. De ahí
+que el problema estuviera invisible hasta tener los dos lados para
+comparar.
 
-Para `profiles` y `categories` RLS lo tapa: están con `force` y las
+Para `profiles` y `categories` RLS lo tapaba: están con `force` y las
 políticas comparan contra `auth.uid()`, que sin sesión es nulo, así que
 ninguna fila pasa. Pero que el único muro sea RLS no es aceptable
 cuando no cuesta nada tener dos.
 
 Y había un agujero de verdad: **`alembic_version` no tiene RLS**, y
 `anon` tenía `DELETE`, `UPDATE` y `TRUNCATE` sobre ella. Esa tabla
-queda expuesta por la API REST de Supabase como cualquier otra de
-`public`, así que con la clave anónima se podía borrar la revisión de
+quedaba expuesta por la API REST del proveedor como cualquier otra de
+`public`, así que con la clave pública se podía borrar la revisión de
 migraciones de producción. No hay datos ahí, pero el siguiente
 despliegue intentaría correr todo de nuevo sobre tablas que ya existen
 y fallaría.
@@ -43,13 +44,18 @@ Qué hace esta migración:
    que vengan no vuelvan a nacer abiertas. Esto es lo que hace que el
    arreglo no haya que repetirlo en cada migración.
 
-`service_role` se deja como está: es el rol administrativo de Supabase,
-su clave nunca sale del servidor y varias funciones del panel lo
-necesitan. Es la única diferencia aceptada entre los dos esquemas y está
-anotada en el comparador.
+`service_role` se dejó como estaba: era el rol administrativo del
+proveedor, su clave no salía del servidor y varias de sus funciones lo
+necesitaban.
 
 En `dev` casi todo esto es un no-op —ahí `anon` nunca tuvo nada—, y eso
 es bueno: la migración corre igual en los dos lados y los deja iguales.
+
+**Qué queda de esto hoy.** Los roles `anon`, `authenticated` y
+`service_role` son nuestros desde F16-T01 y la base es nuestra, así que
+el regalo de fábrica ya no existe. Lo que esta migración dejó puesto
+sigue valiendo igual: `anon` sin nada, `authenticated` con los cuatro
+permisos justos, y los privilegios por defecto cerrados.
 """
 
 from collections.abc import Sequence
@@ -155,8 +161,8 @@ def downgrade() -> None:
 
     Lo que esta migración creó son los privilegios por defecto; eso se
     deshace. Los permisos que `anon` tenía en `public` no los creó
-    ninguna migración: eran el efecto de los privilegios por defecto de
-    Supabase sobre las tablas que ya existían. Volver atrás restituye la
+    ninguna migración: eran el efecto de los privilegios por defecto
+    que traía el proveedor anterior sobre las tablas que ya existían. Volver atrás restituye la
     regla, y si alguien quiere además los permisos viejos sobre las
     tablas viejas, los da a mano sabiendo lo que hace.
     """

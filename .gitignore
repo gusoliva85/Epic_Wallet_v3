@@ -45,10 +45,6 @@ pnpm-debug.log*
 web/public/app.css
 web/public/app.css.map
 
-# ─────────────────────────────── Vercel
-.vercel/
-.now/
-
 # ─────────────────────────────── Pruebas de interfaz
 /playwright-report/
 /test-results/

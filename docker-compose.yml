@@ -65,10 +65,6 @@ services:
       # y sólo vive en el .env del servidor, que es 0600.
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
-      # Vacías hasta F17, que trae la autenticación propia. Con esto
-      # vacío la aplicación levanta y se ve, pero nadie inicia sesión.
-      SUPABASE_URL: ${SUPABASE_URL:-}
-      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
       # Dónde buscar la constancia del último respaldo. La leen el
       # portón de las migraciones (F18-T04) y /api/health (F18-T06).
       RESPALDOS_DIR: /respaldos

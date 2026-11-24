@@ -1,7 +1,7 @@
 """`GET /api/dashboard` · F05-T04.
 
-Se prueba contra la API real, con `TestClient` y cuentas reales de
-Supabase — mismo criterio que `test_transactions_endpoints.py`.
+Se prueba contra la API real, con `TestClient` y cuentas reales de la
+base de pruebas — mismo criterio que `test_transactions_endpoints.py`.
 
 Los tres criterios de aceptación de la tarea, cada uno con su prueba:
 una sola petición trae todo (`test_una_cuenta_nueva_trae_todo_en_cero`,

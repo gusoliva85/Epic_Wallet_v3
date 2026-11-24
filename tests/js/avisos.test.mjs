@@ -28,7 +28,7 @@ async function montar() {
       <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
     </body></html>`,
     {
-      url: "https://epic-wallet-v2.vercel.app/",
+      url: "https://epic-wallet.test/",
       runScripts: "dangerously",
       pretendToBeVisual: true,
     },

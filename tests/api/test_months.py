@@ -1,6 +1,6 @@
 """Repositorio y servicio de meses · F03-T03.
 
-Se prueba contra Postgres real, con cuentas reales de Supabase —mismo
+Se prueba contra Postgres real, con cuentas reales de la base de pruebas —mismo
 criterio que `test_me.py`—, pero sin pasar por HTTP: todavía no existe
 el endpoint (F03-T05), así que se llama al repositorio y al servicio
 directamente con una `Session` de `db.sesion_de_usuario(uid)`, que es
@@ -46,8 +46,10 @@ def db():
 
 @pytest.fixture(scope="module")
 def cuentas(motor) -> Iterator[tuple[str, str]]:
-    """Dos cuentas para todo el módulo, no una por prueba: el límite
-    de registro de Supabase corta si se crean demasiadas seguidas."""
+    """Dos cuentas para todo el módulo, no una por prueba. El motivo
+    original fue un límite de altas del proveedor anterior; ese límite
+    ya no existe, pero el alcance se conserva porque crear una cuenta
+    por prueba no aporta nada y alarga la corrida."""
     a = _crear_cuenta()
     b = _crear_cuenta()
     yield a, b

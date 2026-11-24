@@ -290,7 +290,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *El par se generó **dentro del servidor** y la privada no salió de ahí. `scripts/generar_claves.py` queda para rehacerlo; imprime en pantalla y no escribe archivos, para que nadie termine con una copia olvidada en su disco.*
   *Se adelanta a F16-T03, que no podía terminarse antes: las pruebas de API necesitan firmar sus propios tokens, y hasta acá el backend sólo aceptaba los de un emisor ajeno.*
 
-- [~] **F17-T02 · Los endpoints de sesión**
+- [x] **F17-T02 · Los endpoints de sesión**
   **Tipo:** Backend
   **Hacer:** `signup`, `login`, `refresh`, `logout` y `cambiar-clave` bajo `/api/auth`. Contraseñas con bcrypt —el mismo algoritmo que usa el proveedor anterior, que es lo que permite importar los hashes sin que nadie resetee nada—. Token de acceso de una hora; token de renovación rotatorio, guardado hasheado, de 30 días. Los mensajes de error **no distinguen** «no existe el usuario» de «contraseña equivocada», ni acá ni en el registro.
   **Aceptación:** · se crea una cuenta y entra · la cuenta nueva aparece con su tablero vacío y sus 21 categorías · un token de renovación usado dos veces se rechaza · ningún mensaje revela si un email tiene cuenta.
@@ -300,7 +300,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *bcrypt a propósito, que es lo que usaba el proveedor anterior: sus hashes entran tal cual en F19 y nadie restablece su contraseña.*
   *Un error que encontró la prueba y no el diseño: el 401 por token repetido revertía la transacción y deshacía la revocación. La respuesta decía 401 y la sesión robada seguía viva.*
 
-- [~] **F17-T03 · `auth.js` nuevo**
+- [x] **F17-T03 · `auth.js` nuevo**
   **Tipo:** Frontend · **Ref:** Técnico §8.7
   **Hacer:** reemplazar la librería del proveedor conservando **la misma superficie pública del módulo**, para que las otras 50 pantallas no se enteren. Las tres cosas que daba la librería y hay que sostener: renovación silenciosa antes del vencimiento, **una sola renovación en vuelo** aunque lleguen dos peticiones juntas, y sincronía entre pestañas por el evento `storage`.
   **Aceptación:** · entrar, salir y recargar funcionan en el celular · dejar la aplicación dormida una hora y volver no pide entrar de nuevo · cerrar sesión en una pestaña cierra la otra · dos peticiones simultáneas con el token vencido disparan una sola renovación.
@@ -308,10 +308,10 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *La renovación única en vuelo dejó de ser una optimización y pasó a ser obligatoria: con tokens rotatorios, dos renovaciones simultáneas hacen que el servidor tome la segunda por robada y corte la sesión. Abrir dos pantallas a la vez cerraría la sesión.*
   *Sin red **no** se borra la sesión: el token de renovación sigue siendo bueno y lo único que pasó es que alguien entró al subte.*
   *El cambio de contraseña pasa a ser una sola petición. Antes la pantalla verificaba la actual con `entrar()` y después cambiaba, con un instante en el medio; ahora las dos van juntas y verifica el servidor.*
-  *Se fueron del repositorio `@supabase/auth-js`, `web/src/js/vendor/auth-js.js` y `scripts/preparar-auth.mjs`.*
+  *Se fueron del repositorio la dependencia del proveedor, su copia en `web/src/js/vendor/` y el script que la traía.*
   *Queda para T04 el camino del enlace de recuperación (`verificarEnlace`), y para T06 `scripts/generar-config.mjs`, que todavía escribe un `config.js` con la URL del proveedor aunque nadie lo lea.*
 
-- [~] **F17-T04 · Recuperar la contraseña sin correo**
+- [x] **F17-T04 · Recuperar la contraseña sin correo**
   **Tipo:** Backend · **Ref:** General §48.1
   **Hacer:** `python -m app.cli recuperar <email>` imprime un link de un solo uso, válido 30 minutos, contra la pantalla `#/nueva-clave` **que ya existe**. El link se entrega a mano. El token se guarda hasheado y se quema al usarse.
   **Aceptación:** · el link abre la pantalla y permite poner una contraseña nueva · usarlo dos veces falla · a los 31 minutos falla · cambiar la contraseña desde Ajustes sigue pidiendo la actual.
@@ -322,7 +322,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Los tres rechazos —no existe, ya se usó, venció— son indistinguibles.*
   *Probado en el servidor de punta a punta: el comando imprime el enlace, canjearlo cambia la clave y abre sesión, usarlo dos veces da 401, la contraseña vieja deja de servir, y un correo inexistente avisa en la consola (ahí sí: el único que puede correr esto es Gustavo, y necesita saber si se equivocó al escribirlo).*
 
-- [~] **F17-T05 · Aislamiento entre cuentas, de punta a punta**
+- [x] **F17-T05 · Aislamiento entre cuentas, de punta a punta**
   **Tipo:** QA · **Ref:** Técnico §6.5
   **Hacer:** rehacer el barrido completo contra la autenticación nueva: con el token de una cuenta, intentar leer y escribir por identificador directo los recursos de la otra, en todos los endpoints.
   **Aceptación:** · ningún recurso ajeno es accesible, ni pasando su `id` a mano · RLS bloquea incluso salteando el filtro del endpoint · la prueba queda automatizada.

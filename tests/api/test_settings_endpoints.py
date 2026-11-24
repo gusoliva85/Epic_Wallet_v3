@@ -1,6 +1,6 @@
 """`GET` y `PUT /api/settings` · F11-T01.
 
-Se prueba contra la API real, con cuentas reales de Supabase — mismo
+Se prueba contra la API real, con cuentas reales de la base de pruebas — mismo
 criterio que `test_investments_endpoints.py`.
 
 Los criterios de aceptación, cada uno con su prueba: sin preferencia

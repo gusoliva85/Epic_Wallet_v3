@@ -8,9 +8,9 @@
 
    QUÉ CAMBIÓ EN F17-T03
 
-   Antes esto envolvía `@supabase/auth-js`, que hablaba con un servidor
-   del proveedor. Ahora habla con `/api/auth`, que es nuestro, y la
-   librería se fue del proyecto.
+   Antes esto envolvía la librería del proveedor anterior, que hablaba
+   con un servidor ajeno. Ahora habla con `/api/auth`, que es nuestro,
+   y la librería se fue del proyecto.
 
    **La superficie pública del módulo no cambió.** Las mismas funciones
    con los mismos nombres y las mismas formas de respuesta, para que

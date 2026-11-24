@@ -6,7 +6,7 @@ un token válido devolvería todas las filas, y alcanzaría con crear una
 cuenta para ver las finanzas de los demás.
 
 No se simula nada. Se corre contra Postgres de verdad, fijando los
-claims del token igual que hace Supabase: `auth.uid()` lee
+claims del token igual que los pone la aplicación: `auth.uid()` lee
 `request.jwt.claims->>'sub'`, así que poniendo ese valor se reproduce
 exactamente lo que va a pasar en producción.
 
@@ -96,8 +96,8 @@ def dos_usuarios(motor: Engine) -> Iterator[tuple[str, str]]:
     """Dos perfiles de cuentas distintas, y los borra al terminar.
 
     Se apoyan en usuarios que ya existen en `auth.users`: la clave
-    foránea lo exige, y crear usuarios de Supabase desde SQL no es algo
-    que haya que hacer desde una prueba.
+    foránea lo exige, y los crea `crear_cuenta()`, que es el único
+    lugar de la batería que da de alta cuentas.
     """
     ids = _dos_cuentas_descartables(motor)
 
@@ -125,8 +125,8 @@ def dos_usuarios(motor: Engine) -> Iterator[tuple[str, str]]:
 def _como(con: Any, uid: str) -> None:
     """Deja la conexión hablando como ese usuario.
 
-    Es lo mismo que hace Supabase al propagar el token: el rol pasa a
-    `authenticated` y `auth.uid()` lee el `sub` de los claims.
+    Es lo mismo que hace `core/db.py` al atender una petición: el rol
+    pasa a `authenticated` y `auth.uid()` lee el `sub` de los claims.
     """
     con.execute(text("set local role authenticated"))
     con.execute(
@@ -307,7 +307,7 @@ def test_la_politica_se_llama_own_profile_y_cubre_todo(motor: Engine) -> None:
 @sin_base
 def test_updated_at_se_actualiza_solo(motor: Engine, dos_usuarios: tuple[str, str]) -> None:
     """Va en la base y no en la aplicación: así también cambia cuando
-    una fila se toca desde SQL o desde el panel de Supabase."""
+    una fila se toca desde SQL, sin pasar por la API."""
     a, _ = dos_usuarios
 
     with lectura(motor) as con:

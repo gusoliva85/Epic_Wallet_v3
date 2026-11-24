@@ -16,7 +16,7 @@ más directa de "identificador a mano" sea justamente **intentar
 colarlo**: mandarlo en el cuerpo de un `PATCH` y comprobar que ni
 siquiera se procesa.
 
-Se prueba contra la API real, con cuentas reales de Supabase — mismo
+Se prueba contra la API real, con cuentas reales de la base de pruebas — mismo
 criterio que `test_me.py`: no hay dobles, lo que se verifica es que el
 camino entero (token, RLS, consulta) sostenga el aislamiento aunque un
 endpoint no filtrara explícitamente por `user_id` (como de hecho no lo
@@ -51,9 +51,10 @@ pytestmark = pytest.mark.api
 
 @pytest.fixture(scope="module")
 def cuentas(motor) -> Iterator[tuple[Cuenta, Cuenta]]:
-    """Dos cuentas reales para todo el módulo — no una por prueba: el
-    límite de registro de Supabase corta si se crean demasiadas
-    seguidas (ya pasó una vez, ver `test_me.py`)."""
+    """Dos cuentas para todo el módulo, no una por prueba. El motivo
+    original fue un límite de altas del proveedor anterior; ese límite
+    ya no existe, pero el alcance se conserva porque crear una cuenta
+    por prueba no aporta nada y alarga la corrida."""
     a = _crear_cuenta()
     b = _crear_cuenta()
     yield a, b

@@ -22,8 +22,7 @@ RAIZ = Path(__file__).resolve().parents[2]
 def _recargar_con(monkeypatch: pytest.MonkeyPatch, **entorno: str) -> object:
     """Recarga la configuración y main con un entorno dado."""
     base = {
-        "DATABASE_URL": "postgresql+psycopg://u:p@h.pooler.supabase.com:6543/postgres",
-        "SUPABASE_URL": "https://x.supabase.co",
+        "DATABASE_URL": "postgresql+psycopg://u:p@db:5432/epic_wallet",
     }
     for clave, valor in {**base, **entorno}.items():
         monkeypatch.setenv(clave, valor)
@@ -51,7 +50,7 @@ def test_aborta_si_el_esquema_queda_vacio(monkeypatch: pytest.MonkeyPatch) -> No
 
     `DB_SCHEMA` tiene 'public' por defecto, así que para llegar acá hay
     que vaciarla a propósito. Es lo que pasaría con la variable cargada
-    en blanco en Vercel.
+    en blanco en el `.env` del servidor.
     """
     main = _recargar_con(monkeypatch, APP_ENV="production", DB_SCHEMA="")
     with pytest.raises(SystemExit) as salida:

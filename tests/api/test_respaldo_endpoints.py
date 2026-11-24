@@ -1,6 +1,6 @@
 """`GET /api/export` y `POST /api/import` · F11-T02.
 
-Se prueba contra la API real, con cuentas reales de Supabase — mismo
+Se prueba contra la API real, con cuentas reales de la base de pruebas — mismo
 criterio que `test_investments_endpoints.py`.
 
 El criterio de aceptación que importa más, "se restaura el respaldo en

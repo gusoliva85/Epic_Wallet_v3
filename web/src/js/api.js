@@ -30,8 +30,8 @@ import { LOGIN } from "./nav.js";
  * El backend casi siempre manda su propio `message` ya en español
  * (Técnico §9.3): "La suma de las categorías no coincide...", "No se
  * encontró el recurso.". Estos son el resguardo para lo que no pasa
- * por ese camino: un 401/403/500 que arma el servidor de Vercel antes
- * de llegar a FastAPI, o una respuesta sin cuerpo JSON. */
+ * por ese camino: un 401/403/500 que arma el proxy de borde antes de
+ * llegar a FastAPI, o una respuesta sin cuerpo JSON. */
 const MENSAJES = {
   VALIDATION_ERROR: "Los datos no son válidos.",
   UNAUTHENTICATED: "Tu sesión venció. Volvé a entrar.",

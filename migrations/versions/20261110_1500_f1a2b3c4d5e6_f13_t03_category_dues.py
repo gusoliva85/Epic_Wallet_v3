@@ -19,7 +19,8 @@ Los datos cargados no se ven afectados de ninguna manera.
 vencimiento, y es lo que hace que `PUT /api/dues/{category_id}` sea un
 upsert sin carreras. Los dos `check` repiten los límites que ya valida
 el esquema de la API, a propósito: la API se puede saltear (la clave
-publicable de Supabase llega a Postgres), la restricción no.
+publicable del proveedor anterior llegaba a Postgres), la restricción
+no.
 """
 
 from collections.abc import Sequence

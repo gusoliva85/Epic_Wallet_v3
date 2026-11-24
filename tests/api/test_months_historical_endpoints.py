@@ -1,6 +1,6 @@
 """`POST /api/months/historical` y `PATCH /api/months/{id}` · F08-T03.
 
-Se prueba contra la API real, con cuentas reales de Supabase y sus
+Se prueba contra la API real, con cuentas reales de la base de pruebas y sus
 tokens reales — mismo criterio que `test_months_endpoints.py`.
 
 Los tres criterios de aceptación de la tarea, cada uno con su prueba:

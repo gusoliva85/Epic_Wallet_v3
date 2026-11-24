@@ -22,8 +22,9 @@ red y, peor, que entrar a la aplicación dependiera de que un servicio
 ajeno respondiera. Ahora la clave está en el proceso: la verificación
 no sale a internet.
 
-`SUPABASE_JWT_SECRET` sigue en la configuración como resto de la
-documentación vieja y **no sirve para verificar nada**.
+La firma se mantiene **asimétrica** a propósito: con un secreto
+compartido, cualquiera que lo tenga puede fabricar sesiones, no sólo
+verificarlas. Acá el que verifica sólo tiene la pública.
 """
 
 from __future__ import annotations

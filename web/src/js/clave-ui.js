@@ -14,7 +14,7 @@
    de 8 caracteres, que lo chequea cada pantalla en su `alEnviar` —y el
    servidor otra vez, que es el que manda. */
 
-/** El mínimo que exige Supabase (Técnico §8.9). La interfaz lo repite
+/** El mínimo que exige el servidor (Técnico §8.9). La interfaz lo repite
  * para no gastar una vuelta de red en un error que ya se sabe. */
 export const MINIMO_CLAVE = 8;
 

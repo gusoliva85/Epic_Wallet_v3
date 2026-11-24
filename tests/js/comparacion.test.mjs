@@ -90,7 +90,7 @@ const HISTORIAL = {
 
 function montar() {
   const dom = new JSDOM(HTML, {
-    url: "https://epic-wallet-v2.vercel.app/#/movimientos",
+    url: "https://epic-wallet.test/#/movimientos",
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);

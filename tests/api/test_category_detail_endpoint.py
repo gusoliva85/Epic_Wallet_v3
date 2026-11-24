@@ -1,6 +1,6 @@
 """`GET /api/categories/{id}/detail` · F07-T01.
 
-Se prueba contra la API real, con cuentas reales de Supabase — mismo
+Se prueba contra la API real, con cuentas reales de la base de pruebas — mismo
 criterio que `test_dashboard_endpoint.py` y `test_months_endpoints.py`.
 
 Los tres criterios de aceptación de la tarea que le tocan a este

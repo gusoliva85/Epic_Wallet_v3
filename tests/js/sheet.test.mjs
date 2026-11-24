@@ -37,7 +37,7 @@ async function montar() {
         <button id="ultimo" type="button" data-cerrar>Cerrar</button>
       </aside>
     </body></html>`,
-    { url: "https://epic-wallet-v2.vercel.app/", pretendToBeVisual: true },
+    { url: "https://epic-wallet.test/", pretendToBeVisual: true },
   );
 
   globalThis.window = dom.window;

@@ -77,8 +77,10 @@ def _hoy() -> dt.date:
 
 @pytest.fixture(scope="module")
 def cuentas(motor) -> Iterator[tuple[Cuenta, Cuenta]]:
-    """Dos cuentas para todo el módulo: el límite de registro de
-    Supabase corta si se crean muchas seguidas."""
+    """Dos cuentas para todo el módulo, no una por prueba. El motivo
+    original fue un límite de altas del proveedor anterior; ese límite
+    ya no existe, pero el alcance se conserva porque crear una cuenta
+    por prueba no aporta nada y alarga la corrida."""
     a = _crear_cuenta()
     b = _crear_cuenta()
     yield a, b

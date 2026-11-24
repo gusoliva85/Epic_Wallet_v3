@@ -19,7 +19,8 @@
 
    * **No decide si hay que mostrar la pantalla.** Eso es del enrutador
      (`#/registro`) y, cuando exista, de la guardia de F02-T12.
-   * **No sabe de Supabase.** Habla con `auth.js`, igual que `acceso.js`.
+   * **No sabe de la autenticación.** Habla con `auth.js`, igual que
+     `acceso.js`.
    * **No construye la pantalla de «revisá tu correo».** El bloque
      `#registro-confirmar` ya está en el HTML desde F02-T10; este
      archivo sólo lo muestra cuando `auth.js` devuelve
@@ -128,9 +129,12 @@ function mostrarConfirmarCorreo(email) {
 
 /** Vuelve a mandar el correo de confirmación (General §48.1.1).
  *
- * El botón queda apagado después del primer reenvío: el límite de
- * Supabase es por minuto, y dos toques seguidos darían un 429 que se
- * lee como si la aplicación estuviera fallando. Se reabre al minuto.
+ * El botón queda apagado después del primer reenvío: el límite del
+ * proveedor anterior era por minuto, y dos toques seguidos daban un 429
+ * que se lee como si la aplicación estuviera fallando. Se reabre al
+ * minuto. Hoy no hay correo de confirmación —el servidor no manda
+ * mensajes (General §48.1)—, así que este camino no se usa; se conserva
+ * entero por lo que dice el encabezado del archivo.
  */
 let reenviando = false;
 
@@ -205,9 +209,9 @@ export async function alEnviar(evento) {
     if (!r.ok) {
       mostrarError(r.mensaje);
       // Igual que en el login: el foco va al campo que conviene
-      // revisar primero, no a cualquiera. Una contraseña débil para
-      // Supabase (código que esta pantalla no replica entero del lado
-      // del cliente) señala la contraseña; cualquier otro caso —
+      // revisar primero, no a cualquiera. Una contraseña que el
+      // servidor rechaza por débil (`weak_password`, regla que esta
+      // pantalla no replica entera) señala la contraseña; cualquier otro caso —
       // incluido el email ya existente, que no se distingue del resto
       // a propósito— señala el correo, que es el dato más probable de
       // estar mal si no fue la contraseña.

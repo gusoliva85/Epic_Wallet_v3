@@ -174,9 +174,11 @@ target_metadata = Base.metadata
 def incluir_objeto(objeto, nombre, tipo, reflejado, comparado_con):
     """Decide qué entra en el autogenerate.
 
-    Se ignora todo lo que no viva en nuestro esquema: los esquemas
-    internos de Supabase (auth, storage, realtime, vault, extensions)
-    no son nuestros y no deben aparecer en una migración.
+    Se ignora todo lo que no viva en el esquema de la aplicación.
+    `auth` queda afuera a propósito: `auth.users` se crea y se cambia
+    con migraciones escritas a mano (F16-T01), y dejar que el
+    autogenerate la compare contra los modelos haría que proponga
+    borrarle columnas que el modelo no declara.
     """
     if tipo == "table":
         esquema_objeto = getattr(objeto, "schema", None)

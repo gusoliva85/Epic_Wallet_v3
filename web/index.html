@@ -64,10 +64,9 @@
 
     <!-- Sin bundler (CLAUDE.md), cada módulo es su propio pedido: el
      navegador descubre un import recién cuando termina de parsear el
-     que lo trae, así que una dependencia honda —como el cliente de
-     Supabase Auth, que varias pantallas importan a través de dos o
-     tres niveles— se pedía varios viajes de ida y vuelta después de
-     lo necesario. Estos adelantan el pedido de lo que SÍ hace falta
+     que lo trae, así que una dependencia honda —una que varias
+     pantallas importan a través de dos o tres niveles— se pide varios
+     viajes de ida y vuelta después de lo necesario. Estos adelantan el pedido de lo que SÍ hace falta
      en (casi) cualquier ruta, en paralelo con el resto. -->
     <link rel="modulepreload" href="/src/js/router.js" />
     <link rel="modulepreload" href="/src/js/nav.js" />
@@ -82,11 +81,6 @@
      scripts en línea. -->
     <script src="/src/js/tema.js"></script>
 
-    <!-- La configuración de Supabase, que el build genera a partir del
-     entorno (scripts/generar-config.mjs). Va antes de los módulos y sin
-     `defer` porque `auth.js` la lee al crear el cliente. La clave que
-     contiene es la publicable: es pública por diseño, no da acceso a
-     nada por sí sola porque del otro lado está RLS. -->
   </head>
   <body>
     <div class="app">

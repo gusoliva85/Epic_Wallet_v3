@@ -1,6 +1,6 @@
 """`GET`, `POST`, `PATCH` y `DELETE /api/categories` · F03-T08.
 
-Se prueba contra la API real, con cuentas reales de Supabase —mismo
+Se prueba contra la API real, con cuentas reales de la base de pruebas —mismo
 criterio que `test_me.py` y `test_months_endpoints.py`—.
 
 Los tres criterios de aceptación de la tarea, cada uno con su prueba:

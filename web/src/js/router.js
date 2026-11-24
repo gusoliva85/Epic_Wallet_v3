@@ -7,8 +7,8 @@
 
    Por qué hash y no History API con rutas de verdad: con rutas reales
    (`/movimientos`) el servidor tiene que devolver index.html en cada
-   una o una recarga da 404. En Vercel eso es una regla de reescritura
-   más que mantener, y no compra nada acá: la aplicación es una sola
+   una o una recarga da 404. Eso es una regla de reescritura más que
+   mantener en el proxy de borde, y no compra nada acá: la aplicación es una sola
    pantalla y el hash ya da historial, «atrás» y enlaces que se pueden
    guardar.
 

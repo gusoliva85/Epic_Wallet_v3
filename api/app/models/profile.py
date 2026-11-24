@@ -2,15 +2,18 @@
 
 Referencia: 02_Documento_Tecnico.md §6.2
 
-`profiles` extiende `auth.users`, la tabla que maneja Supabase: la
-identidad —correo, contraseña, confirmación— vive allá y acá sólo lo
-que es de la aplicación. La clave primaria **es** el uuid de
-`auth.users`, no una propia: así no hay dos identificadores del mismo
-usuario que puedan desincronizarse.
+`profiles` extiende `auth.users`: la identidad —correo, contraseña,
+confirmación— vive ahí y acá sólo lo que es de la aplicación. La clave
+primaria **es** el uuid de `auth.users`, no una propia: así no hay dos
+identificadores del mismo usuario que puedan desincronizarse.
+
+Las dos tablas son nuestras desde F16-T01; `auth.users` está en su
+propio esquema porque así venía de la versión anterior, y se dejó ahí
+para que los datos entren sin reescribir ninguna referencia.
 
 `on delete cascade` sobre esa referencia es lo que hace que borrar una
-cuenta desde el panel de Supabase se lleve sus datos. Sin eso quedarían
-filas huérfanas apuntando a un usuario que ya no existe.
+cuenta se lleve sus datos, incluso borrándola desde SQL. Sin eso
+quedarían filas huérfanas apuntando a un usuario que ya no existe.
 
 Nota: este modelo no crea tablas. Las crea Alembic contra Postgres; acá
 sirve para consultar y para que `autogenerate` tenga con qué comparar.
@@ -33,12 +36,13 @@ ZONA_POR_DEFECTO = "America/Argentina/Buenos_Aires"
 
 
 class Profile(Base):
-    """Datos de la aplicación para un usuario de Supabase."""
+    """Datos de la aplicación para un usuario de `auth.users`."""
 
     __tablename__ = "profiles"
 
-    # La referencia cruza al esquema `auth`, que es de Supabase: Alembic
-    # no lo migra, sólo apunta.
+    # La referencia cruza al esquema `auth`. Alembic no lo compara en
+    # el autogenerate (ver `incluir_objeto` en migrations/env.py): sólo
+    # apunta.
     id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         ForeignKey("auth.users.id", ondelete="CASCADE"),

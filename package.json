@@ -1,7 +1,7 @@
 {
   "name": "epic-wallet-web",
   "version": "0.1.0",
-  "description": "Frontend de Epic Wallet 2.0 — Tailwind CSS v4 sobre los tokens del sistema Vidrio Grafito",
+  "description": "Frontend de Epic Wallet 3.0 — Tailwind CSS v4 sobre los tokens del sistema Vidrio Grafito",
   "private": true,
   "type": "module",
   "author": "Gustavo Oliva <gusoliva85@gmail.com>",

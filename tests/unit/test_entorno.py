@@ -34,7 +34,8 @@ def test_version_de_python() -> None:
 def test_dependencias_de_produccion_importan(modulo: str) -> None:
     """Las ocho dependencias de producción tienen que poder importarse.
 
-    Son las mismas que Vercel instalará desde requirements.txt.
+    Son las mismas que la imagen de la api instala desde
+    requirements.txt.
     """
     __import__(modulo)
 

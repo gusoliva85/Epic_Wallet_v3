@@ -1,7 +1,7 @@
 """`GET /api/dues`, `PUT /api/dues/{category_id}` y
 `GET /api/categories/{id}/history` · F13-T02 y F13-T03.
 
-Contra la API real y con cuentas reales de Supabase, mismo criterio que
+Contra la API real y con cuentas reales de la base de pruebas, mismo criterio que
 el resto de `tests/api/`: lo que sostiene el aislamiento es RLS, y RLS
 no existe en un doble.
 

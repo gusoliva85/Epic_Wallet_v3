@@ -29,7 +29,7 @@ async function montar() {
   const dom = new JSDOM(
     `<!doctype html><html><body><div class="rows" id="lista"></div></body></html>`,
     {
-      url: "https://epic-wallet-v2.vercel.app/",
+      url: "https://epic-wallet.test/",
       // Para que un <img onerror> inyectado SÍ pueda correr: si jsdom
       // no ejecutara nada, la prueba del escape pasaría sola.
       runScripts: "dangerously",

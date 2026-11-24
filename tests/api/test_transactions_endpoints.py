@@ -1,7 +1,7 @@
 """`GET`, `POST`, `PUT` y `DELETE /api/transactions` · F04-T06.
 
-Se prueba contra la API real, con `TestClient` y cuentas reales de
-Supabase — mismo criterio que `test_categories_endpoints.py`.
+Se prueba contra la API real, con `TestClient` y cuentas reales de la
+base de pruebas — mismo criterio que `test_categories_endpoints.py`.
 
 Los cuatro criterios de aceptación de la tarea, cada uno con su
 prueba: cada escritura devuelve los totales nuevos del mes

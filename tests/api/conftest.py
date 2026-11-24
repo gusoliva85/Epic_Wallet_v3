@@ -14,9 +14,10 @@ Dos cosas se fijan acá:
 2. `JWT_PUBLIC_KEY` pasa a ser la pública de la batería, así la
    aplicación verifica los tokens que estas pruebas firman.
 
-También se vacían las variables del proveedor anterior. No es
-cosmético: es lo que garantiza que ninguna prueba pueda alcanzarlo
-aunque alguien las deje puestas en su `.env`.
+Hasta F17-T06 acá se vaciaban además las variables del proveedor
+anterior, para que ninguna prueba pudiera alcanzarlo aunque alguien
+las dejara puestas en su `.env`. Ya no hace falta: esas variables no
+existen en ningún lado del proyecto.
 """
 
 from __future__ import annotations
@@ -41,14 +42,6 @@ os.environ["JWT_PUBLIC_KEY"] = entorno.CLAVE_PUBLICA
 # al arrancar y que vive sólo en memoria: no es la del servidor y
 # no sirve fuera de esta corrida.
 os.environ["JWT_PRIVATE_KEY"] = entorno.CLAVE_PRIVADA
-# Que no quede ninguna puerta abierta hacia afuera.
-for variable in (
-    "SUPABASE_URL",
-    "SUPABASE_ANON_KEY",
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "SUPABASE_JWT_SECRET",
-):
-    os.environ[variable] = ""
 
 
 @pytest.fixture(scope="session")

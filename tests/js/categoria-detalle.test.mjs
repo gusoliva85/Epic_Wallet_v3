@@ -146,7 +146,7 @@ async function montar({ apiGet } = {}) {
       htmlDeLaHoja() +
       `<div class="fondo-hoja" id="fondo-hoja"></div>` +
       "</body></html>",
-    { url: "https://epic-wallet-v2.vercel.app/#/inicio", pretendToBeVisual: true },
+    { url: "https://epic-wallet.test/#/inicio", pretendToBeVisual: true },
   );
   ventanas.push(dom.window);
 

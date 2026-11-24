@@ -143,7 +143,7 @@ async function montar({
     structuredClone(path === "/categories" ? CATEGORIAS : MOVIMIENTOS),
 } = {}) {
   const dom = new JSDOM(`<!doctype html><html><body>${htmlDeLaVista()}</body></html>`, {
-    url: "https://epic-wallet-v2.vercel.app/#/movimientos",
+    url: "https://epic-wallet.test/#/movimientos",
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);

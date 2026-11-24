@@ -48,8 +48,9 @@ class Perfil(BaseModel):
 class CambioDePerfil(BaseModel):
     """Lo que acepta `PATCH /api/me`.
 
-    Sólo dos campos. El correo no se toca desde acá —lo maneja Supabase
-    Auth— y el resto son datos del sistema.
+    Sólo dos campos. El correo no se toca desde acá —vive en
+    `auth.users` y lo cambia `/api/auth`— y el resto son datos del
+    sistema.
 
     Los campos ausentes no se tocan; para borrar el nombre visible hay
     que mandarlo explícitamente en `null`. Por eso se distingue «no

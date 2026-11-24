@@ -15,11 +15,15 @@ Dos cosas:
 2. La función `crear_perfil_y_categorias()` y su trigger sobre
    `auth.users`.
 
-**Por qué el trigger y no el backend:** el registro ocurre contra
-Supabase directamente, sin pasar por nuestra API. Si el perfil se
-creara en el primer acceso a `/api/...`, una cuenta podría existir sin
-perfil en el medio y habría que manejar ese estado en cada endpoint. El
-trigger lo vuelve imposible.
+**Por qué el trigger y no el backend:** cuando esto se escribió, el
+registro ocurría contra el proveedor anterior, sin pasar por nuestra
+API. Hoy el alta es `POST /api/auth/signup` y podría crear el perfil
+ella misma, pero el trigger se queda: así una fila de `auth.users`
+**no puede existir** sin su perfil y sus categorías, venga de donde
+venga —del alta, de un `insert` a mano o de la importación de F19—. Si
+el perfil se creara en el primer acceso a `/api/...`, una cuenta podría
+existir sin perfil en el medio y habría que manejar ese estado en cada
+endpoint.
 
 **El trigger lleva el esquema en el nombre.** `auth.users` es única por
 proyecto y los dos esquemas la comparten (§4.1.1), así que cuando

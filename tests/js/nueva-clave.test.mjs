@@ -16,7 +16,8 @@
    anterior—.
 
    Lo que **no** se prueba acá: que el mail llegue, que el enlace
-   venza, y que un enlace ya usado sea rechazado. Eso lo decide GoTrue
+   venza, y que un enlace ya usado sea rechazado. Eso lo decide el
+   servidor
    y se verifica contra el proyecto real; jsdom sólo puede comprobar
    qué hace esta pantalla con la respuesta que recibe. */
 
@@ -124,7 +125,7 @@ async function cargarEnlace(url, { verificacion = { ok: true } } = {}) {
   return { dom, enlace: modulo, registro, navegaciones };
 }
 
-const BASE = "https://epic-wallet-v2.vercel.app";
+const BASE = "https://epic-wallet.test";
 
 describe("el enlace del correo", () => {
   test("un token de recuperación se guarda, se marca y se saca de la URL", async () => {

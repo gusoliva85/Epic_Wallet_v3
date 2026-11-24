@@ -2,11 +2,11 @@
 
 QUÉ CAMBIÓ Y POR QUÉ
 
-Hasta F16-T03, cada uno de estos archivos leía `SUPABASE_URL` y
-`SUPABASE_ANON_KEY`, creaba sus cuentas llamando al servicio de
-registro del proveedor y conseguía los tokens de ahí. O sea: **la
-batería de pruebas le pegaba al servidor de producción con credenciales
-reales**, y las cuentas que creaba y borraba vivían ahí.
+Hasta F16-T03, cada uno de estos archivos leía las credenciales del
+proveedor anterior, creaba sus cuentas llamando a su servicio de
+registro y conseguía los tokens de ahí. O sea: **la batería de pruebas
+le pegaba al servidor de producción con credenciales reales**, y las
+cuentas que creaba y borraba vivían ahí.
 
 Eso ya no pasa. Ahora:
 

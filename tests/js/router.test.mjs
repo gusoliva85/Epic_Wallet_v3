@@ -88,7 +88,7 @@ async function montar(hash = "", { haySesion = true, recuperacion = false } = {}
     `<!doctype html><html><head><title>Epic Wallet</title></head>` +
       `<body><main>${vistas}</main></body></html>`,
     {
-      url: `https://epic-wallet-v2.vercel.app/${hash}`,
+      url: `https://epic-wallet.test/${hash}`,
       pretendToBeVisual: true,
     },
   );
@@ -424,7 +424,7 @@ async function montarConAcceso(
       `<div class="acceso-card" data-cuenta="nueva-clave" hidden></div>` +
       `</div>` +
       `</body></html>`,
-    { url: `https://epic-wallet-v2.vercel.app/${hash}`, pretendToBeVisual: true },
+    { url: `https://epic-wallet.test/${hash}`, pretendToBeVisual: true },
   );
   dom.window.scrollTo = () => {};
 

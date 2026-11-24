@@ -1,6 +1,6 @@
 """`GET /api/months` y `GET /api/months/{id}` · F03-T05.
 
-Se prueba contra la API real, con cuentas reales de Supabase y sus
+Se prueba contra la API real, con cuentas reales de la base de pruebas y sus
 tokens reales —mismo criterio que `test_me.py`—. Los meses se siembran
 llamando al repositorio directo con una sesión de usuario, no por HTTP:
 todavía no hay `POST /api/months`, así que es la única forma de tener

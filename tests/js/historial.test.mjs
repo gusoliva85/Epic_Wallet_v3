@@ -203,7 +203,7 @@ async function montar({ apiGet, apiPostHistorico = async () => ({}), apiPostCate
     `<!doctype html><html><body>${htmlDeHistorial()}${htmlDeLaHoja()}` +
     `<div class="fondo-hoja" id="fondo-hoja"></div></body></html>`;
   const dom = new JSDOM(html, {
-    url: "https://epic-wallet-v2.vercel.app/#/historial",
+    url: "https://epic-wallet.test/#/historial",
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);

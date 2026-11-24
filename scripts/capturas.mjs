@@ -18,7 +18,7 @@ import { dirname, resolve } from "node:path";
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DESTINO = resolve(RAIZ, "docs", "capturas");
 
-const BASE = process.argv[2] ?? "https://epic-wallet-v2.vercel.app";
+const BASE = process.argv[2] ?? "https://13-140-36-93.sslip.io";
 
 /* Qué se captura. El hash es el del enrutador: entrando directo, no
    hace falta simular clics para llegar a cada vista. */

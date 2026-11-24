@@ -14,7 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import computed_field, field_validator
+from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Entorno = Literal["development", "preview", "production"]
@@ -59,17 +59,6 @@ class Settings(BaseSettings):
     JWT_PRIVATE_KEY: str = ""
     JWT_PUBLIC_KEY: str = ""
 
-    # --- Supabase · en retirada ---
-    # Desde F17-T01 la verificación de tokens ya no la usa: se hace con
-    # `JWT_PUBLIC_KEY`, acá mismo y sin viaje de red. Lo que queda lo
-    # necesita el frontend viejo, hasta F17-T03.
-    SUPABASE_URL: str = ""
-    SUPABASE_ANON_KEY: str = ""
-    SUPABASE_SERVICE_ROLE_KEY: str = ""
-    # No se usa para verificar: el proyecto firma con ES256 y la clave
-    # pública se obtiene del JWKS (§8.8). Se conserva por compatibilidad.
-    SUPABASE_JWT_SECRET: str = ""
-
     # --- aplicación ---
     APP_ENV: Entorno = "development"
     APP_TIMEZONE: str = "America/Argentina/Buenos_Aires"
@@ -83,20 +72,6 @@ class Settings(BaseSettings):
 
     # --- versión, para poder identificar qué está desplegado ---
     APP_VERSION: str = "0.1.0"
-
-    @field_validator("SUPABASE_URL")
-    @classmethod
-    def sin_ruta_al_final(cls, v: str) -> str:
-        """`https://xxx.supabase.co/rest/v1/` es el error más común al copiarla."""
-        v = v.rstrip("/")
-        if ".supabase.co" in v:
-            resto = v.split(".supabase.co", 1)[1]
-            if resto:
-                raise ValueError(
-                    f"SUPABASE_URL no debe traer la ruta '{resto}': "
-                    "tiene que terminar en .supabase.co"
-                )
-        return v
 
     @computed_field  # type: ignore[prop-decorator]
     @property

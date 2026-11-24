@@ -42,8 +42,6 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-RAIZ = Path(__file__).resolve().parent.parent
-
 MESES = {
     "enero": 1,
     "febrero": 2,
@@ -161,7 +159,9 @@ def parsear_csv(texto: str, year: int) -> HistorialParseado:
             monto = parsear_monto(col_ingreso)
             actual.income_total += monto
             if not etiqueta.lower().startswith("sueldo"):
-                actual.ingresos_extra[etiqueta] = actual.ingresos_extra.get(etiqueta, Decimal("0")) + monto
+                actual.ingresos_extra[etiqueta] = (
+                    actual.ingresos_extra.get(etiqueta, Decimal("0")) + monto
+                )
 
         if col_egreso:
             monto = parsear_monto(col_egreso)
@@ -231,32 +231,22 @@ def armar_vista_previa(historial: HistorialParseado, existentes: set[str]) -> st
 # ===================================================================
 
 
-def _leer_env() -> dict[str, str]:
-    archivo = RAIZ / ".env"
-    if not archivo.exists():
-        sys.exit("falta .env — copialo de .env.example y completalo")
-    datos: dict[str, str] = {}
-    for linea in archivo.read_text(encoding="utf-8").splitlines():
-        if "=" not in linea or linea.strip().startswith("#"):
-            continue
-        clave, _, valor = linea.partition("=")
-        datos[clave.strip()] = valor.strip().strip("\"'")
-    return datos
+def _pedir_token(base_url: str) -> str:
+    """Entra por `POST /api/auth/login` y devuelve el token de acceso.
 
-
-def _pedir_token(supabase_url: str, anon_key: str) -> str:
-    print("\nEntrá con tu cuenta real de Epic Wallet (nunca se guarda la contraseña).")
+    Desde F17 la sesión la emite esta misma aplicación: el token sale
+    del servidor al que después se le va a escribir, y no hay ninguna
+    credencial de un tercero en el medio.
+    """
+    print("\nEntrá con tu cuenta de Epic Wallet (nunca se guarda la contraseña).")
     correo = input("  Email: ").strip()
     clave = getpass.getpass("  Contraseña: ")
 
     cuerpo = json.dumps({"email": correo, "password": clave}).encode()
     req = urllib.request.Request(  # noqa: S310
-        f"{supabase_url}/auth/v1/token?grant_type=password",
+        f"{base_url}/auth/login",
         data=cuerpo,
-        headers={
-            "apikey": anon_key,
-            "Content-Type": "application/json",
-        },
+        headers={"Content-Type": "application/json"},
         method="POST",
     )
     try:
@@ -264,15 +254,18 @@ def _pedir_token(supabase_url: str, anon_key: str) -> str:
             sesion = json.loads(r.read())
     except urllib.error.HTTPError as e:
         detalle = json.loads(e.read() or b"{}")
-        sys.exit(f"no se pudo iniciar sesión: {detalle.get('error_description') or detalle}")
+        mensaje = (detalle.get("error") or {}).get("message") or detalle
+        sys.exit(f"no se pudo iniciar sesión: {mensaje}")
 
     token = sesion.get("access_token")
     if not token:
-        sys.exit("Supabase no devolvió un token de acceso")
+        sys.exit("el servidor no devolvió un token de acceso")
     return str(token)
 
 
-def _api(base_url: str, token: str, metodo: str, ruta: str, cuerpo: dict[str, Any] | None = None) -> Any:
+def _api(
+    base_url: str, token: str, metodo: str, ruta: str, cuerpo: dict[str, Any] | None = None
+) -> Any:
     datos = json.dumps(cuerpo).encode() if cuerpo is not None else None
     req = urllib.request.Request(  # noqa: S310
         f"{base_url}{ruta}",
@@ -294,7 +287,9 @@ def _categorias_de_egreso(base_url: str, token: str) -> dict[str, int]:
     return {normalizar(c["name"]): c["id"] for c in categorias}
 
 
-def _asegurar_categorias(base_url: str, token: str, nombres: set[str], existentes: dict[str, int]) -> None:
+def _asegurar_categorias(
+    base_url: str, token: str, nombres: set[str], existentes: dict[str, int]
+) -> None:
     for nombre in sorted(nombres):
         if normalizar(nombre) in existentes:
             continue
@@ -316,7 +311,10 @@ def escribir(base_url: str, token: str, historial: HistorialParseado) -> None:
 
     for mes in historial.meses:
         categorias = [
-            {"category_id": existentes[normalizar(resolver_categoria(etq))], "total_amount": str(monto)}
+            {
+                "category_id": existentes[normalizar(resolver_categoria(etq))],
+                "total_amount": str(monto),
+            }
             for etq, monto in mes.categorias.items()
         ]
         cuerpo = {
@@ -339,10 +337,14 @@ def escribir(base_url: str, token: str, historial: HistorialParseado) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--csv", required=True, type=Path, help="ruta al CSV de la planilla")
-    ap.add_argument("--year", required=True, type=int, help="año al que corresponden todos los meses")
+    ap.add_argument(
+        "--year", required=True, type=int, help="año al que corresponden todos los meses"
+    )
     ap.add_argument("--base-url", default="http://localhost:8000/api", help="base de la API")
     ap.add_argument(
-        "--confirmar", action="store_true", help="escribe de verdad; sin esto sólo muestra la vista previa"
+        "--confirmar",
+        action="store_true",
+        help="escribe de verdad; sin esto sólo muestra la vista previa",
     )
     args = ap.parse_args()
 
@@ -352,13 +354,7 @@ def main() -> int:
     if not historial.meses:
         sys.exit("el CSV no tiene ningún bloque «Mes,...»")
 
-    env = _leer_env()
-    supabase_url = env.get("SUPABASE_URL", "").rstrip("/")
-    anon_key = env.get("SUPABASE_ANON_KEY", "")
-    if not supabase_url or not anon_key:
-        sys.exit("faltan SUPABASE_URL / SUPABASE_ANON_KEY en .env")
-
-    token = _pedir_token(supabase_url, anon_key)
+    token = _pedir_token(args.base_url.rstrip("/"))
     existentes = _categorias_de_egreso(args.base_url, token)
 
     print("\n" + armar_vista_previa(historial, set(existentes)) + "\n")

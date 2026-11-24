@@ -1,19 +1,23 @@
-"""Verifica la configuración de Supabase y la conexión a la base.
+"""Verifica el entorno y la conexión a la base.
 
 Uso:  python scripts/check_db.py
 
 Lee .env del directorio del proyecto y comprueba:
   1. que estén todas las variables requeridas
   2. que DATABASE_URL use el driver psycopg y el puerto de Postgres
-  3. que DB_SCHEMA sea 'public': el proyecto usa un solo esquema para
-     los tres entornos (02_Documento_Tecnico §4.1.1)
+  3. que DB_SCHEMA sea 'public': el proyecto usa un solo esquema
+     (02_Documento_Tecnico §4.1.1)
   4. que la conexión funcione, con versión de Postgres y latencia
-  5. que las claves de Supabase tengan la forma esperada
+  5. que esté el par de claves con el que se firman las sesiones
+
+**Se corre en el servidor.** En la máquina de desarrollo el .env va
+sin DATABASE_URL a propósito, así que acá va a decir que falta — y eso
+es lo correcto: desde ahí no se le habla a ninguna base real.
 
 NUNCA imprime el valor de un secreto: sólo si está presente, su
 longitud y una huella corta. Es seguro pegar su salida en un chat.
 
-Corresponde a la tarea F00-T04 del roadmap.
+Nació en F00-T04; la parte del proveedor anterior se fue en F17-T06.
 """
 
 from __future__ import annotations
@@ -184,7 +188,7 @@ def probar_conexion(url: str, esquema: str = "") -> None:
         print(f"{OK}{corto}")
         print(f"{OK}base '{base}' · usuario '{usuario}'")
         if esquemas == 2:
-            print(f"{OK}esquemas public y auth presentes (Supabase listo)")
+            print(f"{OK}esquemas public y auth presentes")
         else:
             avisos.append("no se encontraron los esquemas public y auth")
             print(f"{WARN}faltan esquemas: se esperaban public y auth")
@@ -207,39 +211,45 @@ def probar_conexion(url: str, esquema: str = "") -> None:
         print(f"        {mensaje}")
 
 
+def revisar_claves_de_sesion(env: dict[str, str]) -> None:
+    """El par ES256 con el que la aplicación firma y verifica sesiones.
+
+    La privada es el secreto más serio del proyecto: con ella se
+    fabrica la sesión de cualquier usuario. Por eso acá sólo se mira
+    que esté y qué forma tiene, nunca su valor.
+
+    Sin la privada el servidor levanta pero nadie puede entrar, así que
+    vacía es un problema, no un aviso.
+    """
+    privada = env.get("JWT_PRIVATE_KEY", "")
+    publica = env.get("JWT_PUBLIC_KEY", "")
+
+    describir_secreto("JWT_PRIVATE_KEY", privada, 200)
+    describir_secreto("JWT_PUBLIC_KEY", publica, 150)
+
+    for nombre, valor, encabezado in (
+        ("JWT_PRIVATE_KEY", privada, "-----BEGIN PRIVATE KEY-----"),
+        ("JWT_PUBLIC_KEY", publica, "-----BEGIN PUBLIC KEY-----"),
+    ):
+        if valor and encabezado not in valor:
+            problemas.append(f"{nombre} no parece un PEM: le falta «{encabezado}»")
+            print(f"{BAD}{nombre:30} no parece un PEM")
+
+    if privada and publica and privada == publica:
+        problemas.append("las dos claves son iguales: están mal copiadas")
+        print(f"{BAD}la clave privada y la pública son idénticas")
+
+
 def main() -> int:
     print("\n" + "=" * 62)
-    print("  EPIC WALLET · verificación de Supabase")
+    print("  EPIC WALLET · verificación del entorno")
     print("=" * 62)
 
     env = cargar_env()
     os.environ.update(env)
 
-    print("\n--- credenciales de Supabase ---")
-    url_supabase = env.get("SUPABASE_URL", "")
-    forma_ok = url_supabase.startswith("https://") and ".supabase.co" in url_supabase
-    resto = url_supabase.split(".supabase.co", 1)[1].strip("/") if forma_ok else ""
-    if forma_ok and not resto:
-        print(f"{OK}{'SUPABASE_URL':30} {url_supabase}")
-    elif forma_ok and resto:
-        problemas.append(
-            f"SUPABASE_URL trae la ruta '/{resto}' de más: tiene que terminar en .supabase.co"
-        )
-        print(f"{BAD}{'SUPABASE_URL':30} {url_supabase}")
-        print(f"        sacale el '/{resto}' del final")
-    else:
-        problemas.append("SUPABASE_URL no tiene la forma https://xxxx.supabase.co")
-        print(f"{BAD}{'SUPABASE_URL':30} {url_supabase or 'vacía'}")
-
-    describir_secreto("SUPABASE_ANON_KEY", env.get("SUPABASE_ANON_KEY", ""), 40)
-    describir_secreto("SUPABASE_SERVICE_ROLE_KEY", env.get("SUPABASE_SERVICE_ROLE_KEY", ""), 40)
-    describir_secreto("SUPABASE_JWT_SECRET", env.get("SUPABASE_JWT_SECRET", ""), 32)
-
-    anon = env.get("SUPABASE_ANON_KEY", "")
-    servicio = env.get("SUPABASE_SERVICE_ROLE_KEY", "")
-    if anon and servicio and anon == servicio:
-        problemas.append("la clave anónima y la de servicio son iguales: están mal copiadas")
-        print(f"{BAD}la clave anónima y la de servicio son idénticas")
+    print("\n--- claves de sesión ---")
+    revisar_claves_de_sesion(env)
 
     print("\n--- aplicación ---")
     for clave, esperado in (

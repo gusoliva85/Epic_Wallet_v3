@@ -93,7 +93,7 @@ async function montar({ descargar, apiPost } = {}) {
   const dom = new JSDOM(
     `<!doctype html><html><body>${htmlDeCopiaDeSeguridad()}${htmlDeHojaImportar()}` +
       `<div class="fondo-hoja" id="fondo-hoja"></div></body></html>`,
-    { url: "https://epic-wallet-v2.vercel.app/#/config", pretendToBeVisual: true },
+    { url: "https://epic-wallet.test/#/config", pretendToBeVisual: true },
   );
   ventanas.push(dom.window);
 

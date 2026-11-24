@@ -103,8 +103,7 @@ async def test_la_salud_no_filtra_secretos(monkeypatch: pytest.MonkeyPatch) -> N
 
     texto = r.text
     for secreto in (
-        settings.SUPABASE_SERVICE_ROLE_KEY,
-        settings.SUPABASE_JWT_SECRET,
+        settings.JWT_PRIVATE_KEY,
         settings.DATABASE_URL,
     ):
         if secreto:

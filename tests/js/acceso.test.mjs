@@ -48,17 +48,18 @@ function htmlDelAcceso() {
 /**
  * Monta la pantalla y carga `acceso.js` con un doble de `auth.js`.
  *
- * El doble es de **nuestro** módulo, no de la librería de Supabase: lo
+ * El doble es de **nuestro** módulo, no de la librería del proveedor
+ * anterior: lo
  * que se prueba acá es la pantalla, y `auth.js` ya tiene sus 29 pruebas
  * contra el cliente real. Doblar la red otra vez no agregaría nada y
- * ataría estas pruebas a la forma de las respuestas de GoTrue.
+ * ataría estas pruebas a la forma de las respuestas de `/api/auth`.
  *
  * @param {{respuesta?: object, demora?: number}} opciones
  */
 async function montar({ respuesta = { ok: true, usuario: { id: "u1" } }, demora = 0 } = {}) {
   const dom = new JSDOM(
     `<!doctype html><html><body><div class="app"></div>${htmlDelAcceso()}</body></html>`,
-    { url: "https://epic-wallet-v2.vercel.app/#/login", pretendToBeVisual: true },
+    { url: "https://epic-wallet.test/#/login", pretendToBeVisual: true },
   );
   ventanas.push(dom.window);
 

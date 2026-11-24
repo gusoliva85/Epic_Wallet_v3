@@ -5,7 +5,8 @@
 
    QUÉ SE PRUEBA ACÁ Y POR QUÉ
 
-   Hasta F17-T02 esto envolvía `@supabase/auth-js` y las pruebas
+   Hasta F17-T02 esto envolvía la librería del proveedor anterior y
+   las pruebas
    usaban la librería de verdad con la red falseada: lo que podía
    fallar era nuestra configuración, no la librería.
 
@@ -550,17 +551,10 @@ describe("la marca de recuperación", () => {
 });
 
 describe("lo que el resto de la aplicación no tiene que saber", () => {
-  test("no queda ni una mención al proveedor anterior", async () => {
-    const { readFile } = await import("node:fs/promises");
-    const fuente = await readFile(resolve(RAIZ, "web", "src", "js", "auth.js"), "utf8");
-    // Salvo en el comentario que explica qué se reemplazó, que es
-    // justamente lo que no hay que borrar.
-    const sinComentarios = fuente.replace(/\/\*[\s\S]*?\*\//g, "");
-    assert.ok(
-      !/supabase/i.test(sinComentarios),
-      "quedó código del proveedor anterior en auth.js",
-    );
-  });
+  // Acá había una prueba que leía `auth.js` y comprobaba que no
+  // nombrara al proveedor anterior. Se fue en F17-T06, cuando
+  // `./scripts/sin_proveedores.sh` empezó a correr sobre **todo** el
+  // repositorio: lo mismo, mejor hecho, y en un solo lugar.
 
   test("todas las peticiones van a nuestro /api/auth", async () => {
     const { auth, red } = await montar({ almacenado: guardado({ dentroDe: -1 }) });

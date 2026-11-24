@@ -22,7 +22,7 @@ const br = brotliCompressSync(raw).length;
 console.log(`\n  ${FILE}`);
 console.log(`  sin comprimir  ${kb(raw.length)}`);
 console.log(`  gzip           ${kb(gz)}`);
-console.log(`  brotli         ${kb(br)}   <- lo que sirve Vercel`);
+console.log(`  brotli         ${kb(br)}   <- el mejor caso comprimido`);
 console.log(`  presupuesto    ${BUDGET_KB} KB comprimido`);
 
 const used = ((br / 1024 / BUDGET_KB) * 100).toFixed(0);

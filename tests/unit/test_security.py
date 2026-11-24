@@ -126,8 +126,8 @@ def test_un_token_firmado_con_otra_clave_se_rechaza(otra_clave: Any) -> None:
 @pytest.mark.unit
 @pytest.mark.usefixtures("clave_del_proyecto")
 def test_un_token_con_otra_audiencia_se_rechaza(par_de_claves: tuple[Any, Any]) -> None:
-    """Supabase emite tokens para varias audiencias. Uno de otro uso,
-    aunque esté bien firmado por el mismo proyecto, no sirve acá."""
+    """El claim `aud` dice para qué sirve el token. Uno de otro uso,
+    aunque esté bien firmado con la clave del proyecto, no sirve acá."""
     privada, _ = par_de_claves
 
     with pytest.raises(security.ErrorDeApi):
@@ -345,16 +345,29 @@ def test_solo_se_admite_es256() -> None:
 
 
 @pytest.mark.unit
-def test_el_secreto_compartido_no_se_usa_para_verificar() -> None:
-    """`SUPABASE_JWT_SECRET` quedó en la configuración como resto de la
-    documentación vieja. Si alguien lo usara, bastaría tenerlo para
-    fabricar sesiones."""
-    fuente = __import__("pathlib").Path(security.__file__).read_text(encoding="utf-8")
+def test_no_se_verifica_con_un_secreto_compartido() -> None:
+    """La firma tiene que seguir siendo asimétrica.
+
+    Con un secreto compartido, cualquiera que lo tenga puede **firmar**
+    sesiones, no sólo verificarlas: el servidor que las valida pasa a
+    poder fabricarlas. Con ES256 el que verifica sólo tiene la pública
+    y no puede emitir nada.
+
+    Se mira el código y no el comportamiento porque el comportamiento
+    no lo distingue: un HS256 mal puesto verificaría igual de bien los
+    tokens buenos. Lo que hay que impedir es que el algoritmo cambie.
+    """
     import re
 
+    fuente = __import__("pathlib").Path(security.__file__).read_text(encoding="utf-8")
     sin_comentarios = re.sub(r'""".*?"""', "", fuente, flags=re.S)
     sin_comentarios = re.sub(r"^\s*#.*$", "", sin_comentarios, flags=re.M)
-    assert "SUPABASE_JWT_SECRET" not in sin_comentarios
+
+    assert security.ALGORITMO == "ES256"
+    for simetrico in ("HS256", "HS384", "HS512", "JWT_SECRET"):
+        assert simetrico not in sin_comentarios, (
+            f"`{simetrico}` apareció en security.py: la firma dejó de ser asimétrica"
+        )
 
 
 # -------------------------------- la dependencia, dentro de una aplicación
@@ -449,10 +462,14 @@ def test_un_token_recien_emitido_se_acepta_con_el_reloj_corrido(
 ) -> None:
     """La razón de ser de `TOLERANCIA_DE_RELOJ`.
 
-    Sin ella, un token emitido por Supabase se rechaza si el reloj del
-    servidor está aunque sea una fracción de segundo atrasado. Medido
-    contra el proyecto real: **0,2 segundos bastaban** para que la
-    verificación fallara con «The token is not yet valid (iat)».
+    Sin ella, un token recién emitido se rechaza si el reloj del
+    servidor que lo verifica está aunque sea una fracción de segundo
+    atrasado respecto del que lo firmó. Medido contra el proveedor
+    anterior, cuando el que firmaba era otra máquina: **0,2 segundos
+    bastaban** para que la verificación fallara con «The token is not
+    yet valid (iat)». Hoy firma y verifica el mismo proceso, pero la
+    tolerancia se queda: no cuesta nada y el día que haya dos
+    servidores vuelve a hacer falta.
 
     En producción se habría visto como un 401 intermitente justo
     después de entrar: imposible de reproducir a voluntad.

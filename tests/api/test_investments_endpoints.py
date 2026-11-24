@@ -1,6 +1,6 @@
 """`GET`, `POST`, `PUT` y `DELETE /api/investments` · F10-T06.
 
-Se prueba contra la API real, con cuentas reales de Supabase — mismo
+Se prueba contra la API real, con cuentas reales de la base de pruebas — mismo
 criterio que `test_categories_endpoints.py`.
 
 La cartera es información, no bitácora de gastos (decisión de

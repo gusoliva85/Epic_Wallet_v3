@@ -22,20 +22,18 @@
       y acá se canjea con `verifyOtp`. Vale desde cualquier navegador,
       una sola vez, y vence.
 
-   2. **`code` (la de fábrica, `{{ .ConfirmationURL }}`).** El enlace
-      pasa por `/auth/v1/verify` de Supabase y vuelve con `?code=…`.
-      Ese canje lo hace sola la librería (`detectSessionInUrl` en
-      `auth.js`), así que acá **no se toca el parámetro**: sólo se
-      anota que esto es una recuperación, para que la guardia de rutas
-      deje entrar a la pantalla.
+   2. **`code`.** La forma de fábrica del proveedor anterior: el
+      enlace pasaba por su endpoint de verificación y volvía con
+      `?code=…`, y el canje lo hacía su librería. Acá nunca se tocó el
+      parámetro: sólo se anota que esto es una recuperación, para que
+      la guardia de rutas deje entrar a la pantalla.
 
-   La segunda se acepta porque es la que queda si alguna plantilla se
-   deja sin personalizar, y dejarla fallar en silencio sería el peor
-   resultado posible: un enlace de recuperación que no lleva a ninguna
-   parte. Pero tiene un límite real que la primera no tiene —PKCE
-   guarda su verificador en el navegador que pidió el enlace, así que
-   pedirlo en el celular y abrirlo en la PC no funciona—, y por eso la
-   forma recomendada es la primera.
+      **Hoy esta forma está inerte.** La librería que hacía el canje se
+      fue en F17-T03 y no hay quien emita un enlace así, así que un
+      `?code=` sólo deja ver la pantalla y el primer intento de guardar
+      falla con «el enlace no sirve». Se dejó el camino puesto porque
+      no cuesta nada y no abre nada: sin token no se cambia ninguna
+      contraseña. Borrarlo es una limpieza aparte, no de esta tarea.
 
    QUÉ SE LIMPIA DE LA URL Y POR QUÉ
 
@@ -54,9 +52,9 @@ import { navegar } from "./router.js";
 import { INICIO, LOGIN, NUEVA_CLAVE } from "./nav.js";
 import { toast } from "./components/toast.js";
 
-/** Los tipos de enlace que Supabase puede mandar. Lista cerrada: lo
- * que no esté acá no se canjea, para no pasarle a `verifyOtp` un
- * `type` que venga de la URL sin pasar por ningún filtro. */
+/** Los tipos de enlace que se aceptan. Lista cerrada: lo que no esté
+ * acá no se canjea, para no actuar sobre un `type` que venga de la URL
+ * sin pasar por ningún filtro. */
 const TIPOS = [
   "recovery",
   "signup",
@@ -87,7 +85,7 @@ export function tomarEnlacePendiente() {
 /** @param {string} hash @returns {string} */
 function hashLimpio(hash) {
   // Un hash que ya es una ruta nuestra se respeta; cualquier otra cosa
-  // (vacío, o lo que haya dejado Supabase) se descarta.
+  // (vacío, o lo que haya dejado el enlace) se descarta.
   return /^#\/[a-z-]+$/.test(hash) ? hash : "";
 }
 
@@ -159,9 +157,9 @@ export function arrancar() {
     return null;
   }
 
-  // ── Un enlace que Supabase ya rechazó ───────────────────────────
-  // Pasa con la plantilla de fábrica: la verificación la hace el
-  // servidor y vuelve con el error en la URL. Hay que leerlo del hash
+  // ── Un enlace que el servidor ya rechazó ────────────────────────
+  // Pasaba con las plantillas del proveedor anterior: la verificación
+  // la hacía él y volvía con el error en la URL. Hay que leerlo del hash
   // además de la búsqueda, porque según el flujo lo manda en uno o en
   // el otro —y en el caso del hash, encima, se lleva puesta la ruta.
   const hashParams = new URLSearchParams(

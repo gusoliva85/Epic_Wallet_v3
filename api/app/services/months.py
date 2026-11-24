@@ -29,8 +29,8 @@ from ..models import Month
 from ..repos import months as repos
 
 # La aplicación muestra todo en esta zona (Técnico §6.1), no en la del
-# servidor: Vercel corre en UTC, y sin esto el mes cambiaría unas horas
-# antes o después de la medianoche real en Argentina.
+# servidor: el contenedor corre en UTC, y sin esto el mes cambiaría unas
+# horas antes o después de la medianoche real en Argentina.
 ZONA_APP = ZoneInfo("America/Argentina/Buenos_Aires")
 
 # Los dos únicos valores de `months.status` (General §6.1, §6.2).

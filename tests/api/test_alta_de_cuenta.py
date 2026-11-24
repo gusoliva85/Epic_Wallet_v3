@@ -94,8 +94,6 @@ def cuenta_nueva(motor: Engine) -> Iterator[str]:
 
     if estado >= 400:
         motivo = cuerpo.get("msg") or cuerpo.get("message") or cuerpo
-        if "rate limit" in str(motivo).lower():
-            pytest.skip(f"Supabase cortó por límite: {motivo}")
         pytest.fail(f"no se pudo crear la cuenta: {motivo}")
 
     uid = cuerpo.get("id") or cuerpo.get("user", {}).get("id")
@@ -220,8 +218,6 @@ def test_dos_cuentas_con_el_mismo_nombre_de_correo_conviven(motor: Engine) -> No
             estado, cuerpo = _registrar(f"{base}@{dominio}", secrets.token_urlsafe(16))
             if estado >= 400:
                 motivo = str(cuerpo.get("msg") or cuerpo)
-                if "rate limit" in motivo.lower():
-                    pytest.skip(f"Supabase cortó por límite: {motivo}")
                 pytest.fail(f"la cuenta con {dominio} no se pudo crear: {motivo}")
             uid = cuerpo.get("id") or cuerpo.get("user", {}).get("id")
             creadas.append(str(uid))
@@ -261,8 +257,6 @@ def test_borrar_la_cuenta_se_lleva_perfil_y_categorias(motor: Engine) -> None:
     estado, cuerpo = _registrar(correo, secrets.token_urlsafe(16))
     if estado >= 400:
         motivo = str(cuerpo.get("msg") or cuerpo)
-        if "rate limit" in motivo.lower():
-            pytest.skip(f"Supabase cortó por límite: {motivo}")
         pytest.fail(f"no se pudo crear la cuenta: {motivo}")
 
     uid = str(cuerpo.get("id") or cuerpo.get("user", {}).get("id"))

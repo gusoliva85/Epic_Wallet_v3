@@ -11,7 +11,7 @@
      (`#/login`) y, cuando exista, de la guardia de F02-T12. Si acá se
      mirara la sesión para mostrarse o esconderse, habría dos lugares
      decidiendo lo mismo y tarde o temprano discreparían.
-   * **No sabe de Supabase.** Habla con `auth.js`, que es el único que
+   * **No sabe de la autenticación.** Habla con `auth.js`, que es el único que
      sabe. Los mensajes de error también salen de ahí: están en un solo
      lugar porque hay uno que no se puede equivocar —el de credenciales
      incorrectas— y no conviene tenerlo escrito dos veces. */

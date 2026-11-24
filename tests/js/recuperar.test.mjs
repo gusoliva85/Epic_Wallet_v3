@@ -60,7 +60,7 @@ function htmlDelAcceso() {
 async function montar({ respuesta = { ok: true }, correo = true } = {}) {
   const dom = new JSDOM(
     `<!doctype html><html><body><div class="app"></div>${htmlDelAcceso()}</body></html>`,
-    { url: "https://epic-wallet-v2.vercel.app/#/recuperar", pretendToBeVisual: true },
+    { url: "https://epic-wallet.test/#/recuperar", pretendToBeVisual: true },
   );
   ventanas.push(dom.window);
 

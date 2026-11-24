@@ -111,7 +111,7 @@ async function montar({ apiGet = async () => ({ opening_balance: "4140505.00" })
     `<!doctype html><html><body>${htmlDeLaborales()}${htmlDeLaHoja()}` +
     `<div class="fondo-hoja" id="fondo-hoja"></div></body></html>`;
   const dom = new JSDOM(html, {
-    url: "https://epic-wallet-v2.vercel.app/#/config",
+    url: "https://epic-wallet.test/#/config",
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);

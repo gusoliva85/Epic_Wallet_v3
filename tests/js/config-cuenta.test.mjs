@@ -90,7 +90,7 @@ async function montar({
   apiPatch = async () => ({ display_name: "Gustavo" }),
 } = {}) {
   const dom = new JSDOM(`<!doctype html><html><body>${htmlDeCuenta()}${htmlDeSesion()}</body></html>`, {
-    url: "https://epic-wallet-v2.vercel.app/#/config",
+    url: "https://epic-wallet.test/#/config",
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);

@@ -71,7 +71,7 @@ async function cargarConDobles() {
 
 async function montar({ guardado = null, sincronizarTema, guardarTema } = {}) {
   const dom = new JSDOM(`<!doctype html><html><body>${htmlDePreferencias()}</body></html>`, {
-    url: "https://epic-wallet-v2.vercel.app/#/config",
+    url: "https://epic-wallet.test/#/config",
     pretendToBeVisual: true,
   });
   ventanas.push(dom.window);

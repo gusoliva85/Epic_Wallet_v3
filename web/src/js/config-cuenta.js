@@ -7,9 +7,9 @@
    nombre visible, cambio de contraseña y cerrar sesión. Ninguna
    comparte estado con las otras — guardar una no toca a las demás.
 
-   El correo es de sólo lectura y sale de la sesión de Supabase
-   (`usuarioActual()`), no de nuestra API: el correo no vive en
-   `profiles`, lo gestiona Supabase Auth (Técnico §6.1). El nombre
+   El correo es de sólo lectura y sale de la sesión
+   (`usuarioActual()`), no de `GET /api/me`: no vive en `profiles` sino
+   en `auth.users`, y lo cambia `/api/auth` (Técnico §6.1). El nombre
    visible sí vive en `profiles`, así que su lectura y su escritura
    pasan por `GET`/`PATCH /api/me`, ahora a través de `api.js`.
 

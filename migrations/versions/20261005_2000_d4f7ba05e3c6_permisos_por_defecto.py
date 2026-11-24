@@ -33,7 +33,7 @@ primera función normal que alguien agregue nacería abierta.
 **Lo que esta migración NO hace, a propósito:** no les toca los
 permisos a las dos funciones que ya existen. Para cerrarlas de verdad
 habría que revocarle `EXECUTE` a `PUBLIC`, y de `PUBLIC` también
-depende `supabase_auth_admin`, que es quien dispara
+depende el rol de administración de `auth`, que es quien dispara
 `crear_perfil_y_categorias` al registrarse alguien. Arriesgar el alta de
 cuentas para cerrar una puerta que ya está probada como cerrada no se
 paga. Si alguna vez se agrega una función invocable, hay que darle sus

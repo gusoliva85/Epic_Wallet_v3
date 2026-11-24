@@ -1,9 +1,10 @@
 """Base declarativa y metadatos de SQLAlchemy.
 
-El esquema sale de la variable de entorno DB_SCHEMA: `dev` en
-desarrollo y previews, `public` en producción. Es lo que mantiene
-separados los datos de prueba de los reales dentro del único
-proyecto de Supabase (02_Documento_Tecnico §4.1.1).
+El esquema sale de la variable de entorno DB_SCHEMA, y hoy es
+siempre `public`: el proyecto usa un solo esquema
+(02_Documento_Tecnico §4.1.1). Lo que separa los datos de prueba de
+los reales es la **base**, no el esquema: las pruebas corren contra
+`epic_wallet_test` y se niegan a arrancar si el nombre no lo dice.
 
 En SQLite (sólo tests) no hay esquemas, así que el valor es None.
 """

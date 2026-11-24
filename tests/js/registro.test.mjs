@@ -4,7 +4,7 @@
    Mismo patrón que `acceso.test.mjs`: el HTML sale del `index.html`
    real —una copia en la prueba verificaría la copia—, y se doblan los
    módulos de los que depende (`auth.js`, `router.js`, `nav.js`), no la
-   librería de Supabase: eso ya lo prueba `auth.test.mjs`.
+   librería del proveedor anterior: eso ya lo prueba `auth.test.mjs`.
 
    Los criterios de aceptación de la tarea son de comportamiento: que
    una cuenta se cree de punta a punta y entre directo, que contraseñas
@@ -57,7 +57,7 @@ async function montar({
 } = {}) {
   const dom = new JSDOM(
     `<!doctype html><html><body><div class="app"></div>${htmlDelAcceso()}</body></html>`,
-    { url: "https://epic-wallet-v2.vercel.app/#/registro", pretendToBeVisual: true },
+    { url: "https://epic-wallet.test/#/registro", pretendToBeVisual: true },
   );
   ventanas.push(dom.window);
 
@@ -434,7 +434,7 @@ describe("los mensajes de error", () => {
     assert.equal(dom.window.document.activeElement, $(dom, "registro-email"));
   });
 
-  test("una contraseña débil para Supabase pone el foco ahí", async () => {
+  test("una contraseña que el servidor rechaza por débil pone el foco ahí", async () => {
     const { dom, registro } = await montar({
       respuesta: {
         ok: false,

@@ -27,7 +27,7 @@ async function montar() {
   const dom = new JSDOM(
     `<!doctype html><html><body><div class="kpi-grid stagger" id="rejilla"></div></body></html>`,
     {
-      url: "https://epic-wallet-v2.vercel.app/",
+      url: "https://epic-wallet.test/",
       // runScripts: para que un <script> inyectado SÍ pueda ejecutarse.
       // Sin esto, la prueba del escape pasaría porque jsdom no corre
       // scripts, no porque el escape funcione.

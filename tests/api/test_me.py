@@ -1,6 +1,6 @@
 """Los endpoints del perfil · F02-T06.
 
-Se prueban contra la API real, con cuentas reales de Supabase y sus
+Se prueban contra la API real, con cuentas reales de la base de pruebas y sus
 tokens reales. No hay dobles: lo que se verifica es que el camino
 entero funcione —token, verificación, propagación a Postgres, RLS,
 consulta— porque cada una de esas piezas se probó sola y lo que falta
@@ -35,9 +35,9 @@ pytestmark = pytest.mark.api
 def cuenta(motor) -> Iterator[Cuenta]:
     """UNA cuenta para todo el módulo.
 
-    Antes era una por prueba, y Supabase cortaba por límite de
-    registros: catorce pruebas se salteaban en silencio, justo las que
-    más importaban. El estado se devuelve a cero entre pruebas con
+    Antes era una por prueba, y el proveedor anterior cortaba por
+    límite de altas: catorce pruebas se salteaban en silencio, justo
+    las que más importaban. El estado se devuelve a cero entre pruebas con
     `cuenta_intacta`.
     """
     c = _crear_cuenta()
