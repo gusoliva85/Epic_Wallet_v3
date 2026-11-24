@@ -101,14 +101,23 @@ def archivos_del_repositorio() -> list[Path]:
     esta máquina y puede tener secretos, y está bien que los tenga
     —está en `.gitignore`—. Lo que no puede pasar es que alguno haya
     quedado en un archivo rastreado.
+
+    Sin `git` no hay nada que preguntar y la prueba se saltea. Pasa
+    dentro del contenedor de la api, que no lo lleva: la imagen tiene
+    el código, no el repositorio. Decirlo como salto y no como falla
+    importa, porque una falla acá se lee como «hay un secreto
+    publicado», que es exactamente lo contrario de lo que pasó.
     """
-    salida = subprocess.run(
-        ["git", "ls-files", "-z"],
-        cwd=RAIZ,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
+    try:
+        salida = subprocess.run(
+            ["git", "ls-files", "-z"],
+            cwd=RAIZ,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+    except FileNotFoundError:
+        pytest.skip("no hay git acá: esta prueba mira el repositorio, no el disco")
     return [RAIZ / n for n in salida.split("\0") if n]
 
 
