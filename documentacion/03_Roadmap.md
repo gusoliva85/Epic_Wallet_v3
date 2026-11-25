@@ -394,22 +394,29 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *La api monta `./respaldos` de **sólo lectura**: lee la constancia y no puede escribirla. Si pudiera, un error en la api declararía un respaldo inexistente y el portón dejaría pasar.*
   *Siete casos probados en el servidor contra la base real: sin constancia, de 17 h, fresca pero no verificada → las tres se niegan; `MIGRAR_SIN_RESPALDO=si-entiendo-el-riesgo` pasa avisando por stderr; cualquier otro valor no; con respaldo recién tomado migra; y una base `_test` no pide nada.*
 
-- [ ] **F18-T05 · Registro de cambios: deshacer fila por fila**
+- [ ] **F18-T05 · Registro de cambios: deshacer fila por fila** — *en pausa*
   **Tipo:** Base
   **Hacer:** tabla `audit_log` **sólo-agregar**, llenada por disparadores de Postgres en las 9 tablas de datos: guarda la fila anterior en `jsonb` en cada `update` y cada `delete`, con quién y cuándo. Lo escribe la base, no la aplicación, así que ningún código olvidado lo puede saltear. Más un comando para recuperar una fila concreta.
   **Aceptación:** · borrar un movimiento deja su versión anterior en `audit_log` · el comando lo devuelve sin tocar nada de lo cargado después · RLS activo: una cuenta no ve el registro de otra.
   *Los respaldos cubren «se rompió la base». Esto cubre «se borró algo puntual el martes y me di cuenta el viernes», que restaurando un dump costaría perder miércoles y jueves.*
+  ***En pausa por decisión de Gustavo (2026-11-25):** no le encuentra uso hoy. Queda escrita, no se hace. Se retoma si alguna vez borra algo sin querer y restaurar el dump entero resulta demasiado caro — que es exactamente el día en que se va a entender para qué servía.*
 
-- [ ] **F18-T06 · Aviso cuando el respaldo no pasó**
+- [~] **F18-T06 · Aviso cuando el respaldo no pasó**
   **Tipo:** Infra
   **Hacer:** que `/api/health` informe la fecha del último respaldo verificado, y que haya una señal visible cuando pasaron más de 48 horas sin uno.
   **Aceptación:** · con el respaldo al día, `/api/health` lo muestra · simulando dos días sin respaldo, avisa.
   *Un respaldo que falla en silencio es peor que ninguno: creés que estás cubierto.*
+  *Son **dos piezas**, porque el endpoint solo no alcanzaba. Gustavo lo dijo con todas las letras: no entra a mirar la pantalla de salud. Y tiene razón — un aviso que nadie ve no es un aviso.*
+  *`/api/health` informa `last_backup` —cuándo, si quedó verificado, hace cuántas horas, si está al día y por qué no— y suma un aviso a `warnings` pasadas 48 horas. **No cambia el estado a `degraded`**: la aplicación funciona perfecto sin respaldo fresco, y confundir las dos cosas haría que un monitor avise de una caída que no pasó.*
+  *`scripts/revisar_respaldo.ps1` es la parte que Gustavo sí ve. `traer_respaldos.ps1` ya corre todos los días en su máquina a las 08:00, así que el aviso aparece ahí de **tres formas**, porque cada una falla distinto: notificación de Windows (se ve con la sesión abierta), un archivo `RESPALDO_ATRASADO.txt` en la carpeta de respaldos (se ve siempre) y código de salida 2 (el Programador de tareas lo muestra como «último resultado»). La marca se borra sola cuando el respaldo vuelve.*
+  ***48 horas y no 24:*** *el respaldo corre a las 3:15, y con 24 cualquier demora encendería la alarma sin que haya nada roto. A las 48 se perdieron **dos noches seguidas**, y eso no es una demora.*
+  *Está en su propio script para poder probarlo **contra una constancia inventada**. Los cinco casos dan lo que tienen que dar —sin constancia, de 72 horas, fresca pero sin verificar, con fecha del futuro, y al día—, y en el quinto la marca se levanta sola. Esperar a que el respaldo falle de verdad para ver si avisa no es una prueba: es enterarse tarde.*
+  *Del lado del servidor, 14 pruebas en `test_health.py` y las 18 de `test_respaldos.py`.*
 
-- [ ] **F18-T07 · Jarvis también**
+- [x] **F18-T07 · Jarvis también** — *no se hace*
   **Tipo:** Infra
-  **Hacer:** agregar la base de Jarvis al mismo mecanismo. Es la misma tarea con una base más, y hoy no tiene ninguna copia. Incluir también la configuración del proxy de borde (`/opt/edge/`), que no vive en ningún repositorio.
-  **Aceptación:** · el respaldo diario incluye las dos bases y `/opt/edge/` · la restauración de Jarvis también se probó.
+  ***Descartada por Gustavo (2026-11-25):** Jarvis tiene su versión en la máquina local, así que no depende de este servidor para existir. Si alguna vez se vuelve a subir, se decide ahí.*
+  *Queda dicho lo que sí sigue sin copia, para que no se pierda el dato: la configuración del proxy de borde (`/opt/edge/`) no vive en ningún repositorio. Si el servidor se pierde, hay que rearmarla de memoria. No es de Epic Wallet, pero es de este servidor.*
 
 ---
 
