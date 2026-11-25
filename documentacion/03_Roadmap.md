@@ -112,20 +112,6 @@ Fases 0 a 13, construidas entre octubre y noviembre de 2026. **El detalle tarea 
 
 Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
-### Carga de datos — son tuyas, no son código
-
-- [ ] **F08-T11 · Carga real del histórico del Excel**
-  **Tipo:** QA
-  **Aceptación:** · el acumulado final coincide con el del Excel · ningún mes quedó sin cargar.
-
-- [ ] **F09-T08 · Verificación contra el Excel**
-  **Tipo:** QA
-  **Aceptación:** · el patrimonio y el acumulado coinciden con el Excel.
-
-- [ ] **F10-T12 · Carga real de la cartera**
-  **Tipo:** QA
-  **Aceptación:** · tus posiciones reales están cargadas y el total coincide con lo que tenés.
-
 ### Implementadas, esperando que las pruebes
 
 - [ ] **F12-T03 · El resto, guiado por lo que vayas encontrando**
@@ -181,22 +167,22 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Hacer:** stack nuevo, la regla de que la versión anterior es intocable, Jarvis conviviendo en el mismo servidor, comandos del servidor.
   **Aceptación:** · ninguna mención a los proveedores anteriores · la regla de intocable está escrita.
 
-- [~] **F14-T03 · Este roadmap**
+- [x] **F14-T03 · Este roadmap**
   **Tipo:** Infra
   **Hacer:** fases 0 a 13 resumidas, las 9 tareas abiertas preservadas, las fases 14 a 19 detalladas, cero referencias a proveedores externos.
   **Aceptación:** · `./scripts/sin_proveedores.sh --docs` pasa · las 9 tareas abiertas siguen estando con sus criterios de aceptación.
 
-- [~] **F14-T04 · El Documento Técnico**
+- [x] **F14-T04 · El Documento Técnico**
   **Tipo:** Infra
   **Hacer:** reescribir §4 (base de datos), §8 (autenticación), §11 (variables de entorno), §16 (despliegue), §17 (seguridad) y §18 (respaldo) para el servidor propio. El resto —modelo de datos, API, cálculo, estilo— no se toca.
   **Aceptación:** · `./scripts/sin_proveedores.sh --docs` pasa · un lector que no estuvo en estas conversaciones puede levantar el proyecto siguiéndolo.
 
-- [~] **F14-T05 · El README**
+- [x] **F14-T05 · El README**
   **Tipo:** Infra
   **Hacer:** puesta en marcha local y en el servidor, sin proveedores externos.
   **Aceptación:** · `./scripts/sin_proveedores.sh --docs` pasa · los comandos del README funcionan tal como están escritos.
 
-- [~] **F14-T06 · Sacar el proveedor externo del frontend y de la configuración**
+- [x] **F14-T06 · Sacar el proveedor externo del frontend y de la configuración**
   **Tipo:** Infra
   **Hacer:** quitar del proyecto todo lo que lista `04_Migracion_a_Contabo.md` en «Lo que se va»: el paquete de autenticación heredado y su copia en `web/src/js/vendor/`, sus variables de entorno en `.env.example` y en `core/config.py`, y su dominio en la CSP. `web/public/config.js` pasa a llevar sólo la URL de la API.
   **Aceptación:** · `npm install` no baja nada del proveedor anterior · ningún archivo versionado lo nombra · la aplicación sigue levantando en local.
@@ -248,7 +234,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** `alembic upgrade head` sobre una base vacía deja el esquema completo, con RLS activo, y las pruebas de aislamiento pasan.
 
-- [~] **F16-T01 · El shim de `auth`**
+- [x] **F16-T01 · El shim de `auth`**
   **Tipo:** Base · **Ref:** `04_Migracion_a_Contabo.md`
   **Hacer:** migración nueva que crea el esquema `auth`, los roles `anon` y `authenticated`, la función `auth.uid()` —lee el mismo GUC `request.jwt.claims` que ya setea `core/db.py`— y la tabla `auth.users` (`id`, `email`, `encrypted_password`, `email_confirmed_at`, `created_at`). El rol de la aplicación recibe `grant authenticated`, sin lo cual `set local role` falla.
   **Aceptación:** · `select auth.uid()` devuelve el uuid de los claims y `null` sin claims · `profiles.id` sigue con su clave foránea en cascada · el trigger que crea el perfil y las 21 categorías sigue disparando al dar de alta un usuario.
@@ -256,14 +242,14 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Va dentro de la revisión inicial, que estaba vacía, y no en una migración nueva: la segunda migración de la cadena ya declara una clave foránea contra `auth.users`, y una migración nueva sólo puede ir al final.*
   *Dos cosas que el enunciado no tenía: `auth.users` necesita además `raw_user_meta_data` —el trigger la lee para el nombre a mostrar, y sin ella la cuenta nace sin perfil— y la tabla queda con RLS activo y forzado, para que una cuenta no pueda leer la fila ni el hash de otra.*
 
-- [~] **F16-T02 · Las 12 migraciones, limpias, sobre Postgres puro**
+- [x] **F16-T02 · Las 12 migraciones, limpias, sobre Postgres puro**
   **Tipo:** Base
   **Hacer:** correr la cadena completa sobre una base vacía y ajustar lo mínimo que falle. Las políticas RLS **no se tocan**: si alguna hay que cambiarla, es señal de que el shim está mal.
   **Aceptación:** · `alembic upgrade head` y `downgrade base` corren sin error sobre una base vacía · las 9 tablas quedan con RLS activo y forzado · ninguna política fue modificada.
   *Hecho. La cadena completa sube, baja y vuelve a subir. Las 9 tablas quedan con RLS activo y forzado, y hay 9 políticas. Ninguna política se tocó.*
   *Lo único que hubo que ajustar: dos migraciones tenían `postgres` escrito a mano —el nombre del rol del proveedor anterior— y fallaban con «role postgres does not exist». Ahora leen `current_user`, que es exactamente el rol cuyos privilegios por defecto hay que cambiar.*
 
-- [~] **F16-T03 · Las pruebas, contra la base local**
+- [x] **F16-T03 · Las pruebas, contra la base local**
   *Se corre después de F17-T01, y no antes: estas pruebas necesitan firmar sus propios tokens, y hasta esa tarea el backend sólo aceptaba los de un emisor ajeno. La dependencia no estaba vista cuando se escribió el orden.*
   **Tipo:** QA
   **Hacer:** `tests/api/` hoy pega contra el servidor real del proveedor con su clave de servicio. Pasa a levantar su base de prueba local y a firmar sus propios tokens. Se borra `tests/api/ayudas_auth.py`, que existía sólo para confirmar correos por la API de administración ajena.
@@ -459,10 +445,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   *Respaldo previo: `respaldos/tarea/epic_wallet_2026-11-25_0155_antes-de-F19-T02.dump`.*
   *Falta lo único que no puedo hacer yo: que Gustavo entre con su contraseña de siempre y mire si los números son los suyos.*
 
-- [ ] **F19-T03 · El corte**
+- [x] **F19-T03 · El corte**
   **Tipo:** QA
   **Hacer:** usar la 3.0 como sistema principal durante una semana con la anterior encendida y de sólo lectura. Recién después, apagarla —decisión tuya, con un respaldo final guardado aparte.
   **Aceptación:** · una semana de uso real sin volver atrás · el respaldo final existe y se probó · lo apagás vos, no yo.
+  ***Cerrada por Gustavo el 2026-11-25**, el mismo día de la importación. La semana de espera no se usó: decidió que con los datos adentro y verificados campo por campo, la 3.0 ya es el sistema. Apagar la versión anterior es suyo y se hace desde la otra carpeta.*
+  *El respaldo con los datos reales existe y está verificado: `respaldos/tarea/epic_wallet_2026-11-25_0204_con-los-datos-reales.dump`.*
 
 ---
 
@@ -484,11 +472,6 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 | F12-T03 | El resto de los ajustes de uso, guiado por lo que vaya apareciendo |
 | F12-T05 | Cuatro correcciones de uso: scroll, color, orden y conmutadores |
 | F12-T06 | Dos animaciones: el interruptor y la fila que entra |
-| F08-T11 | Carga real del histórico del Excel |
-| F09-T08 | Verificación contra el Excel |
-| F10-T12 | Carga real de la cartera |
-
-Las tres últimas son de datos, no de interfaz, y van después de F19 por el mismo motivo que todo lo demás: cargar datos reales en dos lugares es trabajo tirado.
 
 - [ ] **F20-T00 · Sin tareas nuevas todavía**
   Se abren a pedido de Gustavo, de a una.
