@@ -44,6 +44,20 @@ from typing import Any
 #     ./scripts/respaldo.sh && alembic upgrade head
 MAXIMO_DE_HORAS = 3.0
 
+# Cuántas horas puede pasar sin respaldo antes de avisar · F18-T06
+#
+# Cuarenta y ocho, no veinticuatro, y el motivo es que un aviso que se
+# prende solo no sirve: el respaldo corre a las 3:15, y con el límite
+# en 24 horas cualquier demora —el servidor reiniciándose, una corrida
+# que tardó— encendería la alarma sin que haya nada roto. A las 48 se
+# perdieron **dos** noches seguidas, y eso no es una demora: es que
+# dejó de correr.
+#
+# Es un umbral distinto del de arriba a propósito. Ese decide si se
+# puede migrar —la operación sin vuelta atrás— y por eso exige el
+# respaldo del momento. Este decide si hay que avisar.
+MAXIMO_PARA_AVISAR = 48.0
+
 # Las bases donde migrar no pone nada en riesgo. Si el nombre dice
 # que es descartable, no hace falta respaldo.
 DESCARTABLES = ("test", "prueba", "restaurado")

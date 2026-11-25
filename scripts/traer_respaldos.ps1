@@ -188,7 +188,26 @@ foreach ($r in $remotos) {
 }
 
 # La constancia del servidor, para poder comparar sin entrar por ssh.
-Correr $SCP ($OpcionesSsh + @("-q", "${Servidor}:$Remoto/ultimo.json", (Join-Path $Destino "ultimo_servidor.json"))) | Out-Null
+$constancia = Join-Path $Destino "ultimo_servidor.json"
+Correr $SCP ($OpcionesSsh + @("-q", "${Servidor}:$Remoto/ultimo.json", $constancia)) | Out-Null
+
+# ------------------------------------------------------------
+#  Aviso si el respaldo dejo de correr - F18-T06
+# ------------------------------------------------------------
+#
+# Vive en su propio script para dos cosas: poder preguntarlo a mano
+# ("¿es esta al dia el respaldo?") y poder PROBAR que el aviso salta,
+# pasandole una constancia inventada. Esperar a que el respaldo falle
+# de verdad no es una prueba.
+$revisor = Join-Path $PSScriptRoot "revisar_respaldo.ps1"
+$problema = $false
+if (Test-Path $revisor) {
+    & $revisor -Constancia $constancia | ForEach-Object { Escribir $_ }
+    if ($LASTEXITCODE -ne 0) { $problema = $true }
+} else {
+    Escribir "FALLA - no se encontro revisar_respaldo.ps1" "Red"
+    $problema = $true
+}
 
 # ------------------------------------------------------------
 #  Cierre
@@ -202,8 +221,12 @@ if ($fallados -gt 0) {
     exit 1
 }
 
-# Que no haya nada nuevo esta bien si ya se corrio hoy, y esta mal si
-# hace dias que no baja nada. Lo segundo lo detecta F18-T06 mirando la
-# fecha del ultimo respaldo, no este script.
+if ($problema) {
+    # Que no haya nada nuevo esta bien si ya se corrio hoy. Que haga
+    # dias que el servidor no toma un respaldo, no.
+    Escribir "TERMINO CON AVISO - $resumen" "Red"
+    exit 2
+}
+
 Escribir "LISTO - $resumen" "Green"
 exit 0
