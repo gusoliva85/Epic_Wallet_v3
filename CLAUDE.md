@@ -6,15 +6,13 @@ La 3.0 es la misma aplicación, **corriendo en un servidor propio**. Se mueve pa
 
 **Escala real: pocos usuarios conocidos**, cada uno con sus propios datos de contabilidad. No es un producto público. Toda decisión se toma a esa escala: lo simple gana.
 
-## La versión anterior es intocable
+## Acá sólo existe Contabo
 
-La versión anterior sigue viva, en los servicios de terceros donde se construyó, y es **el único sistema que hoy funciona**. Hasta que el corte esté aprobado:
+**La versión anterior está migrada y queda fuera de este proyecto.** No se toca, no se consulta, no se nombra y no se toma como referencia desde esta carpeta. Decidido por Gustavo el 2026-11-25, después de que los datos entraran y se verificaran.
 
-- Ni un push a su repositorio, ni una migración, ni un cambio de variable de entorno, ni un script que escriba.
-- **Leer está bien** (`pg_dump`, `GET /api/export`). Escribir, no.
-- Si algo pareciera necesitar un cambio allá, **se frena y se pregunta**, diciendo qué tabla, qué filas y por qué.
-
-Esta carpeta apunta a `Epic_Wallet_v3` y no tiene forma de alcanzar el repositorio anterior. Que siga así.
+- **Nada en esta carpeta se conecta a otra cosa que no sea Contabo.** Ni para leer. Un script que pida credenciales de la versión anterior no se escribe; si hace falta algo de allá, se hace en la otra carpeta.
+- Si una respuesta pareciera necesitar mirar la versión anterior, **la respuesta es que no**: o se resuelve con lo que hay acá, o se frena y se pregunta.
+- Lo que siga cargándose en la versión anterior **no llega acá solo**. Traerlo es una tarea del otro proyecto, no de éste.
 
 ## Documentos que mandan
 

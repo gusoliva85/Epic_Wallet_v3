@@ -196,11 +196,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Hacer:** puesta en marcha local y en el servidor, sin proveedores externos.
   **Aceptación:** · `./scripts/sin_proveedores.sh --docs` pasa · los comandos del README funcionan tal como están escritos.
 
-- [ ] **F14-T06 · Sacar el proveedor externo del frontend y de la configuración**
+- [~] **F14-T06 · Sacar el proveedor externo del frontend y de la configuración**
   **Tipo:** Infra
   **Hacer:** quitar del proyecto todo lo que lista `04_Migracion_a_Contabo.md` en «Lo que se va»: el paquete de autenticación heredado y su copia en `web/src/js/vendor/`, sus variables de entorno en `.env.example` y en `core/config.py`, y su dominio en la CSP. `web/public/config.js` pasa a llevar sólo la URL de la API.
   **Aceptación:** · `npm install` no baja nada del proveedor anterior · ningún archivo versionado lo nombra · la aplicación sigue levantando en local.
   *Va después de F17-T03, que es la que reemplaza `auth.js`. Antes de eso, sacarlo deja la aplicación sin forma de entrar.*
+  ***La hizo F17-T06**, que barrió los 84 archivos del repositorio entero. Los tres criterios se comprobaron: la dependencia no está en `package.json` ni en `package-lock.json`, el verificador pasa sobre todo lo versionado, y la aplicación levanta (`/api/health` en `ok`). La CSP que sirve el borde es `connect-src 'self'` y no nombra ningún dominio ajeno.*
 
 ---
 
@@ -358,7 +359,9 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** hay copias diarias verificadas, una copia fuera del servidor, una restauración hecha de verdad, y la base guarda sola la versión anterior de cada fila que se toca.
 
-**T05, T06 y T07 se posponen hasta después del corte (2026-11-23).** Protegen datos que todavía no están en el servidor. Hecha la restauración y puesto el portón, lo que falta para que la aplicación se use es el login propio (F17) y traer los datos (F19).
+**T05, T06 y T07 se pospusieron el 2026-11-23** con este motivo: «protegen datos que todavía no están en el servidor».
+
+**Ese motivo se venció el 2026-11-25**, cuando entraron las tres cuentas con sus 405 filas. Ahora hay datos que perder, así que las tres vuelven a la mesa. La más urgente es **T06**: un respaldo que falla en silencio es peor que ninguno, y hoy no hay forma de enterarse.
 
 **Se adelanta sobre F17 por decisión de Gustavo (2026-11-23).** Es independiente del login propio, y así la red existe **antes** de que haya algo que perder y antes de las dos etapas donde se puede romper algo: la autenticación nueva (F17) y la importación (F19).
 
