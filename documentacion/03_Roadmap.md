@@ -430,7 +430,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 
 **Al cerrar esta fase:** usás la 3.0 todos los días y los números coinciden con los de antes.
 
-- [~] **F19-T01 · Bajar los datos**
+- [x] **F19-T01 · Bajar los datos**
   **Tipo:** QA
   **Hacer:** `pg_dump` del esquema de datos y de la tabla de usuarios desde la versión anterior, más el `GET /api/export?format=json` como red de seguridad legible. **Sólo lectura**: no se le escribe nada.
   **Aceptación:** · los dos dumps abren y listan sus tablas · el JSON se puede leer · la versión anterior quedó exactamente como estaba.
@@ -443,10 +443,18 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   ***El corte que evita un archivo hueco.*** *Las once tablas tienen `force row level security`: una fila se ve sólo si la política la deja pasar, y las políticas comparan contra `auth.uid()`, que sale del token. Una conexión de `psql` no tiene token. Si el usuario con el que se entra no puede saltear RLS, el dump **no da error**: abre perfecto, lista las once tablas y no trae una sola fila. Se comprueba antes de empezar —`rolsuper` o `rolbypassrls`— y se corta; y después otra vez contando filas, porque `transactions`, `profiles`, `months` y `categories` no pueden venir en cero en un sistema que se usa todos los días.*
   *Baja también el esquema en texto (`esquema_<fecha>.sql`), para poder poner los dos esquemas uno al lado del otro antes de importar: la 3.0 agregó tablas y pudo cambiar alguna columna, y eso conviene verlo leyendo un archivo y no a mitad de un restore.*
 
-- [ ] **F19-T02 · Importar y verificar**
+- [~] **F19-T02 · Importar y verificar**
   **Tipo:** QA
   **Hacer:** restaurar los datos y los usuarios en el servidor propio. Los hashes de contraseña viajan tal cual: nadie resetea nada.
   **Aceptación:** · entrás con tu contraseña de siempre · el patrimonio, el ahorro acumulado y los totales de cada mes **coinciden con los de la versión anterior y con el Excel** · la cantidad de filas coincide tabla por tabla.
+  *`scripts/importar_datos_anteriores.py` arma el SQL; no se conecta a ninguna base. **Es un script y no un SQL a mano porque esto se corre dos veces**: hoy, y de nuevo el día del corte, porque entre medio se sigue cargando en la 2.0.*
+  *Entraron **las tres cuentas reales** —Gustavo, Nélida y Diego— y quedaron afuera diez cuentas `@example.com`, residuos de cuando la batería de pruebas corría contra producción. Se descartan 63 categorías, 2 meses, 1 movimiento y 2 totales que eran de ellas.*
+  ***Verificado campo por campo, no por conteo:*** *se volvió a exportar lo que quedó en Contabo y se comparó contra el origen. **Cero diferencias reales** en las 405 filas. Las 807 que aparecían eran la misma fecha en otra zona —el contenedor muestra en hora argentina y el origen en UTC—, y se confirmó comparando instantes.*
+  *Los totales guardados de cada mes abierto coinciden con la suma de sus movimientos: los datos no sólo son iguales, son **coherentes**.*
+  ***Las tres cosas que hacen fallar una importación, y que el script resuelve:*** *el trigger `al_crear_usuario_public`, que inventaría un perfil y 21 categorías por cada usuario importado; las ocho secuencias, que sin un `setval` harían que el primer movimiento nuevo pida un id que ya existe —y eso no se ve hasta que alguien intenta guardar—; y el orden de las claves foráneas.*
+  *Todo en **una sola transacción** con `ON_ERROR_STOP`. Se usó: el primer intento falló en `app_settings.value`, una columna `jsonb` que guarda la cadena `"light"` y que yo escribía sin comillas. Se revirtió entero —0 filas, trigger encendido— y la base quedó como estaba. Las columnas `json` ahora están declaradas en el script, porque mirando el valor no hay forma de distinguir un texto de una cadena JSON: la diferencia la tiene el esquema.*
+  *Respaldo previo: `respaldos/tarea/epic_wallet_2026-11-25_0155_antes-de-F19-T02.dump`.*
+  *Falta lo único que no puedo hacer yo: que Gustavo entre con su contraseña de siempre y mire si los números son los suyos.*
 
 - [ ] **F19-T03 · El corte**
   **Tipo:** QA
