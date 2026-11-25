@@ -443,7 +443,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   ***El corte que evita un archivo hueco.*** *Las once tablas tienen `force row level security`: una fila se ve sólo si la política la deja pasar, y las políticas comparan contra `auth.uid()`, que sale del token. Una conexión de `psql` no tiene token. Si el usuario con el que se entra no puede saltear RLS, el dump **no da error**: abre perfecto, lista las once tablas y no trae una sola fila. Se comprueba antes de empezar —`rolsuper` o `rolbypassrls`— y se corta; y después otra vez contando filas, porque `transactions`, `profiles`, `months` y `categories` no pueden venir en cero en un sistema que se usa todos los días.*
   *Baja también el esquema en texto (`esquema_<fecha>.sql`), para poder poner los dos esquemas uno al lado del otro antes de importar: la 3.0 agregó tablas y pudo cambiar alguna columna, y eso conviene verlo leyendo un archivo y no a mitad de un restore.*
 
-- [~] **F19-T02 · Importar y verificar**
+- [x] **F19-T02 · Importar y verificar**
   **Tipo:** QA
   **Hacer:** restaurar los datos y los usuarios en el servidor propio. Los hashes de contraseña viajan tal cual: nadie resetea nada.
   **Aceptación:** · entrás con tu contraseña de siempre · el patrimonio, el ahorro acumulado y los totales de cada mes **coinciden con los de la versión anterior y con el Excel** · la cantidad de filas coincide tabla por tabla.
