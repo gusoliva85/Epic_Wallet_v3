@@ -7,10 +7,15 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
 
-    <!-- La barra de estado de Android acompaña al tema. -->
+    <!-- La barra de estado de Android acompaña al tema.
+
+         Es el unico color del proyecto escrito fuera de `tokens.css`, y
+         es porque un `<meta>` no puede leer una variable CSS. Valen lo
+         mismo que `--color-bg-1` en cada tema: si la paleta cambia,
+         estos dos cambian a mano. -->
     <meta
       name="theme-color"
-      content="#ebe5db"
+      content="#edebe7"
       media="(prefers-color-scheme: light)"
     />
     <meta
@@ -80,7 +85,6 @@
      En archivo aparte porque la política de contenido no admite
      scripts en línea. -->
     <script src="/src/js/tema.js"></script>
-
   </head>
   <body>
     <div class="app">
@@ -272,7 +276,9 @@
                 aria-label="Modo del gráfico diario"
                 id="diario-modo"
               >
-                <button type="button" class="activa" data-modo="ambos">Ambos</button>
+                <button type="button" class="activa" data-modo="ambos">
+                  Ambos
+                </button>
                 <button type="button" data-modo="egresos">Egresos</button>
                 <button type="button" data-modo="ingresos">Ingresos</button>
               </div>
@@ -309,7 +315,9 @@
                 aria-label="Orden de las categorías"
                 id="categorias-orden"
               >
-                <button type="button" class="activa" data-orden="mayor">Mayor gasto</button>
+                <button type="button" class="activa" data-orden="mayor">
+                  Mayor gasto
+                </button>
                 <button type="button" data-orden="az">A–Z</button>
               </div>
             </div>
@@ -391,7 +399,9 @@
                   id="comp-rango"
                 >
                   <button type="button" data-rango="3">3 m</button>
-                  <button type="button" class="activa" data-rango="6">6 m</button>
+                  <button type="button" class="activa" data-rango="6">
+                    6 m
+                  </button>
                   <button type="button" data-rango="12">12 m</button>
                   <button type="button" data-rango="0">Todo</button>
                 </div>
@@ -671,118 +681,132 @@
             </div>
 
             <div class="card-body">
-            <div class="campo-seccion">Nombre visible</div>
-            <form id="form-nombre" novalidate>
-              <div class="campo">
-                <label for="cuenta-nombre" class="solo-lector">Nombre visible</label>
-                <input
-                  class="inp"
-                  id="cuenta-nombre"
-                  name="nombre"
-                  type="text"
-                  autocomplete="name"
-                  maxlength="120"
-                  placeholder="Cómo te saluda la aplicación"
-                />
-              </div>
-              <p
-                class="acceso-error"
-                id="nombre-error"
-                role="alert"
-                aria-live="assertive"
-                hidden
-              ></p>
-              <button class="btn btn--principal btn--inline" id="nombre-guardar" type="submit">
-                <span class="btn-texto">Guardar nombre</span>
-                <span class="btn-girador" aria-hidden="true"></span>
-              </button>
-            </form>
-
-            <div class="campo-seccion">Cambiar contraseña</div>
-            <form id="form-clave" novalidate>
-              <div class="campo">
-                <label for="clave-actual">Contraseña actual</label>
-                <div class="clave-wrap">
+              <div class="campo-seccion">Nombre visible</div>
+              <form id="form-nombre" novalidate>
+                <div class="campo">
+                  <label for="cuenta-nombre" class="solo-lector"
+                    >Nombre visible</label
+                  >
                   <input
                     class="inp"
-                    id="clave-actual"
-                    type="password"
-                    autocomplete="current-password"
-                    required
+                    id="cuenta-nombre"
+                    name="nombre"
+                    type="text"
+                    autocomplete="name"
+                    maxlength="120"
+                    placeholder="Cómo te saluda la aplicación"
                   />
-                  <button
-                    class="clave-ojo"
-                    id="ojo-actual"
-                    type="button"
-                    aria-label="Mostrar contraseña"
-                    aria-pressed="false"
-                    aria-controls="clave-actual"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
-                  </button>
                 </div>
-              </div>
+                <p
+                  class="acceso-error"
+                  id="nombre-error"
+                  role="alert"
+                  aria-live="assertive"
+                  hidden
+                ></p>
+                <button
+                  class="btn btn--principal btn--inline"
+                  id="nombre-guardar"
+                  type="submit"
+                >
+                  <span class="btn-texto">Guardar nombre</span>
+                  <span class="btn-girador" aria-hidden="true"></span>
+                </button>
+              </form>
 
-              <div class="campo">
-                <label for="clave-nueva">Contraseña nueva</label>
-                <div class="clave-wrap">
-                  <input
-                    class="inp"
-                    id="clave-nueva"
-                    type="password"
-                    autocomplete="new-password"
-                    minlength="8"
-                    required
-                  />
-                  <button
-                    class="clave-ojo"
-                    id="ojo-nueva"
-                    type="button"
-                    aria-label="Mostrar contraseña"
-                    aria-pressed="false"
-                    aria-controls="clave-nueva"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
-                  </button>
+              <div class="campo-seccion">Cambiar contraseña</div>
+              <form id="form-clave" novalidate>
+                <div class="campo">
+                  <label for="clave-actual">Contraseña actual</label>
+                  <div class="clave-wrap">
+                    <input
+                      class="inp"
+                      id="clave-actual"
+                      type="password"
+                      autocomplete="current-password"
+                      required
+                    />
+                    <button
+                      class="clave-ojo"
+                      id="ojo-actual"
+                      type="button"
+                      aria-label="Mostrar contraseña"
+                      aria-pressed="false"
+                      aria-controls="clave-actual"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div class="campo">
-                <label for="clave-nueva2">Repetir contraseña nueva</label>
-                <div class="clave-wrap">
-                  <input
-                    class="inp"
-                    id="clave-nueva2"
-                    type="password"
-                    autocomplete="new-password"
-                    required
-                  />
-                  <button
-                    class="clave-ojo"
-                    id="ojo-nueva2"
-                    type="button"
-                    aria-label="Mostrar contraseña"
-                    aria-pressed="false"
-                    aria-controls="clave-nueva2"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
-                  </button>
+                <div class="campo">
+                  <label for="clave-nueva">Contraseña nueva</label>
+                  <div class="clave-wrap">
+                    <input
+                      class="inp"
+                      id="clave-nueva"
+                      type="password"
+                      autocomplete="new-password"
+                      minlength="8"
+                      required
+                    />
+                    <button
+                      class="clave-ojo"
+                      id="ojo-nueva"
+                      type="button"
+                      aria-label="Mostrar contraseña"
+                      aria-pressed="false"
+                      aria-controls="clave-nueva"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
+                    </button>
+                  </div>
                 </div>
-                <span class="campo-nota" id="clave-coincide" aria-live="polite"></span>
-              </div>
 
-              <p
-                class="acceso-error"
-                id="clave-error"
-                role="alert"
-                aria-live="assertive"
-                hidden
-              ></p>
-              <button class="btn btn--principal btn--inline" id="clave-guardar" type="submit">
-                <span class="btn-texto">Cambiar contraseña</span>
-                <span class="btn-girador" aria-hidden="true"></span>
-              </button>
-            </form>
+                <div class="campo">
+                  <label for="clave-nueva2">Repetir contraseña nueva</label>
+                  <div class="clave-wrap">
+                    <input
+                      class="inp"
+                      id="clave-nueva2"
+                      type="password"
+                      autocomplete="new-password"
+                      required
+                    />
+                    <button
+                      class="clave-ojo"
+                      id="ojo-nueva2"
+                      type="button"
+                      aria-label="Mostrar contraseña"
+                      aria-pressed="false"
+                      aria-controls="clave-nueva2"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
+                    </button>
+                  </div>
+                  <span
+                    class="campo-nota"
+                    id="clave-coincide"
+                    aria-live="polite"
+                  ></span>
+                </div>
+
+                <p
+                  class="acceso-error"
+                  id="clave-error"
+                  role="alert"
+                  aria-live="assertive"
+                  hidden
+                ></p>
+                <button
+                  class="btn btn--principal btn--inline"
+                  id="clave-guardar"
+                  type="submit"
+                >
+                  <span class="btn-texto">Cambiar contraseña</span>
+                  <span class="btn-girador" aria-hidden="true"></span>
+                </button>
+              </form>
             </div>
           </article>
 
@@ -808,7 +832,11 @@
                   <h2>Datos laborales</h2>
                   <p>Sueldo vigente y punto de partida del sistema.</p>
                 </div>
-                <button class="link-btn" type="button" id="btn-editar-saldo-inicial">
+                <button
+                  class="link-btn"
+                  type="button"
+                  id="btn-editar-saldo-inicial"
+                >
                   Editar
                 </button>
               </div>
@@ -853,7 +881,9 @@
                 <button class="chip" type="button" id="btn-exportar-csv">
                   Exportar CSV
                 </button>
-                <button class="chip" type="button" id="btn-importar">Importar</button>
+                <button class="chip" type="button" id="btn-importar">
+                  Importar
+                </button>
               </div>
               <input
                 type="file"
@@ -886,7 +916,11 @@
                      —se entra de nuevo con el mismo correo y la misma
                      contraseña—, así que un diálogo de por medio
                      sería fricción sin nada que evitar. -->
-                <button class="btn btn--inline" id="btn-cerrar-sesion" type="button">
+                <button
+                  class="btn btn--inline"
+                  id="btn-cerrar-sesion"
+                  type="button"
+                >
                   Cerrar sesión
                 </button>
               </div>
@@ -1087,7 +1121,11 @@
             hidden
           ></p>
 
-          <button class="btn btn--principal" id="categoria-guardar" type="submit">
+          <button
+            class="btn btn--principal"
+            id="categoria-guardar"
+            type="submit"
+          >
             <span class="btn-texto">Guardar</span>
             <span class="btn-girador" aria-hidden="true"></span>
           </button>
@@ -1148,7 +1186,11 @@
             hidden
           ></p>
 
-          <button class="btn btn--principal" id="saldo-inicial-guardar" type="submit">
+          <button
+            class="btn btn--principal"
+            id="saldo-inicial-guardar"
+            type="submit"
+          >
             <span class="btn-texto">Guardar</span>
             <span class="btn-girador" aria-hidden="true"></span>
           </button>
@@ -1215,7 +1257,9 @@
           <div class="campo">
             <label for="inversion-tipo">Tipo</label>
             <select class="inp" id="inversion-tipo">
-              <option value="obligacion_negociable">Obligación Negociable</option>
+              <option value="obligacion_negociable">
+                Obligación Negociable
+              </option>
               <option value="bono">Bono</option>
               <option value="cedear">CEDEAR</option>
               <option value="accion">Acción</option>
@@ -1256,7 +1300,11 @@
             hidden
           ></p>
 
-          <button class="btn btn--principal" id="inversion-guardar" type="submit">
+          <button
+            class="btn btn--principal"
+            id="inversion-guardar"
+            type="submit"
+          >
             <span class="btn-texto">Comprar</span>
             <span class="btn-girador" aria-hidden="true"></span>
           </button>
@@ -1293,7 +1341,11 @@
         </button>
       </div>
       <div class="hoja-cuerpo">
-        <div class="kv-grid" id="inversion-detalle-kv" style="grid-template-columns: 1fr"></div>
+        <div
+          class="kv-grid"
+          id="inversion-detalle-kv"
+          style="grid-template-columns: 1fr"
+        ></div>
 
         <div class="day-sep">Actualizar valor</div>
         <form id="form-inversion-valor" novalidate>
@@ -1315,14 +1367,22 @@
             aria-live="assertive"
             hidden
           ></p>
-          <button class="btn btn--principal" id="inversion-detalle-guardar" type="submit">
+          <button
+            class="btn btn--principal"
+            id="inversion-detalle-guardar"
+            type="submit"
+          >
             <span class="btn-texto">Actualizar valor</span>
             <span class="btn-girador" aria-hidden="true"></span>
           </button>
         </form>
 
         <div class="day-sep">Vender</div>
-        <button class="btn btn--peligro" type="button" id="inversion-detalle-vender">
+        <button
+          class="btn btn--peligro"
+          type="button"
+          id="inversion-detalle-vender"
+        >
           Vender
         </button>
       </div>
@@ -1372,7 +1432,13 @@
         <form id="form-historico" novalidate>
           <div class="campo">
             <label for="historico-periodo">Mes</label>
-            <input class="inp" id="historico-periodo" name="periodo" type="month" required />
+            <input
+              class="inp"
+              id="historico-periodo"
+              name="periodo"
+              type="month"
+              required
+            />
           </div>
 
           <div class="campo">
@@ -1410,7 +1476,11 @@
             hidden
           ></p>
 
-          <button class="btn btn--principal" id="historico-guardar" type="submit">
+          <button
+            class="btn btn--principal"
+            id="historico-guardar"
+            type="submit"
+          >
             <span class="btn-texto">Guardar</span>
             <span class="btn-girador" aria-hidden="true"></span>
           </button>
@@ -1438,14 +1508,23 @@
           <h2 id="importar-titulo">Importar un respaldo</h2>
           <p>Sólo funciona en una cuenta limpia, sin datos cargados.</p>
         </div>
-        <button class="hoja-cerrar" type="button" data-cerrar aria-label="Cerrar">
+        <button
+          class="hoja-cerrar"
+          type="button"
+          data-cerrar
+          aria-label="Cerrar"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
       </div>
       <div class="hoja-cuerpo">
-        <div class="kv-grid" id="importar-vista-previa" style="grid-template-columns: 1fr"></div>
+        <div
+          class="kv-grid"
+          id="importar-vista-previa"
+          style="grid-template-columns: 1fr"
+        ></div>
 
         <p
           class="acceso-error"
@@ -1455,7 +1534,11 @@
           hidden
         ></p>
 
-        <button class="btn btn--principal" id="importar-confirmar" type="button">
+        <button
+          class="btn btn--principal"
+          id="importar-confirmar"
+          type="button"
+        >
           <span class="btn-texto">Confirmar importación</span>
           <span class="btn-girador" aria-hidden="true"></span>
         </button>
@@ -1550,7 +1633,12 @@
             <label for="movimiento-descripcion">
               Descripción
               <span
-                style="text-transform: none; letter-spacing: 0; color: var(--color-ink-4); font-weight: 500"
+                style="
+                  text-transform: none;
+                  letter-spacing: 0;
+                  color: var(--color-ink-4);
+                  font-weight: 500;
+                "
                 >(opcional)</span
               >
             </label>
@@ -1572,7 +1660,11 @@
             hidden
           ></p>
 
-          <button class="btn btn--principal" id="movimiento-guardar" type="submit">
+          <button
+            class="btn btn--principal"
+            id="movimiento-guardar"
+            type="submit"
+          >
             <span class="btn-texto">Guardar</span>
             <span class="btn-girador" aria-hidden="true"></span>
           </button>
@@ -1590,8 +1682,8 @@
           </button>
 
           <div class="ghost-note">
-            <b>El importe siempre se ingresa positivo.</b> El sistema decide
-            si contablemente suma o resta según el tipo elegido.
+            <b>El importe siempre se ingresa positivo.</b> El sistema decide si
+            contablemente suma o resta según el tipo elegido.
           </div>
         </form>
       </div>
@@ -1625,7 +1717,12 @@
              es contenido real, no relleno. Sólo lo decorativo interno
              (el sello y el trazo de fondo) lleva `aria-hidden`. -->
         <aside class="acceso-brand shell" aria-labelledby="acceso-brand-titulo">
-          <svg class="acceso-brand-grafico" viewBox="0 0 320 200" aria-hidden="true" focusable="false">
+          <svg
+            class="acceso-brand-grafico"
+            viewBox="0 0 320 200"
+            aria-hidden="true"
+            focusable="false"
+          >
             <path
               d="M-10,150 C40,135 70,80 120,95 C170,110 190,55 240,45 C270,40 290,55 330,35 L330,210 L-10,210 Z"
             />
@@ -1643,9 +1740,8 @@
               Tus finanzas, con la claridad que merecen.
             </h2>
             <p class="acceso-brand-texto">
-              Ingresos, gastos, ahorro e inversiones en un solo lugar —
-              pensado primero para el celular, cómodo también en la
-              computadora.
+              Ingresos, gastos, ahorro e inversiones en un solo lugar — pensado
+              primero para el celular, cómodo también en la computadora.
             </p>
 
             <!-- `role="list"`: Safari con VoiceOver deja de anunciar
@@ -1655,9 +1751,8 @@
               <li>
                 <span aria-hidden="true"
                   ><svg viewBox="0 0 24 24">
-                    <path d="M3 17l5-6 4 3.5L21 6" /><path
-                      d="M15.5 6H21v5.5"
-                    /></svg
+                    <path d="M3 17l5-6 4 3.5L21 6" />
+                    <path d="M15.5 6H21v5.5" /></svg
                 ></span>
                 Un dashboard que se entiende de un vistazo
               </li>
@@ -1674,9 +1769,8 @@
                 <span aria-hidden="true"
                   ><svg viewBox="0 0 24 24">
                     <rect x="3.5" y="5" width="17" height="14" rx="3" />
-                    <circle cx="12" cy="12" r="3.2" /><path
-                      d="M12 6.2v1.6M12 16.2v1.6"
-                    /></svg
+                    <circle cx="12" cy="12" r="3.2" />
+                    <path d="M12 6.2v1.6M12 16.2v1.6" /></svg
                 ></span>
                 Cada cuenta ve sólo lo suyo
               </li>
@@ -1821,8 +1915,8 @@
              una línea más de acá. -->
         <div class="acceso-confirmar" id="registro-confirmar" hidden>
           <p>
-            Te mandamos un correo para confirmar tu cuenta. Abrí el enlace
-            y después volvé a iniciar sesión.
+            Te mandamos un correo para confirmar tu cuenta. Abrí el enlace y
+            después volvé a iniciar sesión.
           </p>
           <!-- «Ofrece reenviarlo» es parte de General §48.1.1, no un
                extra: el correo de confirmación es el que más cae en
@@ -1832,7 +1926,11 @@
             <span class="btn-texto">Reenviar el correo</span>
             <span class="btn-girador" aria-hidden="true"></span>
           </button>
-          <span class="campo-nota" id="registro-reenviado" aria-live="polite"></span>
+          <span
+            class="campo-nota"
+            id="registro-reenviado"
+            aria-live="polite"
+          ></span>
           <button class="btn" id="registro-volver-login" type="button">
             Ir a iniciar sesión
           </button>
@@ -1977,9 +2075,8 @@
              9). «Quien te dio la cuenta» dice lo mismo sin clavarlo. -->
         <div class="acceso-confirmar" id="recuperar-sin-correo">
           <p>
-            Por ahora no podemos mandarte un enlace por correo.
-            Contactate con quien te dio la cuenta para que te asigne una
-            contraseña nueva.
+            Por ahora no podemos mandarte un enlace por correo. Contactate con
+            quien te dio la cuenta para que te asigne una contraseña nueva.
           </p>
           <button class="btn" id="recuperar-sin-correo-login" type="button">
             Ir a iniciar sesión
@@ -1995,8 +2092,8 @@
              esa cuenta existe. -->
         <div class="acceso-confirmar" id="recuperar-listo" hidden>
           <p>
-            Si hay una cuenta con ese correo, en un minuto te llega el
-            enlace. Revisá también la carpeta de spam.
+            Si hay una cuenta con ese correo, en un minuto te llega el enlace.
+            Revisá también la carpeta de spam.
           </p>
           <button class="btn" id="recuperar-volver-login" type="button">
             Ir a iniciar sesión
@@ -2028,7 +2125,11 @@
             hidden
           ></p>
 
-          <button class="btn btn--principal" id="recuperar-enviar" type="submit">
+          <button
+            class="btn btn--principal"
+            id="recuperar-enviar"
+            type="submit"
+          >
             <span class="btn-texto">Enviar enlace</span>
             <span class="btn-girador" aria-hidden="true"></span>
           </button>
@@ -2053,7 +2154,12 @@
            desde el arranque para que el cambio entre ellos no tenga
            que construir nada: verificando el enlace, enlace que no
            sirve, y el formulario. -->
-      <div class="acceso-card shell" data-cuenta="nueva-clave" hidden role="main">
+      <div
+        class="acceso-card shell"
+        data-cuenta="nueva-clave"
+        hidden
+        role="main"
+      >
         <div class="acceso-marca">
           <span class="acceso-sello" aria-hidden="true">
             <svg viewBox="0 0 24 24">
@@ -2070,8 +2176,8 @@
              «entrás directo» justo cuando no se va a poder entrar es
              peor que no decir nada. -->
         <p class="acceso-bajada" id="nueva-bajada">
-          Después de guardarla entrás directo, no hace falta volver a
-          iniciar sesión.
+          Después de guardarla entrás directo, no hace falta volver a iniciar
+          sesión.
         </p>
 
         <!-- Mientras se canjea el token del enlace. Es una sola vuelta
@@ -2084,8 +2190,8 @@
 
         <div class="acceso-confirmar" id="nueva-invalido" hidden>
           <p>
-            Este enlace no sirve o ya venció. Los enlaces son de un solo
-            uso: si ya lo usaste, pedí uno nuevo.
+            Este enlace no sirve o ya venció. Los enlaces son de un solo uso: si
+            ya lo usaste, pedí uno nuevo.
           </p>
           <button class="btn" id="nueva-pedir-otro" type="button">
             Pedir un enlace nuevo
@@ -2146,7 +2252,11 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
               </button>
             </div>
-            <span class="campo-nota" id="nueva-coincide" aria-live="polite"></span>
+            <span
+              class="campo-nota"
+              id="nueva-coincide"
+              aria-live="polite"
+            ></span>
           </div>
 
           <p
