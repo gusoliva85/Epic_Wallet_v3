@@ -51,7 +51,7 @@ export function filaMovimiento({
     : esc(fecha);
 
   return (
-    `<button class="row cg" type="button" data-movimiento="${esc(id)}" ` +
+    `<button class="row" type="button" data-movimiento="${esc(id)}" ` +
     `style="--c:var(--color-${entra ? "inc" : "egr"})">` +
     // aria-hidden: la flecha repite lo que ya dice el signo del importe.
     `<span class="row-ico" aria-hidden="true">` +
@@ -76,9 +76,14 @@ export function filaMovimiento({
  * categoría que más gastó. Se recorta igual que en las tarjetas: un
  * valor fuera de rango daría una barra negativa o desbordada.
  *
+ * `destacada` es la categoría que más gastó: lleva el scarlet de la
+ * señal y el resto el jade del acento. Toda la lista en rojo no avisa
+ * de nada — es una lista de gastos, se espera que gasten (F20-T02,
+ * mockup: el mismo criterio que el día más alto del gráfico diario).
+ *
  * @param {{id: string|number, nombre: string, total: string,
  *          detalle?: string, participacion?: number, pie?: string,
- *          color?: string}} c
+ *          destacada?: boolean}} c
  */
 export function filaCategoria({
   id,
@@ -87,12 +92,14 @@ export function filaCategoria({
   detalle = "",
   participacion = 0,
   pie = "",
+  destacada = false,
 }) {
   const ancho = Math.min(100, Math.max(0, Number(participacion) || 0));
+  const c = destacada ? "var(--color-egr)" : "var(--color-accent)";
 
   return (
-    `<button class="row cg" type="button" data-categoria="${esc(id)}" ` +
-    'style="--c:var(--color-egr)">' +
+    `<button class="row" type="button" data-categoria="${esc(id)}" ` +
+    `style="--c:${c}">` +
     // Las iniciales son un adorno que repite el nombre de al lado: si
     // no se ocultan, el lector dice «AL Alquiler».
     `<span class="row-ico" aria-hidden="true">${esc(inicial(nombre))}</span>` +
@@ -104,7 +111,7 @@ export function filaCategoria({
     "</span>" +
     "</span>" +
     '<span class="row-val">' +
-    `<b class="num amt-out">${esc(total)}</b><span>${esc(pie)}</span>` +
+    `<b class="num">${esc(total)}</b><span>${esc(pie)}</span>` +
     "</span>" +
     "</button>"
   );

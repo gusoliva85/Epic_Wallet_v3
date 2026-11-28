@@ -256,17 +256,39 @@ describe("tarjetas de indicador", () => {
     );
   });
 
-  test("la barra de progreso no la lee el lector", async () => {
-    // La cifra de arriba ya dice el valor; un progreso anunciado aparte
-    // no agrega nada.
+  test("el anillo y la barra no los lee el lector", async () => {
+    // La cifra de arriba ya dice el valor y el pie dice el porcentaje
+    // con todas las letras: un anillo y un progreso anunciados aparte
+    // repiten lo mismo tres veces.
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
-      kpi.tarjetaHeroe({ etiqueta: "x", cifra: "$1", porcentaje: 50 }),
+      kpi.tarjetaHeroe({ etiqueta: "x", cifra: "$1", porcentaje: 50, anillo: 50 }),
     ]);
     assert.equal(
-      rejilla.querySelector(".fin-track").getAttribute("aria-hidden"),
+      rejilla.querySelector(".kpi-aro").getAttribute("aria-hidden"),
       "true",
     );
+  });
+
+  test("sin porcentaje no se dibuja el anillo", async () => {
+    // Un anillo vacío se lee como "cero por ciento". Cuando no hay
+    // tasa —ingresos en cero—, no hay anillo.
+    const { kpi, rejilla } = await montar();
+    kpi.pintarTarjetas(rejilla, [
+      kpi.tarjetaHeroe({ etiqueta: "x", cifra: "$1", anillo: null }),
+    ]);
+    assert.equal(rejilla.querySelector(".kpi-anillo"), null);
+  });
+
+  test("el anillo redondea al entero y se recorta a 0–100", async () => {
+    const { kpi, rejilla } = await montar();
+    kpi.pintarTarjetas(rejilla, [
+      kpi.tarjetaHeroe({ etiqueta: "x", cifra: "$1", anillo: 24.4 }),
+      kpi.tarjetaHeroe({ etiqueta: "y", cifra: "$1", anillo: 180 }),
+    ]);
+    const anillos = rejilla.querySelectorAll(".kpi-anillo");
+    assert.equal(anillos[0].querySelector("text").textContent, "24%");
+    assert.equal(anillos[1].querySelector("text").textContent, "100%");
   });
 
   test("una tarjeta sin icono no deja el hueco", async () => {

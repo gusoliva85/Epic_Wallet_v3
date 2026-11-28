@@ -116,37 +116,46 @@ export function tarjetaMetrica({
 }
 
 /**
- * Tarjeta héroe: cifra grande, barra de progreso y, opcionalmente, un
- * pie de dos datos.
+ * Tarjeta héroe: cifra grande y, debajo, el anillo con el porcentaje,
+ * la barra y su pie.
  *
  * `porcentaje` es cuánto se llena la barra. Se recorta a 0–100: un
  * ahorro negativo daría una barra de ancho negativo, que el navegador
  * ignora, y un 140 % desbordaría el surco.
  *
- * El pie es opcional a propósito: la de "Ahorro del mes" no lo lleva
- * —ingreso y egreso ya están en las tarjetas de color de abajo, y
- * repetirlos acá era decirlo dos veces— pero la de "Patrimonio" sí
- * (invertido y cantidad de posiciones no están en ningún otro lado).
- * Sin `pieIzq` ni `pieDer`, no se renderiza el `<div>` del pie: dejarlo
- * vacío igual sumaría un hueco en blanco, por el `margin-top` que trae.
+ * `anillo` dibuja el disco con el porcentaje adentro (F20-T02, el
+ * mockup aprobado). Es `null` cuando no hay porcentaje que mostrar
+ * —ingresos en cero, por ejemplo— y entonces no se dibuja: un anillo
+ * en cero diría que la tasa es cero, que es justo lo que la regla de
+ * la tasa de ahorro no quiere decir.
+ *
+ * El pie admite dos formas, y son excluyentes: `pie` es una línea
+ * sola, debajo de la barra (el ahorro del mes, el patrimonio);
+ * `pieIzq`/`pieDer` son dos datos a los extremos. Sin ninguno de los
+ * tres no se renderiza nada: un pie vacío igual sumaría el hueco de
+ * su `margin-top`.
  *
  * @param {{etiqueta: string, cifra: string, sub?: string,
- *          porcentaje?: number, pieIzq?: string, pieDer?: string,
- *          color?: string}} datos
+ *          porcentaje?: number, anillo?: number|null, pie?: string,
+ *          pieIzq?: string, pieDer?: string, color?: string}} datos
  */
 export function tarjetaHeroe({
   etiqueta,
   cifra,
   sub = "",
   porcentaje = 0,
+  anillo = null,
+  pie = "",
   pieIzq = "",
   pieDer = "",
   color: c,
 }) {
   const ancho = Math.min(100, Math.max(0, Number(porcentaje) || 0));
-  const pie =
-    pieIzq || pieDer
-      ? `<div class="fin-foot"><span>${esc(pieIzq)}</span><span>${esc(pieDer)}</span></div>`
+
+  const pieHtml = pie
+    ? `<span class="fin-pie">${esc(pie)}</span>`
+    : pieIzq || pieDer
+      ? `<span class="fin-foot"><span>${esc(pieIzq)}</span><span>${esc(pieDer)}</span></span>`
       : "";
 
   return (
@@ -154,13 +163,41 @@ export function tarjetaHeroe({
     `<div class="kpi-label">${esc(etiqueta)}</div>` +
     `<div class="kpi-num num">${esc(cifra)}</div>` +
     `<div class="kpi-sub">${esc(sub)}</div>` +
-    // El surco es decoración; la cifra de arriba ya dice el valor. Sin
-    // aria-hidden, el lector anuncia un progreso que no agrega nada.
-    '<div class="fin-track" aria-hidden="true">' +
-    `<div class="fin-fill" data-ancho="${ancho}"></div>` +
+    // Todo el bloque de abajo es decoración: el porcentaje que dice el
+    // anillo está también en el pie, y la cifra de arriba ya dice el
+    // valor. Sin aria-hidden, el lector lee dos veces lo mismo.
+    '<div class="kpi-aro" aria-hidden="true">' +
+    anilloSvg(anillo) +
+    '<span class="kpi-aro-g">' +
+    '<span class="fin-track">' +
+    `<i class="fin-fill" data-ancho="${ancho}"></i>` +
+    "</span>" +
+    pieHtml +
+    "</span>" +
     "</div>" +
-    pie +
     "</article>"
+  );
+}
+
+/** El disco de la tarjeta héroe: un anillo de 52 px con el porcentaje
+ * entero adentro. `pathLength="100"` es lo que deja escribir el
+ * `stroke-dasharray` en por ciento sin calcular la circunferencia.
+ *
+ * Se recorta a 0–100 por lo mismo que la barra, y se redondea al
+ * entero: adentro del anillo no entran dos cifras y una coma. El
+ * valor con decimal va en el pie. */
+function anilloSvg(valor) {
+  if (valor == null || Number.isNaN(Number(valor))) return "";
+  const v = Math.min(100, Math.max(0, Number(valor)));
+  const entero = Math.round(v);
+  return (
+    '<svg class="kpi-anillo" viewBox="0 0 40 40">' +
+    '<circle cx="20" cy="20" r="15.9" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="5"/>' +
+    '<circle cx="20" cy="20" r="15.9" fill="none" stroke="currentColor" stroke-width="5" ' +
+    `stroke-linecap="round" stroke-dasharray="${v} ${100 - v}" pathLength="100" ` +
+    'transform="rotate(-90 20 20)"/>' +
+    `<text x="20" y="22.6" text-anchor="middle">${entero}%</text>` +
+    "</svg>"
   );
 }
 

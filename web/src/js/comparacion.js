@@ -137,7 +137,7 @@ function filas(meses) {
 
       if (m.total === null) {
         return (
-          '<div class="row cg" style="--c: var(--color-ink-4)">' +
+          '<div class="row" style="--c: var(--color-ink-4)">' +
           '<span class="row-ico" aria-hidden="true">—</span>' +
           `<span class="row-main"><b>${esc(titulo)}</b>` +
           "<span>Sin movimientos de este ítem</span></span>" +
@@ -159,7 +159,7 @@ function filas(meses) {
       const tipo = delta === null ? "neutral" : delta > 0.5 ? "crit" : delta < -0.5 ? "ok" : "neutral";
 
       return (
-        '<div class="row cg" style="--c: var(--color-egr)">' +
+        '<div class="row" style="--c: var(--color-egr)">' +
         `<span class="row-ico" aria-hidden="true">${esc(etiquetaDeMes(m).slice(0, 3))}</span>` +
         `<span class="row-main"><b>${esc(titulo)}</b><span>${esc(detalle)}</span></span>` +
         '<span class="row-val">' +

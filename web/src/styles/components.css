@@ -183,61 +183,27 @@
    `.acceso-nombre` en las pantallas de cuenta, para que el nombre solo
    se lea con la misma confianza que antes se repartía entre las dos
    líneas. */
-/* El nombre de la marca con un degradado animado de varios colores
-   (pedido de Gustavo, después de cerrar la Fase 4: la primera versión
-   sólo usaba azules y no se parecía al efecto "aurora" de la
-   referencia). Los cuatro tonos salen de la paleta semántica que ya
-   existe —acento, ingreso, alerta y crítico—, nunca un color fuera
-   del sistema (skill §13), pero son lo bastante distintos entre sí
-   como para que se note un degradado de verdad, no una variación de
-   un solo azul. Mismo tamaño y lugar que el título de siempre: sólo
-   cambia el color, que ahora es `background-clip: text` en vez de un
-   `color` fijo. */
+/* El nombre de la marca, en tinta.
+
+   Hasta F20-T02 llevaba un degradado animado de cuatro colores —el
+   "aurora" que pidió Gustavo después de la Fase 4—. Con la paleta
+   nueva ese degradado pasaba por el ámbar y el naranja quemado de las
+   severidades, que acá son colores de alerta: el nombre de la
+   aplicación parpadeando en color de alerta decía algo que no pasaba.
+   El mockup aprobado lo tiene en tinta y así queda. */
 .marca-texto b {
   display: block;
   font-family: var(--font-display);
   font-size: var(--text-sheet);
   font-weight: 700;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
   line-height: 1.1;
-  background: linear-gradient(
-    110deg,
-    var(--color-accent),
-    var(--color-inc),
-    var(--color-warn),
-    var(--color-crit),
-    var(--color-accent)
-  );
-  background-size: 400% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  animation: aurora-marca 8s linear infinite;
+  color: var(--color-ink);
   /* En 320 px el nombre y las tres acciones compiten por el ancho:
      antes de desbordar, el nombre se recorta. */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-@keyframes aurora-marca {
-  to {
-    background-position: -400% 0;
-  }
-}
-
-/* Sin degradado de texto donde no hay soporte de background-clip:
-   text (muy poco frecuente, pero sin esto el nombre quedaría
-   invisible: texto transparente sobre un fondo que no se recortó). */
-@supports not (
-  (background-clip: text) or (-webkit-background-clip: text)
-) {
-  .marca-texto b {
-    background: none;
-    -webkit-text-fill-color: unset;
-    color: var(--color-ink);
-    animation: none;
-  }
 }
 
 /* ---- las acciones de la derecha ---- */
@@ -338,13 +304,14 @@
   flex: none;
   border: 0;
   border-radius: var(--radius-btn);
-  background: linear-gradient(
-    155deg,
-    var(--color-avatar-1),
-    var(--color-avatar-2)
-  );
-  box-shadow: var(--glass-in);
-  color: var(--color-on-solid);
+  /* Material, como los otros dos botones de la barra: el cuadrado
+     relleno de gris era de Vidrio Grafito, y al lado de dos piezas
+     levantadas parecía un hueco tapado. Los tokens `--color-avatar-*`
+     quedan definidos porque el sello de la marca podría volver a
+     usarlos. */
+  background: var(--surf);
+  box-shadow: var(--glass-in), var(--sh-sm);
+  color: var(--color-ink-2);
   font-size: var(--text-avatar);
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -531,16 +498,17 @@
   height: 56px;
   border: 0;
   border-radius: var(--radius-fab);
-  background: linear-gradient(
-    155deg,
-    var(--color-accent),
-    var(--color-accent-2)
-  );
-  color: var(--color-on-accent);
+  /* EL COLOR DE LA SEÑAL, no el del acento, y es la única pieza del
+     sistema que lo usa sin ser una alerta: así está en el mockup que
+     Gustavo aprobó (F20-T02). Es el botón que se toca cien veces por
+     mes y es el único de la pantalla que flota: tiene el color que
+     más se ve. Plano, con su sombra teñida, como el resto. */
+  background: var(--color-crit);
+  color: var(--color-on-solid);
   cursor: pointer;
   box-shadow:
-    var(--glass-in),
-    0 14px 30px -10px rgba(var(--shadow-rgb), 0.55);
+    5px 5px 11px var(--sig-sh-lo),
+    -3px -3px 9px var(--sig-sh-hi);
   transition: transform 0.22s var(--ease);
 }
 
@@ -920,7 +888,7 @@
   justify-content: space-between;
   gap: 10px;
   margin-top: 12px;
-  padding: 9px 11px;
+  padding: 7px 9px;
   border-radius: var(--radius-card);
 }
 
@@ -950,13 +918,18 @@
   white-space: nowrap;
 }
 
+/* La naturaleza del mes va en el color del acento y no en gris: es un
+   estado del mes, no un pie de página (mockup F20-T02). Las dos
+   naturalezas comparten color porque lo que distingue a un mes
+   consolidado de uno abierto es la palabra, no el tono. */
 .mb-title span {
   display: block;
   margin-top: 1px;
   font-size: var(--text-label);
-  letter-spacing: var(--tracking-caps);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--color-ink-3);
+  color: var(--color-accent);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -969,9 +942,11 @@
   position: relative;
   display: inline-grid;
   place-items: center;
-  padding: 7px 12px;
+  padding: 7px 11px;
   border: 1px solid var(--borde-pieza);
-  border-radius: 99px;
+  /* Esquina del sistema, no cápsula: con el relieve, una píldora de
+     99 px de radio pierde el canto donde la sombra tiene que girar. */
+  border-radius: var(--radius-chip);
   /* Levantada: una píldora de acción se toca. La hundida es la que
      está elegida, y ésa la maneja el conmutador de vistas. */
   background: var(--surf);
@@ -1040,11 +1015,9 @@
 /* Variante sólida, para cuando la píldora es la acción principal. */
 .chip.solid {
   border-color: transparent;
-  background: linear-gradient(
-    155deg,
-    var(--color-accent),
-    var(--color-accent-2)
-  );
+  /* Plana: un degradado sobre una pieza de 30 px se lee como un
+     reflejo de vidrio, que es de lo que se salió. */
+  background: var(--color-accent);
   color: var(--color-on-accent);
   box-shadow:
     var(--glass-in),
@@ -1151,7 +1124,7 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-card);
-  padding: 14px;
+  padding: 13px 14px;
   transition:
     transform 0.22s var(--ease),
     box-shadow 0.22s var(--ease);
@@ -1165,30 +1138,29 @@
 /* ---- la tarjeta héroe ----
    La ÚNICA superficie maciza de la aplicación: el ahorro del mes y el
    patrimonio neto. Jade en claro, Molten Orange profundo en oscuro,
-   el texto en blanco y su propia sombra teñida — una pieza del mismo
-   material pero de otro color, no una tarjeta de acento.
+   el texto en blanco y su propia sombra teñida.
 
    Es la contracara de la tarjeta teñida de más abajo: en Vidrio
    Grafito la héroe era de vidrio y las cuatro métricas eran sólidas;
-   en el sistema neumórfico es al revés (F20-T01, decisión de Gustavo
-   sobre el mockup). El peso visual queda donde está la cifra que
-   importa. */
+   en el sistema neumórfico es al revés (F20-T01). El peso visual
+   queda donde está la cifra que importa. */
 .kpi--hero {
   grid-column: span 2;
-  padding: 17px;
+  padding: 17px 18px 15px;
+  border-radius: var(--radius-lg);
   background: var(--hero);
   color: var(--on-hero);
   box-shadow:
     var(--glass-in),
-    6px 6px 14px var(--hero-sh-lo),
-    -5px -5px 12px var(--hero-sh-hi);
+    5px 5px 11px var(--hero-sh-lo),
+    -4px -4px 9px var(--hero-sh-hi);
 }
 
 .kpi--hero:hover {
   box-shadow:
     var(--glass-in),
-    9px 9px 20px var(--hero-sh-lo),
-    -8px -8px 18px var(--hero-sh-hi);
+    8px 8px 17px var(--hero-sh-lo),
+    -6px -6px 14px var(--hero-sh-hi);
 }
 
 /* El brillo diagonal, fuera: sobre una superficie de color es un velo
@@ -1197,13 +1169,24 @@
   content: none;
 }
 
-/* Todo el texto de la héroe en blanco, la cifra incluida. `.kpi--hero`
-   solo no le gana a `.kpi[style*="--c"] .kpi-num`, que tiene un
-   selector de atributo de más: por eso la clase va repetida. */
+/* Todo el texto de la héroe en blanco, la cifra incluida. */
 .kpi--hero .kpi-label,
 .kpi--hero .kpi-sub,
-.kpi.kpi--hero .kpi-num {
+.kpi--hero .kpi-num {
   color: var(--on-hero);
+}
+
+/* La etiqueta de la héroe pesa menos que la de una tarjeta teñida: no
+   tiene que competir con la cifra que lleva abajo. */
+.kpi--hero .kpi-label {
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  opacity: 0.78;
+}
+
+.kpi--hero .kpi-sub {
+  margin-top: 1px;
+  opacity: 0.8;
 }
 
 @media (min-width: 1024px) {
@@ -1211,12 +1194,9 @@
     grid-column: span 3;
   }
 
-  /* Héroe + cuatro métricas (hoy sólo Inicio: Ingresos, Egresos,
-     Gasto de hoy, Total de ahorros): la héroe y las primeras tres
-     llenan la fila justo (3+1+1+1=6), y la cuarta métrica queda sola
-     en la fila siguiente — angosta, con aire vacío al lado. Ocupa
-     todo el ancho en vez de quedar huérfana. Apronte de escritorio,
-     2026-10-21. */
+  /* Héroe + cuatro métricas: la héroe y las primeras tres llenan la
+     fila justo (3+1+1+1=6), y la cuarta quedaría sola en la fila
+     siguiente, angosta y con aire vacío al lado. */
   .kpi-grid > :nth-child(5):last-child {
     grid-column: 1 / -1;
   }
@@ -1234,22 +1214,35 @@
 }
 
 .kpi-num {
-  margin: 6px 0 2px;
+  margin: 5px 0 3px;
   font-family: var(--font-display);
   font-size: var(--text-kpi);
   font-weight: 700;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   color: var(--color-ink);
 }
 
-/* La cifra toma algo del color de la tarjeta sin perder legibilidad:
-   el color puro sobre vidrio queda por debajo del contraste mínimo. */
-.kpi[style*="--c"] .kpi-num {
+/* La cifra de una tarjeta de métrica con color propio toma algo de
+   ese color sin perder legibilidad.
+
+   EL SELECTOR LLEVA LOS DOS PUNTOS Y LA CLASE, Y LOS DOS IMPORTAN.
+   Escrito `.kpi[style*="--c"]`, este atributo le pegaba también a la
+   héroe (que lleva `--c` en su `style`) y a las cuatro tarjetas
+   teñidas (que llevan `--c-card`), y como tiene un selector de más
+   les ganaba a sus propias reglas de color: la cifra blanca de la
+   héroe y el jade del ingreso salían mezclados con la tinta, o sea
+   casi negros. Era el "quedó todo en negro" del tablero (F20-T02). */
+.kpi-metric[style*="--c:"] .kpi-num {
   color: color-mix(in srgb, var(--c) 32%, var(--color-ink));
 }
 
 .kpi--hero .kpi-num {
+  margin: 5px 0 2px;
   font-size: var(--text-hero);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
 }
 
 .kpi-metric .kpi-num {
@@ -1257,7 +1250,8 @@
 }
 
 .kpi-sub {
-  font-size: var(--text-chip);
+  font-size: var(--text-sub);
+  line-height: 1.35;
   color: var(--color-ink-3);
 }
 
@@ -1297,33 +1291,36 @@
    Las cuatro del tablero: ingresos, egresos, gasto de hoy y total de
    ahorros. Siguen siendo la misma pieza de material levantada que
    todo lo demás; lo único que las distingue es el color del dato,
-   puesto en dos lugares y en ninguno más:
+   puesto en tres lugares y en ninguno más:
 
    1. UN 10% MEZCLADO EN LA SUPERFICIE. Diez por ciento y no más: con
       el color al 25% dejan de ser material y pasan a ser cuatro
-      rectángulos de color, que es exactamente lo que se quiso sacar.
-      Se mezcla contra `--kpi-surf`, un escalón del material, no
-      contra la pieza: la tarjeta tiene que leerse como una pieza
-      aparte dentro del tablero.
+      rectángulos de color, que es lo que se quiso sacar. Se mezcla
+      contra `--kpi-surf`, un escalón del material, no contra la
+      pieza: la tarjeta tiene que leerse como una pieza aparte.
 
-   2. EL PUNTO DE LA ETIQUETA, con el color pleno. Es la referencia de
-      un gráfico: dice de qué se trata la cifra sin pintar nada grande.
+   2. LA ETIQUETA Y SU PUNTO, con el color pleno. Es la referencia de
+      un gráfico: dice de qué se trata la cifra sin pintar nada
+      grande.
 
-   Ningún texto cae encima del color, así que —al contrario de la
-   tarjeta de color sólido de Vidrio Grafito, que vivía acá hasta el
-   2026-11-27— estos cuatro colores no necesitan contraste con blanco
-   y son los de la paleta sin retoques. El signo pesos de fondo y el
-   símbolo de la esquina se fueron con ella.
+   3. LA CIFRA, pero SÓLO donde el color significa dirección: el jade
+      del ingreso y el scarlet del egreso (F20-T02, mockup). "Gasto de
+      hoy" y "Total de ahorros" llevan la cifra en tinta: no son una
+      dirección, son un saldo, y pintarlas de color les daba un peso
+      que no tienen.
+
+   Ningún texto cae encima del color, así que estos cuatro colores no
+   necesitan contraste con blanco y son los de la paleta sin retoques.
    ============================================================ */
 
 .kpi-color {
   background: color-mix(in srgb, var(--kpi-surf) 90%, var(--c-card));
 }
 
-/* La etiqueta lleva el color del dato, oscurecido con la tinta para
-   que una etiqueta de 10,5 px no quede al límite del contraste. */
+/* La etiqueta lleva el color del dato, apenas oscurecido con la tinta
+   para que una etiqueta de 10,5 px no quede al límite del contraste. */
 .kpi-color .kpi-label {
-  color: color-mix(in srgb, var(--c-card) 70%, var(--mix-ink));
+  color: color-mix(in srgb, var(--c-card) 82%, var(--mix-ink));
 }
 
 /* El punto. Va en la etiqueta y no como un nodo aparte: es decoración
@@ -1334,42 +1331,80 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--c-card);
+  background: currentColor;
 }
 
-/* La cifra toma algo del color sin perderlo de vista: el color puro a
-   27 px pesa más que el número. */
+/* La cifra en el color pleno del dato: es la dirección de la plata.
+   Vale para el ingreso y el egreso; las otras dos la anulan abajo. */
 .kpi-color .kpi-num {
-  color: color-mix(in srgb, var(--c-card) 30%, var(--color-ink));
+  color: var(--c-card);
 }
 
 .kpi-color .kpi-sub {
-  color: var(--color-ink-3);
+  color: var(--color-ink-4);
 }
 
 /* "Gasto de hoy" es el dato más blando de los cuatro: su tinte va a la
-   mitad, así la fila no tiene cuatro colores con el mismo peso. */
+   mitad y su cifra queda en tinta, asi la fila no tiene cuatro colores
+   con el mismo peso. */
 .kpi-color[style*="--color-card-dia"] {
   background: color-mix(in srgb, var(--kpi-surf) 95%, var(--c-card));
 }
 
-/* ---- la barra de progreso de la tarjeta héroe ---- */
+.kpi-color[style*="--color-card-dia"] .kpi-num,
+.kpi-color[style*="--color-card-pat"] .kpi-num {
+  color: var(--color-ink);
+}
+
+/* ---- el pie de la tarjeta héroe: anillo, barra y leyenda ----
+   El anillo dice el porcentaje de un vistazo, la barra lo dibuja y el
+   pie lo escribe con su decimal. Los tres dicen lo mismo a propósito:
+   es la pieza que da el impacto del tablero (mockup, F20-T02). */
+
+.kpi-aro {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 12px;
+}
+
+.kpi-anillo {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  /* El trazo sale de currentColor: dentro de la héroe, el blanco del
+     texto. */
+  color: var(--on-hero);
+}
+
+.kpi-anillo text {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  fill: var(--on-hero);
+}
+
+.kpi-aro-g {
+  flex: 1;
+  min-width: 0;
+}
 
 .fin-track {
-  height: 8px;
-  margin-top: 11px;
-  border-radius: 99px;
+  display: block;
+  height: 9px;
+  border-radius: 5px;
   overflow: hidden;
   background: var(--groove-bg);
   box-shadow: var(--groove-in);
 }
 
 .fin-fill {
+  display: block;
   height: 100%;
-  border-radius: 99px;
+  border-radius: 5px;
   /* Nace en cero: el ancho real lo pone animarBarras() al frame
-     siguiente. Escrito directo, la transición no tiene de dónde partir
-     y la barra aparece ya llena. */
+     siguiente. Escrito directo, la transición no tiene de dónde
+     partir y la barra aparece ya llena. */
   width: 0;
   background: linear-gradient(
     90deg,
@@ -1379,23 +1414,30 @@
   transition: width 1.1s var(--ease);
 }
 
+.fin-pie {
+  display: block;
+  margin-top: 6px;
+  font-size: var(--text-sub);
+  color: var(--color-ink-3);
+}
+
 .fin-foot {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 9px;
-  font-size: var(--text-chip);
+  margin-top: 6px;
+  font-size: var(--text-sub);
   color: var(--color-ink-3);
 }
 
 /* ---- la barra, dentro de la héroe maciza ----
    La héroe es la única superficie de color de la aplicación, así que
    su barra no puede usar el surco del material: sobre jade o naranja,
-   un surco claro desaparece. El canal se hunde con negro y la barra se
-   llena con el mismo blanco del texto. */
+   un surco claro desaparece. El canal se hunde con negro y la barra
+   se llena con el mismo blanco del texto. */
 .kpi--hero .fin-track {
   background: rgba(0, 0, 0, 0.22);
-  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 .kpi--hero .fin-fill {
@@ -1403,9 +1445,10 @@
   opacity: 0.92;
 }
 
+.kpi--hero .fin-pie,
 .kpi--hero .fin-foot {
   color: var(--on-hero);
-  opacity: 0.8;
+  opacity: 0.78;
 }
 
 /* ============================================================
@@ -1413,10 +1456,14 @@
    Referencia: mockup 01, .row · SKILL.md §8
    ============================================================ */
 
+/* Sin separación entre filas: la lista es un bloque continuo y lo
+   que separa una fila de la siguiente es la hairline de `.row + .row`,
+   no un hueco. Con `gap`, cada fila se lee como una ficha suelta
+   —que es lo que era hasta F20-T02— y la lista pierde el ritmo. */
 .rows {
   display: grid;
-  gap: 7px;
-  padding: 6px 11px 14px;
+  gap: 0;
+  padding: 2px 13px 14px;
 }
 
 /* ---- la fila recién cargada ----
@@ -1475,28 +1522,42 @@
 }
 
 /* La fila es un botón: se abre para ver el detalle. */
+/* La fila es un botón: se abre para ver el detalle.
+
+   NO ES UNA PIEZA. No lleva relieve, ni fondo, ni borde: va apoyada
+   sobre la superficie del panel, separada de la de abajo por una
+   hairline. Una lista de ocho categorías hecha de ocho piezas
+   hundidas es ocho veces la misma sombra, y el relieve deja de
+   significar algo (mockup F20-T02, `.fila`). Lo que se hunde es el
+   bloque que las contiene, una sola vez. */
 .row {
   display: grid;
   grid-template-columns: 34px 1fr auto;
   align-items: center;
   gap: 11px;
   width: 100%;
-  padding: 11px 12px;
-  border: 1px solid var(--borde-pieza);
+  padding: 9px 2px;
+  border: 0;
   border-radius: var(--radius-row);
+  background: none;
+  box-shadow: none;
   color: inherit;
   text-align: left;
   cursor: pointer;
   transition:
     transform 0.18s var(--ease),
-    box-shadow 0.18s var(--ease),
-    border-color 0.18s var(--ease);
+    background-color 0.18s var(--ease);
 }
 
+.row + .row {
+  border-top: 1px solid var(--line-2);
+}
+
+/* El hover tiñe apenas la superficie en lugar de levantar la fila:
+   sin pieza no hay nada que levantar. */
 .row:hover {
-  transform: translateX(3px);
-  box-shadow: var(--glass-in), var(--sh-sm);
-  border-color: var(--line);
+  transform: translateX(2px);
+  background: color-mix(in srgb, var(--c, var(--color-accent)) 7%, transparent);
 }
 
 .row:active {
@@ -1511,34 +1572,33 @@
    también mientras está en hover. */
 .row:focus-visible {
   outline: none;
-  box-shadow:
-    0 0 0 4px var(--accent-ring),
-    var(--glass-in);
-  border-color: var(--line);
+  box-shadow: 0 0 0 4px var(--accent-ring);
 }
 
 /* Marca de la fila: la flecha de dirección o las iniciales de la
    categoría. El color sale de `--c`, que pone cada fila. */
+/* El cuadradito HUNDIDO, no teñido: es el hueco del material donde
+   apoya el icono, y el color queda en el trazo. Teñido de fondo
+   competía con las tarjetas del tablero, que son las que usan el
+   color de superficie. */
 .row-ico {
   display: grid;
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-ico);
   font-family: var(--font-display);
-  font-size: var(--text-marca);
+  font-size: var(--text-pill);
   font-weight: 700;
-  background: color-mix(
-    in srgb,
-    var(--c, var(--color-accent)) 15%,
-    var(--mix-tint)
-  );
-  color: color-mix(in srgb, var(--c, var(--color-accent)) 82%, var(--mix-ink));
+  letter-spacing: 0.02em;
+  background: var(--surf-2);
+  box-shadow: var(--hundido-sm);
+  color: var(--c, var(--color-accent));
 }
 
 .row-ico svg {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -1556,6 +1616,7 @@
   display: block;
   font-size: var(--text-row);
   font-weight: 600;
+  color: var(--color-ink);
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1592,53 +1653,67 @@
   color: var(--color-ink-3);
 }
 
-/* Importes. El color se mezcla con la tinta y no se usa puro: el verde
-   y el rojo puros sobre vidrio quedan por debajo del contraste mínimo.
-   El signo y la flecha son los que llevan la información; el color
-   acompaña. */
+/* Importes. El color es el de la paleta, sin mezclar: sobre el
+   material —que no es blanco— el jade y el scarlet llegan al
+   contraste mínimo, y mezclados con la tinta se volvían dos grises
+   con un tinte. El signo y la flecha siguen llevando la información;
+   el color acompaña.
+
+   Un importe sin dirección —el total de una categoría, el valor de
+   una posición— NO lleva color: va en tinta (`.row-val b` a secas).
+   Toda una lista en rojo deja de avisar nada. */
 .amt-in {
-  color: color-mix(in srgb, var(--color-inc) 86%, var(--mix-ink));
+  color: var(--color-inc);
 }
 
 .amt-out {
-  color: color-mix(in srgb, var(--color-egr) 82%, var(--mix-ink));
+  color: var(--color-egr);
 }
 
 /* ---- barra de participación de la fila de categoría ---- */
 
 .cat-track {
   display: block;
-  height: 5px;
+  height: 6px;
   margin-top: 6px;
-  border-radius: 99px;
+  border-radius: 4px;
   overflow: hidden;
-  background: var(--groove-bg);
+  background: var(--surf-2);
+  box-shadow: var(--hundido-sm);
 }
 
 .cat-fill {
   display: block;
   height: 100%;
-  border-radius: 99px;
+  border-radius: 4px;
   /* Nace en cero; el ancho lo pone animarParticipacion() al frame
      siguiente. */
   width: 0;
-  background: linear-gradient(
-    90deg,
-    var(--color-accent-2),
-    var(--color-accent)
-  );
+  background: var(--c, var(--color-accent));
   transition: width 0.9s var(--ease);
 }
 
 /* ---- separador de día ---- */
 
+/* La línea que sigue al texto es lo que lo hace leer como un corte y
+   no como un título más (mockup F20-T02). */
 .day-sep {
-  padding: 8px 4px 2px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 2px 3px;
   font-size: var(--text-label);
   font-weight: 700;
-  letter-spacing: var(--tracking-caps);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-ink-4);
+}
+
+.day-sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
 }
 
 /* ============================================================
@@ -1653,37 +1728,38 @@
 
 /* ---- aviso ---- */
 
+/* Una pieza levantada con un canto del color de la severidad: el
+   borde entero teñido la convertía en un recuadro de color, que es lo
+   que el material no hace. El canto de 3 px es lo único que grita, y
+   grita de costado (mockup F20-T02, `.aviso`). */
 .alert {
   display: grid;
-  grid-template-columns: 30px 1fr;
+  grid-template-columns: 26px 1fr;
   align-items: flex-start;
   gap: 11px;
-  padding: 11px 12px;
-  border-radius: var(--radius-row);
-  border: 1px solid color-mix(in srgb, var(--c) 34%, var(--line-2));
-  /* Sombra teñida de la severidad: es lo que hace que un aviso crítico
-     pese más en la pantalla que uno informativo, sin gritar. */
-  box-shadow:
-    var(--glass-in),
-    0 10px 22px -14px color-mix(in srgb, var(--c) 60%, transparent);
+  padding: 12px 13px;
+  border: 0;
+  border-left: 3px solid var(--c);
+  border-radius: var(--radius-card);
+  background: var(--surf);
+  box-shadow: var(--glass-in), var(--sh-sm);
 }
 
+/* El icono va suelto sobre la pieza, sin cuadradito propio: el canto
+   ya dice la severidad y dos marcas de color en 26 px es una de más.
+   El mínimo de contraste de un gráfico es 3:1, y el color pleno de la
+   severidad sobre el material lo pasa en los dos temas. */
 .alert-ico {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-aviso);
-  background: color-mix(in srgb, var(--c) 17%, var(--mix-tint));
-  /* El icono es un gráfico, no texto: el mínimo es 3:1, y al 80% del
-     color el peor caso da 3,42:1. Por eso conserva más color que el
-     texto de la píldora. */
-  color: color-mix(in srgb, var(--c) 80%, var(--mix-ink));
+  width: 26px;
+  height: 26px;
+  color: var(--c);
 }
 
 .alert-ico svg {
-  width: 15px;
-  height: 15px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.9;
@@ -1698,9 +1774,9 @@
 }
 
 .alert p {
-  margin: 3px 0 0;
-  font-size: var(--text-chip);
-  line-height: 1.45;
+  margin: 2px 0 0;
+  font-size: var(--text-sub);
+  line-height: 1.4;
   color: var(--color-ink-3);
 }
 
@@ -1728,10 +1804,12 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px;
-  border-radius: 99px;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
   font-size: var(--text-pill);
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
   background: color-mix(in srgb, var(--c) 15%, var(--mix-tint));
   /* 60% y no 80% como el mockup: ahí el ámbar y el naranja no llegaban
@@ -1971,7 +2049,7 @@
   display: flex;
   gap: 3px;
   padding: 3px;
-  border-radius: 99px;
+  border-radius: var(--radius-chip);
   background: var(--groove-bg);
   box-shadow: var(--groove-in);
   /* En el teléfono, cuatro modos no entran: se desplaza en lugar de
@@ -1997,7 +2075,7 @@
      puede tocar. */
   padding: 5px 10px;
   border: 0;
-  border-radius: 99px;
+  border-radius: 8px;
   background: transparent;
   color: var(--color-ink-3);
   font-size: var(--text-sub);
@@ -2034,14 +2112,19 @@
   box-shadow: none;
 }
 
+/* La pastilla es una pieza LEVANTADA dentro del surco: es lo elegido,
+   y lo elegido se toca. Con el color de lo hundido (`--glass-content-bg`)
+   quedaba al ras del surco y no se distinguía (mockup F20-T02). */
 .vs-ind {
   position: absolute;
   top: 3px;
   left: 0;
   height: calc(100% - 6px);
-  border-radius: 99px;
-  background: var(--glass-content-bg);
-  box-shadow: var(--glass-in), var(--sh-sm);
+  border-radius: 8px;
+  background: var(--surf);
+  box-shadow:
+    2px 2px 5px var(--sh-lo),
+    -2px -2px 5px var(--sh-hi);
   opacity: 0;
   pointer-events: none;
   transition:
@@ -2074,6 +2157,45 @@
 .view-switch button {
   position: relative;
   z-index: 1;
+}
+
+/* ---- variante etiquetas ----
+   El filtro de Movimientos no es un conmutador dentro de un surco
+   sino una fila de etiquetas sueltas: levantadas las que se pueden
+   tocar, maciza del color del acento la elegida (mockup F20-T02,
+   `.tags`). Es la misma pieza de JavaScript —la pastilla que se
+   desliza— con otra ropa: lo único que cambia es que la pastilla es
+   de acento y el surco no existe. */
+.view-switch--tags {
+  gap: 7px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.view-switch--tags button {
+  padding: 7px 12px;
+  border-radius: var(--radius-chip);
+  background: var(--surf);
+  box-shadow: var(--sh-sm);
+  color: var(--color-ink-2);
+  font-size: var(--text-chip);
+}
+
+.view-switch--tags button.activa {
+  background: none;
+  box-shadow: none;
+  color: var(--color-on-accent);
+}
+
+.view-switch--tags .vs-ind {
+  top: 0;
+  height: 100%;
+  border-radius: var(--radius-chip);
+  background: var(--color-accent);
+  box-shadow:
+    3px 3px 8px var(--acc-sh-lo),
+    -2px -2px 6px var(--acc-sh-hi);
 }
 
 /* ---- rejilla de dos columnas ----
@@ -3276,11 +3398,9 @@
 
 .btn--principal {
   border: 0;
-  background: linear-gradient(
-    155deg,
-    var(--color-accent),
-    var(--color-accent-2)
-  );
+  /* Plano, no degradado: el degradado era un reflejo de vidrio. Lo
+     que le da volumen ahora son sus dos sombras. */
+  background: var(--color-accent);
   color: var(--color-on-accent);
   box-shadow:
     var(--glass-in),

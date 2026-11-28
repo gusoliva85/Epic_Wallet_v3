@@ -1351,21 +1351,36 @@ Una consecuencia que se agradece: las dos reglas que apagaban el desenfoque dura
 
 ### 13.4 Tipografía
 
-Escala aprobada, ya aumentada respecto del mockup original según tu pedido. Base **16,5 px** con interlineado 1,55.
+Escala medida sobre el mockup aprobado, pieza por pieza (F20-T02). Base **15 px** con interlineado 1,55.
+
+Lo que define esta escala no es cada número sino **la distancia entre la cifra héroe y todo lo demás**. Con la escala anterior —indicador a 27,5 px contra una héroe de 35— las dos cifras pesaban casi igual y el tablero se leía plano: era la queja de Gustavo al ver F20-T01 publicada («perdió la gracia, no tiene impacto»). Ahora la héroe pesa el doble que la tarjeta de al lado.
 
 | Rol | Fuente | Tamaño | Peso |
 |---|---|---|---|
-| Cifra héroe (ahorro, patrimonio) | Outfit | 35 px | 700 |
-| Cifra de KPI | Outfit | 28 px | 700 |
-| Cifra de KPI secundario | Outfit | 24 px | 700 |
-| Título de panel | Outfit | 20 px | 700 |
-| Texto base | Inter | 16,5 px | 400 |
-| Nombre en fila de lista | Inter | 15 px | 600 |
-| Secundario de fila | Inter | 12,5 px | 400 |
-| Etiqueta de KPI | Inter | 11,5 px | 700, mayúsculas, `letter-spacing: .07em` |
-| Eje de gráfico | Inter | 10–10,5 px | 600 |
+| Cifra héroe (ahorro del mes, cartera) | Outfit | 32 px | 800 |
+| Importe del formulario de alta | Outfit | 33 px | 700 |
+| Cifra de indicador | Outfit | 20 px | 700 |
+| Cifra de tarjeta teñida | Outfit | 17,5 px | 700 |
+| Título de hoja y marca | Outfit | 18 px | 700 |
+| Título de panel y de sección | Outfit | 14,5 px | 700 |
+| Importe en fila | Outfit | 14 px | 700 |
+| Botón | Inter | 13,5 px | 700 |
+| Nombre en fila de lista | Inter | 13 px | 600 |
+| Texto base | Inter | 15 px | 400 |
+| Secundario de fila y subtítulo de indicador | Inter | 11 px | 400 |
+| Etiqueta de indicador | Inter | 10,5 px | 700, mayúsculas, `letter-spacing: .07em` |
+| Píldora de estado | Inter | 10 px | 700, mayúsculas |
+| Eje de gráfico | Inter | 9,75–10,5 px | 600 |
 
 Las cifras usan `font-variant-numeric: tabular-nums` siempre, para que no "bailen" al actualizarse.
+
+### 13.4.1 Las tres piezas que cambiaron de forma en F20-T02
+
+**La tarjeta héroe lleva anillo.** Debajo de la cifra y el subtítulo va un bloque de tres partes que dicen lo mismo a propósito: un anillo de 52 px con el porcentaje entero adentro, la barra que lo dibuja y el pie que lo escribe con su decimal. El anillo **no se dibuja** cuando no hay porcentaje —ingresos en cero—: un anillo vacío se lee como "cero por ciento" y la regla de la tasa de ahorro dice otra cosa (General §52). Todo el bloque va `aria-hidden`.
+
+**La fila de lista no es una pieza.** Sin relieve, sin fondo y sin borde: apoyada sobre el panel, separada de la siguiente por una hairline. Ocho filas hundidas son ocho veces la misma sombra y el relieve deja de significar algo; lo que se hunde es el bloque que las contiene, una sola vez. Su marca (`.row-ico`) sí es un hueco, con el color en el trazo.
+
+**El color de un importe significa dirección.** Jade y scarlet plenos, sin mezclar con la tinta: sobre el material pasan el contraste mínimo y mezclados quedaban dos grises con un tinte. Un importe que no tiene dirección —el total de una categoría, el valor de una posición— va en tinta. En la lista de categorías, lo único en scarlet es la que más gastó.
 
 ### 13.5 Puntos de corte
 

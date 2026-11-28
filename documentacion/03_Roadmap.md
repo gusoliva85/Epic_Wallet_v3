@@ -490,6 +490,13 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas: las seis vistas, la tarjeta héroe, las cuatro tarjetas, el gráfico diario, los seis meses con la barra de egreso maciza, la lista de movimientos, las hojas, el interruptor y el botón de borrar.
   **Respaldo:** no toca la base ni los datos — frontend y documentación.
 
+- [~] **F20-T02 · El revamp completo, igual al mockup**
+  **Tipo:** interfaz
+  **Hacer:** llevar la aplicación al detalle del mockup aprobado (`documentacion/mockups/05_Mockup_Neumorfismo.html`), que F20-T01 había dejado a medio camino: la escala tipográfica entera medida sobre el archivo —la cifra héroe pesa el doble que la tarjeta de al lado—, el anillo con la tasa de ahorro dentro de la tarjeta héroe, la cifra de ingreso y egreso en el color pleno de la paleta, la naturaleza del mes en color de acento, las filas de lista sin relieve y separadas por hairlines con su marca hundida, los avisos con el canto de color, las etiquetas de filtro, el botón flotante en el color de la señal, la marca sin el degradado animado y los radios y las piezas planas (sin degradados de vidrio).
+  **Arreglado de paso:** `.kpi[style*="--c"]` le pegaba a la héroe y a las cuatro tarjetas teñidas y les ganaba por especificidad — por eso la cifra blanca de la héroe y el jade del ingreso salían casi negros.
+  **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas, mockup al lado: Inicio (héroe con anillo, cuatro tarjetas, gráfico, categorías), Movimientos, Historial, Cartera, Vencimientos y Ajustes.
+  **Respaldo:** no toca la base ni los datos — frontend, pruebas y documentación.
+
 ---
 
 # Después del traslado

@@ -84,11 +84,16 @@ function tarjetas(d) {
     tarjetaHeroe({
       etiqueta: "Ahorro del mes",
       cifra: fmtS(ind.saving),
-      sub:
+      sub: "Ingresos menos egresos",
+      porcentaje: d.month.saving_rate == null ? 0 : Number(d.month.saving_rate),
+      // Con ingresos en cero no hay tasa (General §52): no se dibuja
+      // el anillo y el pie lo dice con palabras, en vez de mostrar un
+      // cero que se leería como "no ahorraste nada".
+      anillo: d.month.saving_rate == null ? null : Number(d.month.saving_rate),
+      pie:
         d.month.saving_rate == null
           ? "Sin ingresos registrados"
-          : `Tasa de ahorro ${pctPlano(d.month.saving_rate)} · ingresos menos egresos`,
-      porcentaje: d.month.saving_rate == null ? 0 : Number(d.month.saving_rate),
+          : `Tasa de ahorro ${pctPlano(d.month.saving_rate)}`,
       color: "sav",
     }),
     tarjetaMetrica({
@@ -217,7 +222,7 @@ function categoriasOrdenadas(categorias, orden) {
  *
  * El pie de la fila es siempre la última carga: el pie alternativo
  * que mostraba la variación se fue con el orden "Variación". */
-function filaDeCategoria(c, mesConsolidado) {
+function filaDeCategoria(c, mesConsolidado, destacada = false) {
   return filaCategoria({
     id: c.category_id,
     nombre: c.name,
@@ -227,6 +232,7 @@ function filaDeCategoria(c, mesConsolidado) {
       : `${c.transaction_count} movimiento${c.transaction_count === 1 ? "" : "s"} · ${pctPlano(c.share)} del gasto`,
     participacion: c.share == null ? 0 : Number(c.share),
     pie: c.last_date ? `últ. ${fechaCorta(c.last_date)}` : "—",
+    destacada,
   });
 }
 
@@ -249,7 +255,14 @@ function pintarCategorias() {
     return;
   }
 
-  pintarFilas(caja, gastos.map((c) => filaDeCategoria(c, dashboard.month.consolidated)));
+  // La que más gastó va en scarlet, y sólo con el orden por mayor
+  // gasto: en A–Z la primera de la lista es la primera del alfabeto y
+  // marcarla no querría decir nada.
+  const mayor = ordenCategorias === "mayor";
+  pintarFilas(
+    caja,
+    gastos.map((c, i) => filaDeCategoria(c, dashboard.month.consolidated, mayor && i === 0)),
+  );
 }
 
 function conectarOrdenCategorias() {

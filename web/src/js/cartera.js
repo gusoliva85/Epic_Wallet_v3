@@ -56,14 +56,20 @@ function tarjetasDeCartera(ind) {
       etiqueta: "Valor de la cartera",
       cifra: fmt(ind.current_value),
       sub: `${pct(ind.return_percentage)} sobre lo invertido`,
+      // La barra es qué parte de la cartera es ganancia; el anillo
+      // repite ese mismo porcentaje. Un rendimiento negativo deja la
+      // barra en cero y el anillo afuera: un anillo vacío diría "cero
+      // por ciento", no "perdió".
+      porcentaje: Number(ind.return_percentage) || 0,
+      anillo: Number(ind.return_percentage) > 0 ? Number(ind.return_percentage) : null,
       pieIzq: `Invertido ${fmt(ind.total_invested)}`,
       pieDer: posiciones,
       color: "sav",
     }),
-    // Tarjetas de color sólido, misma estética que las cuatro del
-    // tablero de Inicio (kpi.js, variante `tarjeta`): "Invertido" en
-    // el azul de patrimonio, "Rendimiento" en verde o rojo según el
-    // signo — reusa inc/egr con su significado de siempre (ganó/perdió
+    // Tarjetas teñidas, las mismas que las cuatro del tablero de
+    // Inicio (kpi.js, variante `tarjeta`): "Invertido" con el color
+    // del patrimonio, "Rendimiento" con el de ingreso o egreso según
+    // el signo — inc/egr con su significado de siempre (ganó/perdió
     // plata), no literalmente ingreso/egreso del mes.
     tarjetaMetrica({
       etiqueta: "Invertido",

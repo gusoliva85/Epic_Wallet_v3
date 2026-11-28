@@ -125,18 +125,20 @@
   --radius-linea: 2px; /* el trazo de línea de una leyenda */
   --radius-enlace: 8px; /* foco de un botón de enlace */
   --radius-tilde: 8px; /* icono dentro de la notificación breve */
-  --radius-ico: 11px; /* cuadradito de icono dentro de una tarjeta */
+  --radius-ico: 12px; /* cuadradito de icono dentro de una tarjeta */
   --radius-aviso: 12px; /* icono de un aviso */
   --radius-toast: 17px; /* la notificación breve */
-  --radius-sm: 13px;
-  --radius-btn: 13px; /* botones de icono, avatar, sello de la marca */
-  --radius-nav: 14px; /* posición de la barra inferior */
-  --radius-row: 16px; /* fila de lista */
+  --radius-sm: 14px;
+  --radius-btn: 12px; /* botones de icono, avatar, sello de la marca */
+  --radius-nav: 13px; /* posición de la barra inferior */
+  --radius-row: 14px; /* fila de lista */
   --radius-fab: 19px; /* botón flotante */
-  --radius-card: 21px;
-  --radius-bar: 22px; /* la barra inferior */
-  --radius-lg: 24px;
+  --radius-card: 19px;
+  --radius-bar: 19px; /* la barra inferior */
+  --radius-lg: 20px;
   --radius-sheet: 27px; /* las dos esquinas de arriba de una hoja */
+  --radius-pill: 9px; /* píldora de estado */
+  --radius-chip: 11px; /* píldora de acción y filtro */
 
   /* ---- tipografía ----
      Sin cambios: Outfit para cifras y títulos, Inter para el resto.
@@ -145,24 +147,28 @@
   --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
 
   /* ---- escala tipográfica ----
-     Un tamaño por ROL, no por medida. Los valores salen de la tabla de
-     la skill §4. */
-  --text-hero: 35px; /* ahorro del mes, patrimonio */
+     Un tamaño por ROL, no por medida. Los valores salen del mockup
+     aprobado (F20-T02), medidos uno por uno sobre el archivo: la
+     jerarquía del neumorfismo está en la DISTANCIA entre la cifra
+     héroe y todo lo demás. Con la escala de Vidrio Grafito —cifra de
+     indicador a 27,5 px contra una héroe de 35— esa distancia se
+     perdía y el tablero quedaba plano. */
+  --text-hero: 32px; /* ahorro del mes, patrimonio */
   --text-amount: 33px; /* el importe en el formulario de alta */
-  --text-kpi: 27.5px; /* cifra de indicador */
-  --text-kpi-sm: 23px; /* cifra de indicador secundario */
-  --text-sheet: 21.5px; /* título de hoja */
-  --text-panel: 20px; /* título de panel */
-  --text-section: 19px; /* título de sección */
-  --text-kv: 16.5px; /* cifra en ficha */
-  --text-base: 16.5px; /* texto corriente */
-  --text-amount-row: 16px; /* importe en una fila */
-  --text-aviso: 14.5px; /* título de un aviso */
-  --text-row: 15.5px; /* nombre en una fila */
-  --text-button: 15.5px;
-  --text-sub: 12px; /* secundario de fila, subtítulo de indicador */
-  --text-pill: 11px;
-  --text-chip: 12.5px; /* píldora de acción */
+  --text-kpi: 20px; /* cifra de indicador */
+  --text-kpi-sm: 17.5px; /* cifra de la tarjeta teñida */
+  --text-sheet: 18px; /* título de hoja */
+  --text-panel: 14.5px; /* título de panel */
+  --text-section: 14.5px; /* título de sección */
+  --text-kv: 14px; /* cifra en ficha */
+  --text-base: 15px; /* texto corriente */
+  --text-amount-row: 14px; /* importe en una fila */
+  --text-aviso: 12.8px; /* título de un aviso */
+  --text-row: 13px; /* nombre en una fila */
+  --text-button: 13.5px;
+  --text-sub: 11px; /* secundario de fila, subtítulo de indicador */
+  --text-pill: 10px;
+  --text-chip: 11.5px; /* píldora de acción */
   --text-avatar: 12.5px; /* iniciales en el avatar de la barra */
   --text-marca: 14px; /* iniciales en la marca de una fila */
   --text-badge: 9.5px; /* contador de alertas */

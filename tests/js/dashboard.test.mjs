@@ -285,6 +285,24 @@ function subDe(caja, etiqueta) {
   return tarjeta?.querySelector(".kpi-sub").textContent;
 }
 
+/* El pie de la tarjeta héroe. Desde F20-T02 la tasa de ahorro vive
+   acá —debajo de la barra y al lado del anillo— y no en el subtítulo,
+   que pasó a decir de qué está hecha la cifra. */
+function pieDe(caja, etiqueta) {
+  const tarjeta = [...caja.querySelectorAll(".kpi")].find(
+    (t) => t.querySelector(".kpi-label").textContent === etiqueta,
+  );
+  return tarjeta?.querySelector(".fin-pie")?.textContent;
+}
+
+/* El anillo del porcentaje: `null` cuando no hay tasa que mostrar. */
+function anilloDe(caja, etiqueta) {
+  const tarjeta = [...caja.querySelectorAll(".kpi")].find(
+    (t) => t.querySelector(".kpi-label").textContent === etiqueta,
+  );
+  return tarjeta?.querySelector(".kpi-anillo");
+}
+
 // ===================================================================
 
 describe("al cambiar de mes", () => {
@@ -396,7 +414,10 @@ describe("las cinco tarjetas", () => {
     cambiarMes(dom, MES_ACTUAL);
     await esperar();
 
-    assert.equal(subDe(caja, "Ahorro del mes"), "Sin ingresos registrados");
+    assert.equal(pieDe(caja, "Ahorro del mes"), "Sin ingresos registrados");
+    // Y no se dibuja un anillo en cero: diría que la tasa es cero,
+    // que es justo lo que la regla no quiere decir.
+    assert.equal(anilloDe(caja, "Ahorro del mes"), null);
   });
 
   test("la tasa de ahorro no antepone signo: es una proporción, no una mejora", async () => {
@@ -405,8 +426,8 @@ describe("las cinco tarjetas", () => {
     cambiarMes(dom, MES_ACTUAL);
     await esperar();
 
-    assert.match(subDe(caja, "Ahorro del mes"), /Tasa de ahorro 67,0%/);
-    assert.ok(!subDe(caja, "Ahorro del mes").includes("+67"));
+    assert.match(pieDe(caja, "Ahorro del mes"), /Tasa de ahorro 67,0%/);
+    assert.ok(!pieDe(caja, "Ahorro del mes").includes("+67"));
   });
 });
 
@@ -483,7 +504,7 @@ describe("mes nuevo sin movimientos", () => {
     assert.equal(caja.querySelectorAll(".kpi").length, 5, "las tarjetas siguen, no desaparecen");
     assert.equal(cifraDe(caja, "Ingresos"), "$0");
     assert.equal(cifraDe(caja, "Gasto de hoy"), "$0");
-    assert.equal(subDe(caja, "Ahorro del mes"), "Sin ingresos registrados");
+    assert.equal(pieDe(caja, "Ahorro del mes"), "Sin ingresos registrados");
   });
 });
 

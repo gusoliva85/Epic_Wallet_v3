@@ -5,7 +5,7 @@ description: Sistema de diseño "Neumorfismo" de Epic Wallet 3.0 — paletas y t
 
 # Epic Wallet 3.0 · Sistema de diseño "Neumorfismo"
 
-**Aprobado por Gustavo el 2026-11-27 (F20-T01)** sobre un mockup de prueba de cuatro pantallas. Reemplaza al sistema **"Vidrio Grafito"**, que rigió desde la Fase 1; su versión de esta skill y su mockup están en el historial de Git.
+**Aprobado por Gustavo el 2026-11-27 (F20-T01)** sobre un mockup de prueba de cuatro pantallas, y **llevado al detalle del mockup en F20-T02** (2026-11-28): escala tipográfica, filas, anillo de la héroe y color de cada pieza, medidos uno por uno sobre el archivo. Reemplaza al sistema **"Vidrio Grafito"**, que rigió desde la Fase 1; su versión de esta skill y su mockup están en el historial de Git.
 **Referencia viva:** `documentacion/mockups/05_Mockup_Neumorfismo.html` — el mockup aprobado, con las cuatro pantallas y las piezas en los dos temas. Ante cualquier duda, ese archivo manda.
 **Documento normativo:** `documentacion/02_Documento_Tecnico.md` §13 y §14.
 
@@ -178,28 +178,29 @@ Así se encontró, en F20-T01, un `var(--color-line-2)` —el token se llama `--
 
 ## 4 · Tipografía
 
-`Outfit` para cifras y títulos (`letter-spacing:-.015em`), `Inter` para todo lo demás. Base **16,5 px / 1,55**. Las cifras llevan `font-variant-numeric:tabular-nums` **siempre**, para que no bailen al actualizarse.
+`Outfit` para cifras y títulos, `Inter` para todo lo demás. Base **15 px / 1,55**. Las cifras llevan `font-variant-numeric:tabular-nums` **siempre**, para que no bailen al actualizarse.
+
+**La escala sale del mockup, medida sobre el archivo** (F20-T02). Lo que importa de ella no es cada valor sino la DISTANCIA entre la cifra héroe y todo lo demás: con la escala de Vidrio Grafito —cifra de indicador a 27,5 px contra una héroe de 35— las dos pesaban casi igual y el tablero quedaba plano. Ahora la héroe pesa el doble que la tarjeta de al lado, y eso es el tablero.
 
 | Rol | Fuente | Tamaño | Peso |
 |---|---|---|---|
-| Cifra héroe (ahorro del mes, patrimonio) | Outfit | 35 px | 700 |
-| Cifra de KPI | Outfit | 27,5 px | 700 |
-| Cifra de KPI secundario | Outfit | 23 px | 700 |
+| Cifra héroe (ahorro del mes, cartera) | Outfit | 32 px | 800 |
 | Importe en formulario | Outfit | 33 px | 700 |
-| Título de panel | Outfit | 20 px | 700 |
-| Título de sección | Outfit | 19 px | 700 |
-| Título de hoja | Outfit | 21,5 px | 700 |
-| Cifra en ficha `.kv` | Outfit | 16,5 px | 700 |
-| Importe en fila | Outfit | 16 px | 700 |
-| Nombre en fila | Inter | 15,5 px | 600 |
-| Botón | Inter | 15,5 px | 700 |
-| Texto base | Inter | 16,5 px | 400 |
-| Secundario de fila | Inter | 12 px | 400 |
-| Subtítulo de KPI | Inter | 12 px | 400 |
-| Etiqueta de KPI | Inter | 10,5 px | 700, mayúsculas, `letter-spacing:.05em` |
-| Separador de día / subcabecera | Inter | 10,5 px | 700, mayúsculas, `letter-spacing:.07em` |
-| Píldora | Inter | 11 px | 700 |
-| Eje de gráfico (valores / días) | Inter | 10 / 9,5 px | 600 |
+| Cifra de indicador | Outfit | 20 px | 700 |
+| Cifra de tarjeta teñida | Outfit | 17,5 px | 700 |
+| Título de hoja / marca | Outfit | 18 px | 700 |
+| Título de panel y de sección | Outfit | 14,5 px | 700 |
+| Importe en fila · cifra en ficha `.kv` | Outfit | 14 px | 700 |
+| Botón | Inter | 13,5 px | 700 |
+| Nombre en fila | Inter | 13 px | 600 |
+| Título de aviso | Inter | 12,8 px | 700 |
+| Texto base | Inter | 15 px | 400 |
+| Píldora de acción `.chip` | Inter | 11,5 px | 600 |
+| Secundario de fila · subtítulo de indicador | Inter | 11 px | 400 |
+| Etiqueta de indicador · separador de día | Inter | 10,5 px | 700, mayúsculas |
+| Píldora de estado | Inter | 10 px | 700, mayúsculas |
+| Etiqueta de la barra inferior | Inter | 9,5 px | 600 |
+| Eje de gráfico (valores / días) | Inter | 10,5 / 9,75 px | 600 |
 
 ## 5 · Puntos de corte
 
@@ -266,13 +267,18 @@ Funciones que reciben datos y devuelven HTML. Sin ciclo de vida, sin estado inte
 ### Tarjeta de indicador
 
 ```javascript
-// héroe: cifra grande + barra de progreso + pie de dos datos
+// héroe: cifra grande + anillo con el porcentaje + barra + pie
 `<article class="kpi kpi--hero shell">
   <div class="kpi-label">${esc(label)}</div>
-  <div class="kpi-num" style="color:color-mix(in srgb,${color} 32%,var(--ink))">${value}</div>
+  <div class="kpi-num num">${value}</div>
   <div class="kpi-sub">${sub}</div>
-  <div class="fin-track"><div class="fin-fill" data-w="${pct}"></div></div>
-  <div class="fin-foot"><span>${left}</span><span>${right}</span></div>
+  <div class="kpi-aro" aria-hidden="true">
+    <svg class="kpi-anillo" viewBox="0 0 40 40">…<text>24%</text></svg>
+    <span class="kpi-aro-g">
+      <span class="fin-track"><i class="fin-fill" data-ancho="${pct}"></i></span>
+      <span class="fin-pie">Tasa de ahorro 24,4%</span>
+    </span>
+  </div>
 </article>`
 
 // métrica: etiqueta + icono + cifra + subtítulo
@@ -293,7 +299,7 @@ La barra se anima en el siguiente frame: `requestAnimationFrame(()=>el.style.wid
 
 ```javascript
 filaMovimiento({ id, tipo, categoria, importe, fecha, descripcion, origen })
-filaCategoria({ id, nombre, total, detalle, participacion, pie })
+filaCategoria({ id, nombre, total, detalle, participacion, pie, destacada })
 separadorDia("04 de octubre 2026")
 pintarFilas(contenedor, [ ...filas ])   // escribe y arranca las barras
 destacarFilaNueva(contenedor, id)       // hace entrar la fila recién creada
@@ -301,11 +307,15 @@ destacarFilaNueva(contenedor, id)       // hace entrar la fila recién creada
 
 Rejilla de `34px 1fr auto`: marca, contenido, valor. **La fila es un `<button>`**, no un `div` con `onclick`: se abre para ver el detalle, así que tiene que alcanzarse con el tabulador y anunciarse.
 
+**La fila NO es una pieza** (F20-T02). No lleva relieve, ni fondo, ni borde: va apoyada sobre el panel y lo único que la separa de la de abajo es una hairline (`.row + .row`). Ocho categorías hechas de ocho piezas hundidas son ocho veces la misma sombra, y el relieve deja de significar algo. Lo que se hunde es el bloque que las contiene, una sola vez. Su marca —la flecha o las iniciales— sí es un hueco: `.row-ico` va hundido, con el color en el trazo y no en el fondo.
+
 **El signo lo decide `tipo`, nunca el valor del importe.** El importe llega ya formateado del backend y sin signo: el frontend sólo formatea y no hace aritmética. Si el signo saliera del texto, un importe que ya trajera un menos saldría con dos.
 
 **Ingreso: `+`, verde y flecha hacia arriba. Egreso: `−`, rojo y flecha hacia abajo.** Los tres a la vez, porque el color no puede ser el único portador. El menos es **U+2212**, no el guión del teclado: el guión es más corto y a otra altura, y al lado de un `+` en una columna de cifras se nota.
 
-Los importes mezclan su color con la tinta (`color-mix` contra `--mix-ink`) y no lo usan puro: el jade y el scarlet puros sobre el material quedan al límite del contraste mínimo.
+**Los importes van en el color pleno de la paleta**, sin mezclar con la tinta: sobre el material —que no es blanco— el jade y el scarlet pasan el contraste mínimo, y mezclados quedaban dos grises con un tinte (F20-T02).
+
+**Un importe sin dirección no lleva color.** El total de una categoría, el valor de una posición: van en tinta. Toda una lista en rojo no avisa de nada — es una lista de gastos, se espera que gasten. En la lista de categorías lo único que va en scarlet es **la que más gastó** (`destacada`), igual que el día más alto del gráfico diario.
 
 La flecha y las iniciales van `aria-hidden`: la flecha repite el signo y las iniciales repiten el nombre de al lado — sin ocultarlas, el lector dice «AL Alquiler». La barra de participación también: el porcentaje ya está en el detalle.
 
@@ -445,11 +455,11 @@ El recuadro mide unos 33 px, así que el área táctil llega a 44 con un `::afte
 
 ### Tarjetas de indicador
 
-`components/kpi.js`. Dos variantes y nada más: **héroe** (cifra grande, barra de progreso, pie de dos datos) para el ahorro del mes y el patrimonio, y **métrica** (etiqueta, icono, cifra, subtítulo) para todo lo demás.
+`components/kpi.js`. Dos variantes y nada más: **héroe** (cifra grande, anillo, barra y pie) para el ahorro del mes y la cartera, y **métrica** (etiqueta, cifra, subtítulo) para todo lo demás.
 
 ```javascript
-tarjetaHeroe({ etiqueta, cifra, sub, porcentaje, pieIzq, pieDer, color })
-tarjetaMetrica({ etiqueta, cifra, sub, color, icono })
+tarjetaHeroe({ etiqueta, cifra, sub, porcentaje, anillo, pie, pieIzq, pieDer, color })
+tarjetaMetrica({ etiqueta, cifra, sub, color, icono, tarjeta })
 pintarTarjetas(contenedor, [ ...tarjetas ])   // escribe y arranca las barras
 ```
 
@@ -457,7 +467,9 @@ pintarTarjetas(contenedor, [ ...tarjetas ])   // escribe y arranca las barras
 - **`color` sale de una lista cerrada** (`COLORES_VALIDOS`), no de un string libre: el valor termina dentro de un atributo `style` y la política del sitio admite estilos en línea, así que un color libre sería CSS inyectable. Un nombre inválido cae en el acento.
 - **`icono` también es un nombre de `iconos.js`**, no un trazo. Un nombre que no existe devuelve cadena vacía, nunca `undefined` dentro del SVG.
 - `porcentaje` se recorta a 0–100: un ahorro negativo daría una barra de ancho negativo y un 140 % desbordaría el surco.
-- La barra y el surco van `aria-hidden`: la cifra de arriba ya dice el valor.
+- **`anillo` es `null` cuando no hay porcentaje que mostrar**, y entonces no se dibuja. Un anillo vacío se lee como «cero por ciento», que es justo lo que la regla de la tasa de ahorro con ingresos en cero no quiere decir (General §52). El valor del anillo se redondea al entero —adentro no entran dos cifras y una coma—; el decimal va en el pie.
+- **El pie tiene dos formas y son excluyentes**: `pie` es una línea sola bajo la barra; `pieIzq`/`pieDer` son dos datos a los extremos. Sin ninguno, no se renderiza: un pie vacío suma el hueco de su `margin-top`.
+- Todo el bloque de abajo (`.kpi-aro`) va `aria-hidden`: la cifra de arriba dice el valor y el pie dice el porcentaje con todas las letras — anunciarlo tres veces no agrega nada.
 - **`pintarTarjetas` escribe todas de una vez.** Con siete asignaciones a `innerHTML` el navegador recalcula el layout siete veces y en un teléfono se ve el salto.
 
 **La barra nace en 0 en el CSS y recibe su ancho en `requestAnimationFrame`.** Puesta directo, la transición no tiene de dónde partir y aparece ya llena. Y tiene que ser `requestAnimationFrame`: una microtarea corre antes del pintado, así que el ancho se junta con el primer render y tampoco se ve crecer. Ojo: **esa diferencia no se puede probar en jsdom**, los dos se ven iguales; por eso `tests/unit/test_kpi.py` la verifica leyendo el código y lo dice.
@@ -477,12 +489,11 @@ dia  jade apagado (pewter apagado)    gasto de hoy
 pat  jade      (pewter)               total de ahorros
 ```
 
-El color entra en dos lugares y en ninguno más:
+El color entra en tres lugares y en ninguno más:
 
-1. **Un 10% mezclado en la superficie**, contra `--kpi-surf` (un escalón del material, no la pieza). Diez por ciento y no más: con el color al 25% dejan de ser material y pasan a ser cuatro rectángulos de color.
-2. **El punto de la etiqueta**, con el color pleno, como la referencia de un gráfico. Lo pone el CSS con un `::before`: es decoración y no tiene que existir en el DOM ni leerse en voz alta.
-
-La cifra toma un 30% del color mezclado con la tinta, y la etiqueta un 70%: el color puro a 27 px pesa más que el número, y una etiqueta de 10,5 px en color pleno queda al límite del contraste.
+1. **Un 10% mezclado en la superficie**, contra `--kpi-surf` (un escalón del material, no la pieza). Diez por ciento y no más: con el color al 25% dejan de ser material y pasan a ser cuatro rectángulos de color. «Gasto de hoy» va al 5%: es el dato más blando de los cuatro.
+2. **La etiqueta y su punto**, con el color casi pleno (82% contra la tinta, para que 10,5 px no queden al límite del contraste). El punto lo pone el CSS con un `::before`: es decoración y no tiene que existir en el DOM ni leerse en voz alta.
+3. **La cifra, pero sólo donde el color significa DIRECCIÓN** (F20-T02): el jade del ingreso y el scarlet del egreso, plenos. «Gasto de hoy» y «Total de ahorros» llevan la cifra en tinta — no son una dirección, son un saldo, y pintarlas les daba un peso que no tienen.
 
 **Ningún texto cae encima del color**, así que los cuatro valores no necesitan contraste con blanco: son los de la paleta sin retoques.
 
@@ -495,8 +506,10 @@ La única superficie maciza de la aplicación: el ahorro del mes y el patrimonio
 ```text
 fondo      --hero      jade en claro · molten orange PROFUNDO en oscuro
 texto      --on-hero   blanco, también la cifra y el pie
+cifra      32 px / 800 — el doble que la tarjeta de al lado, a propósito
 sombra     --hero-sh-* teñida de los dos lados (es grande: acá el halo
                        de color se lee como el canto de la pieza)
+anillo     52 px, trazo 5, pathLength="100", el entero adentro
 barra      canal negro al 22%, relleno en --on-hero
 brillo     .kpi--hero::before { content: none }
 ```
@@ -700,6 +713,9 @@ Y la pantalla **dice que son de muestra**: una cifra creíble sin aclaración se
 - **No poner borde a una pieza con relieve.** Es lo que rompe la ilusión.
 - **No levantar lo que está elegido ni hundir lo que se toca.** La gramática de §3 es lo que hace que la interfaz se entienda sin explicarla.
 - **No teñir el lado claro de la sombra en una pieza chica de acento.** Queda un aura de color alrededor del botón: para eso están `--acc-sh-*`.
+- **No poner relieve a cada fila de una lista.** La lista es un bloque; las filas son hairlines.
+- **No usar el color de la señal fuera de egreso, alerta, vencimiento y borrar.** La única excepción del sistema es el botón flotante, que es así en el mockup aprobado: es la acción que se toca cien veces por mes y la única pieza que flota.
+- **No escribir un `[style*="--c"]` sin los dos puntos.** `--c-card` también lo cumple, y el selector termina pintando tarjetas que no eran (F20-T02).
 - No usar `innerHTML` con datos del servidor sin `esc()`.
 - No hacer aritmética con dinero en el frontend.
 - No inventar movimientos para un mes consolidado.
