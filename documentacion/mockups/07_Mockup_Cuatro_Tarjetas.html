@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="es">
+  <meta charset="utf-8" />
+  <title>Epic Wallet · las cuatro tarjetas</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+  />
+  <style>
+    /* ========================================================================
+     Tres tratamientos para las cuatro tarjetas del tablero, contra el
+     estado de hoy. Todo lo demás de la pantalla es EXACTAMENTE el sistema
+     publicado: paleta Gallery Stone 60 / Jet Black 30 / Rocket Orange 10,
+     y el relieve siempre hacia afuera (F20-T04).
+
+     El problema que se quiere resolver: la pantalla no tiene más color que
+     el naranja, y las cuatro tarjetas meten cuatro tonos más pintando la
+     superficie entera. Son cuatro manchas pastel en una pantalla sobria.
+     ====================================================================== */
+
+    :root {
+      /* --- el sistema, tal cual está publicado --- */
+      --bg-1: #edebe7;
+      --bg-2: #e9e7e2;
+      --surf: #f4f3f0;
+      --surf-2: #e9e7e2;
+      --kpi-surf: #eeece8;
+      --sh-lo: rgba(148, 144, 136, 0.5);
+      --sh-hi: #ffffff;
+      --ink: #23262b;
+      --ink-2: #4c5058;
+      --ink-3: #656970;
+      --ink-4: #878b93;
+      --acc: #1f2227;
+      --on-acc: #f7f6f4;
+      --sig: #d9480f;
+      --sig-texto: #bf400d;
+      --hero: #1f2227;
+      --on-hero: #fbfaf8;
+      --hero-sh-lo: rgba(0, 0, 0, 0.45);
+      --hero-sh-hi: rgba(255, 255, 255, 0.55);
+      --hero-in: inset 1px 1px 0 rgba(255, 255, 255, 0.16);
+      --acc-sh-lo: rgba(0, 0, 0, 0.42);
+      --sig-sh-lo: rgba(110, 35, 5, 0.45);
+      --sig-sh-hi: rgba(255, 178, 140, 0.45);
+      --line: rgba(88, 92, 100, 0.18);
+      --glass-in: inset 1px 1px 0 rgba(255, 255, 255, 0.8);
+      --sh-sm: 4px 4px 9px var(--sh-lo), -4px -4px 9px var(--sh-hi);
+      --sh-md: 6px 6px 14px var(--sh-lo), -6px -6px 14px var(--sh-hi);
+      --hundido-sm:
+        inset 3px 3px 7px var(--sh-lo), inset -3px -3px 7px var(--sh-hi);
+      --font-d: "Outfit", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: linear-gradient(170deg, var(--bg-1), var(--bg-2) 72%);
+      color: var(--ink);
+      font-family: var(--font-b);
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: clamp(22px, 5vw, 46px) max(16px, env(safe-area-inset-left, 0px));
+    }
+    h1,
+    h2,
+    h3,
+    .num,
+    .cifra {
+      font-family: var(--font-d);
+    }
+    .tnum {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .head h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 4.4vw, 2.3rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+    }
+    .head p {
+      margin: 0 0 6px;
+      max-width: 70ch;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--ink-2);
+    }
+    .head .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sig-texto);
+    }
+    .head {
+      margin-bottom: 30px;
+    }
+
+    /* ---------------- la tira de variantes ---------------- */
+    .tira {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: clamp(18px, 2.4vw, 28px);
+      align-items: start;
+    }
+    .var {
+      min-width: 0;
+    }
+    .var > header {
+      margin: 0 4px 14px;
+    }
+    .var > header .tag {
+      display: inline-block;
+      margin-bottom: 7px;
+      font-family: var(--font-d);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+    }
+    .var[data-trat="hoy"] > header .tag {
+      color: var(--sig-texto);
+    }
+    .var > header h2 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .var > header p {
+      margin: 0;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      color: var(--ink-3);
+    }
+
+    /* ---------------- el teléfono ---------------- */
+    .tel {
+      border-radius: 34px;
+      padding: 12px;
+      background: var(--surf);
+      box-shadow:
+        7px 7px 16px var(--sh-lo),
+        -7px -7px 16px var(--sh-hi);
+    }
+    .tel-in {
+      position: relative;
+      overflow: hidden;
+      padding: 14px 11px 16px;
+      border-radius: 24px;
+      background: var(--surf);
+      box-shadow:
+        inset 2px 2px 6px var(--sh-lo),
+        inset -2px -2px 6px var(--sh-hi);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 13px;
+    }
+    .sello-marca {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: var(--acc);
+      color: var(--on-acc);
+      box-shadow:
+        3px 3px 7px var(--acc-sh-lo),
+        -2px -2px 6px var(--sh-hi);
+    }
+    .sello-marca svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .topbar .marca {
+      font-family: var(--font-d);
+      font-weight: 700;
+      font-size: 0.97rem;
+    }
+    .topbar .sp {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+    .ic {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+    .ic svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: var(--ink-3);
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      display: grid;
+      place-items: center;
+      min-width: 17px;
+      height: 17px;
+      padding: 0 4px;
+      border-radius: 9px;
+      background: var(--sig);
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+    }
+
+    .monthbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 13px;
+      padding: 7px;
+      border-radius: 17px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+    .mb-t {
+      flex: 1;
+      text-align: center;
+      line-height: 1.25;
+    }
+    .mb-t b {
+      display: block;
+      font-family: var(--font-d);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .mb-t span {
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--acc);
+    }
+    .chip {
+      display: grid;
+      place-items: center;
+      height: 30px;
+      min-width: 30px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+      color: var(--ink-3);
+      font: 600 0.74rem var(--font-b);
+      cursor: pointer;
+    }
+    .chip svg {
+      width: 15px;
+      height: 15px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ---------------- la tarjeta héroe ---------------- */
+    .hero {
+      margin-bottom: 11px;
+      padding: 17px 18px 15px;
+      border-radius: 20px;
+      background: var(--hero);
+      color: var(--on-hero);
+      box-shadow:
+        var(--hero-in),
+        5px 5px 11px var(--hero-sh-lo),
+        -4px -4px 9px var(--hero-sh-hi);
+    }
+    .hero .lab {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      opacity: 0.78;
+    }
+    .hero .cifra {
+      margin: 5px 0 2px;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1;
+    }
+    .hero .sub {
+      font-size: 0.72rem;
+      line-height: 1.4;
+      opacity: 0.8;
+    }
+    .aro {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-top: 12px;
+    }
+    .aro svg {
+      flex: 0 0 auto;
+      width: 52px;
+      height: 52px;
+    }
+    .aro .g {
+      flex: 1;
+      min-width: 0;
+    }
+    .barra {
+      display: block;
+      height: 9px;
+      overflow: hidden;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.22);
+      box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.33);
+    }
+    .barra i {
+      display: block;
+      height: 100%;
+      border-radius: 5px;
+      background: var(--on-hero);
+      opacity: 0.92;
+    }
+    .aro .g span {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.66rem;
+      opacity: 0.78;
+    }
+
+    /* ======================================================================
+     LAS CUATRO TARJETAS · la pieza que se está probando.
+     El marcado es idéntico en las cuatro columnas; lo único que cambia
+     son las reglas de cada `[data-trat]`.
+     ==================================================================== */
+    .kpis {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .kpi {
+      min-width: 0;
+      padding: 12px 13px;
+      border-radius: 17px;
+    }
+    .kpi-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      margin-bottom: 7px;
+      /* Alto fijo de dos líneas de etiqueta: así las cuatro tarjetas
+         alinean su cifra aunque una etiqueta ocupe dos renglones. */
+      min-height: 27px;
+    }
+    .kpi .lab {
+      flex: 1;
+      min-width: 0;
+      /* La etiqueta PARTE en dos líneas en vez de cortarse. "Total de
+         ahorros" a 10,5 px no entra en media tarjeta de 390 px, y con
+         `nowrap` salía "TOTAL DE AHORR…". */
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.3;
+      text-transform: uppercase;
+    }
+    .sello {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+    }
+    .sello svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .kpi .num {
+      margin: 0 0 3px;
+      font-size: 1.12rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .kpi .sub {
+      font-size: 0.63rem;
+      line-height: 1.35;
+    }
+
+    /* los cuatro colores de hoy */
+    .kpi[data-k="inc"] {
+      --c: #0e7c5a;
+    }
+    .kpi[data-k="egr"] {
+      --c: #bf400d;
+    }
+    .kpi[data-k="dia"] {
+      --c: #5b6168;
+    }
+    .kpi[data-k="pat"] {
+      --c: #1f5fa8;
+    }
+
+    /* ---------- HOY: la superficie teñida al 18% ---------- */
+    [data-trat="hoy"] .kpi {
+      background: color-mix(in srgb, var(--kpi-surf) 82%, var(--c));
+      box-shadow:
+        5px 5px 11px var(--sh-lo),
+        -5px -5px 11px var(--sh-hi);
+    }
+    [data-trat="hoy"] .lab {
+      color: color-mix(in srgb, var(--c) 85%, var(--ink));
+    }
+    [data-trat="hoy"] .sello {
+      background: var(--c);
+      box-shadow:
+        2px 2px 5px color-mix(in srgb, var(--c) 55%, #000),
+        -1px -1px 4px var(--sh-hi);
+    }
+    [data-trat="hoy"] .sello svg {
+      stroke: #fff;
+    }
+    [data-trat="hoy"] .num {
+      color: var(--c);
+    }
+    [data-trat="hoy"] .sub {
+      color: var(--ink-3);
+    }
+
+    /* ---------- A · el sello manda ----------
+     Cero tinte. La tarjeta es la misma piedra que todo lo demás y lo que
+     la identifica es el sello y la etiqueta. Color sólo donde la paleta
+     lo permite: el naranja del egreso. La cifra crece a 20 px. */
+    [data-trat="a"] .kpi {
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+    [data-trat="a"] .lab {
+      color: var(--ink-3);
+    }
+    [data-trat="a"] .sello {
+      width: 27px;
+      height: 27px;
+      border-radius: 9px;
+      background: var(--acc);
+      box-shadow:
+        2px 2px 5px var(--acc-sh-lo),
+        -1px -1px 4px var(--sh-hi);
+    }
+    [data-trat="a"] .kpi[data-k="egr"] .sello {
+      background: var(--sig);
+      box-shadow:
+        2px 2px 5px var(--sig-sh-lo),
+        -1px -1px 4px var(--sig-sh-hi);
+    }
+    [data-trat="a"] .sello svg {
+      stroke: var(--on-acc);
+    }
+    [data-trat="a"] .num {
+      font-size: 1.25rem;
+      color: var(--ink);
+    }
+    [data-trat="a"] .kpi[data-k="egr"] .num {
+      color: var(--sig-texto);
+    }
+    [data-trat="a"] .sub {
+      color: var(--ink-4);
+    }
+
+    /* ---------- B · dos macizas y dos de material ----------
+     Las dos que son una DIRECCION de la plata se vuelven macizas, en los
+     dos colores que la paleta ya tiene: carbón para lo que entra, naranja
+     para lo que sale. Las otras dos son saldos y se quedan en material.
+     Queda una jerarquía de dos y dos en lugar de cuatro bloques iguales. */
+    [data-trat="b"] .kpi {
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+    [data-trat="b"] .lab {
+      color: var(--ink-3);
+    }
+    [data-trat="b"] .sello {
+      background: var(--acc);
+      box-shadow:
+        2px 2px 5px var(--acc-sh-lo),
+        -1px -1px 4px var(--sh-hi);
+    }
+    [data-trat="b"] .sello svg {
+      stroke: var(--on-acc);
+    }
+    [data-trat="b"] .num {
+      font-size: 1.25rem;
+      color: var(--ink);
+    }
+    [data-trat="b"] .sub {
+      color: var(--ink-4);
+    }
+    /* las dos macizas */
+    [data-trat="b"] .kpi[data-k="inc"] {
+      background: #343a42;
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.14),
+        5px 5px 11px rgba(0, 0, 0, 0.35),
+        -4px -4px 9px var(--sh-hi);
+    }
+    [data-trat="b"] .kpi[data-k="egr"] {
+      background: var(--sig);
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.2),
+        5px 5px 11px var(--sig-sh-lo),
+        -4px -4px 9px var(--sig-sh-hi);
+    }
+    [data-trat="b"] .kpi[data-k="inc"] .lab,
+    [data-trat="b"] .kpi[data-k="egr"] .lab {
+      color: rgba(255, 255, 255, 0.78);
+    }
+    [data-trat="b"] .kpi[data-k="inc"] .num,
+    [data-trat="b"] .kpi[data-k="egr"] .num {
+      color: #fff;
+    }
+    [data-trat="b"] .kpi[data-k="inc"] .sub,
+    [data-trat="b"] .kpi[data-k="egr"] .sub {
+      color: rgba(255, 255, 255, 0.72);
+    }
+    [data-trat="b"] .kpi[data-k="inc"] .sello,
+    [data-trat="b"] .kpi[data-k="egr"] .sello {
+      background: rgba(255, 255, 255, 0.16);
+      box-shadow: none;
+    }
+    [data-trat="b"] .kpi[data-k="inc"] .sello svg,
+    [data-trat="b"] .kpi[data-k="egr"] .sello svg {
+      stroke: #fff;
+    }
+
+    /* ---------- C · el color sin pintar la superficie ----------
+     Se conservan las cuatro familias de color, pero la superficie queda
+     limpia: el color vive en el sello y en la cifra, y los tonos bajan de
+     saturación para convivir con la piedra. Es el tratamiento de hoy con
+     el 18% de tinte en cero. */
+    [data-trat="c"] .kpi[data-k="inc"] {
+      --c: #0f5f49;
+    }
+    [data-trat="c"] .kpi[data-k="egr"] {
+      --c: #bf400d;
+    }
+    [data-trat="c"] .kpi[data-k="dia"] {
+      --c: #5b6168;
+    }
+    [data-trat="c"] .kpi[data-k="pat"] {
+      --c: #2b5a86;
+    }
+    [data-trat="c"] .kpi {
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+    [data-trat="c"] .lab {
+      color: var(--ink-3);
+    }
+    [data-trat="c"] .sello {
+      background: var(--c);
+      box-shadow:
+        2px 2px 5px color-mix(in srgb, var(--c) 55%, var(--sh-lo)),
+        -1px -1px 4px var(--sh-hi);
+    }
+    [data-trat="c"] .sello svg {
+      stroke: #fff;
+    }
+    [data-trat="c"] .num {
+      font-size: 1.25rem;
+      color: var(--c);
+    }
+    [data-trat="c"] .sub {
+      color: var(--ink-4);
+    }
+
+    /* ---------------- contexto: una tarjeta con gráfico y dos filas ---- */
+    .card {
+      margin-bottom: 11px;
+      padding: 13px 0;
+      border-radius: 19px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-md);
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 14px 11px;
+    }
+    .card-head h4 {
+      margin: 0;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+      padding: 4px 9px;
+      border-radius: 9px;
+      background: color-mix(in srgb, var(--acc) 10%, transparent);
+      color: var(--acc);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .chart-wrap {
+      margin: 0 14px;
+      padding: 12px 0 6px;
+      border-radius: 14px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-md);
+    }
+    .chart-wrap svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .rows {
+      margin: 0 14px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 9px 0;
+    }
+    .row + .row {
+      border-top: 1px solid var(--line);
+    }
+    .row-ico {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+      color: var(--acc);
+      font: 700 0.63rem var(--font-d);
+    }
+    .row-ico.sig {
+      color: var(--sig-texto);
+    }
+    .row-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .row-main b {
+      display: block;
+      overflow: hidden;
+      font-size: 0.81rem;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .row-main > span {
+      font-size: 0.67rem;
+      color: var(--ink-3);
+    }
+    .row .amt {
+      font-family: var(--font-d);
+      font-size: 0.86rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* ---------------- de cerca ---------------- */
+    .cerca {
+      margin-top: 36px;
+      padding: 22px;
+      border-radius: 26px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-md);
+    }
+    .cerca > h2 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .cerca > p {
+      margin: 0 0 20px;
+      font-size: 0.8rem;
+      color: var(--ink-3);
+    }
+    .cerca-tira {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .cerca-tira > div {
+      min-width: 0;
+    }
+    .cerca-tira h5 {
+      margin: 0 0 10px;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+    }
+    .cerca-tira .kpis {
+      margin-bottom: 0;
+    }
+
+    .foot {
+      margin-top: 26px;
+      font-size: 0.73rem;
+      line-height: 1.6;
+      text-align: center;
+      color: var(--ink-4);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Prueba de estilo · ninguna está aprobada</span>
+      <h1>Las cuatro tarjetas del tablero</h1>
+      <p>
+        El tema claro y el relieve quedan como están. Lo único que cambia entre
+        las cuatro columnas son las cuatro tarjetas: el resto de la pantalla
+        —héroe, barra de mes, gráfico, filas— es idéntico, para que se vea cuál
+        convive mejor con lo que ya hay.
+      </p>
+      <p>
+        <b>El diagnóstico:</b> la pantalla no tiene más color que el naranja, y
+        hoy las tarjetas meten cuatro tonos más pintando la superficie entera.
+        Las tres propuestas bajan la cantidad de color, cada una de una manera
+        distinta. Cifras de ejemplo de octubre 2026.
+      </p>
+    </div>
+
+    <div class="tira" id="tira"></div>
+
+    <section class="cerca">
+      <h2>Las cuatro, de cerca</h2>
+      <p>Lo mismo sin el teléfono alrededor, para mirar el detalle.</p>
+      <div class="cerca-tira" id="cerca"></div>
+    </section>
+
+    <p class="foot">
+      Mockup de exploración de <b>F20-T05</b>. Sólo tema claro: el oscuro se
+      ajusta después, con el tratamiento ya elegido.
+    </p>
+  </div>
+
+  <script>
+    /* -------------------------------------------------------------- */
+    const I = {
+      billetera:
+        '<path d="M3 8.5A2.5 2.5 0 015.5 6H19a2 2 0 012 2v9a2 2 0 01-2 2H5.5A2.5 2.5 0 013 16.5v-8z"/><path d="M3 9.5h13.5a1.5 1.5 0 011.5 1.5v3a1.5 1.5 0 01-1.5 1.5H3"/><circle cx="7" cy="12.5" r="1.1"/>',
+      campana:
+        '<path d="M6 8a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 004 0"/>',
+      sube: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+      baja: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+      calendario:
+        '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+      cajaFuerte:
+        '<rect x="3.5" y="5" width="17" height="14" rx="3"/><circle cx="12" cy="12" r="3.2"/><path d="M12 6.2v1.6M12 16.2v1.6"/>',
+    };
+    const svg = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+
+    const TARJETAS = [
+      ["inc", "Ingresos", "$2.510.000", "+3,1% vs. septiembre", I.sube],
+      ["egr", "Egresos", "$1.897.520", "+8,7% vs. septiembre", I.baja],
+      ["dia", "Gasto de hoy", "$43.900", "5 movimientos de hoy", I.calendario],
+      [
+        "pat",
+        "Total de ahorros",
+        "$5.184.300",
+        "Acumulado de 6 meses",
+        I.cajaFuerte,
+      ],
+    ];
+
+    const tarjetas = () =>
+      '<div class="kpis">' +
+      TARJETAS.map(
+        ([k, lab, num, sub, ico]) =>
+          `<article class="kpi" data-k="${k}">` +
+          `<div class="kpi-top"><span class="lab">${lab}</span>` +
+          `<span class="sello">${svg(ico)}</span></div>` +
+          `<div class="num tnum">${num}</div>` +
+          `<div class="sub">${sub}</div></article>`,
+      ).join("") +
+      "</div>";
+
+    const EG = [
+      18400, 0, 42100, 9800, 26500, 71200, 15300, 0, 33800, 12900, 58400, 21700,
+      8600, 44200, 0, 19500, 97300, 27800, 11400, 35600, 0, 23100, 48700, 16200,
+      62800, 9300, 84200, 29400, 15500, 0, 0,
+    ];
+    function grafico() {
+      const W = 300,
+        H = 108,
+        L = 6,
+        R = 6,
+        T = 10,
+        B = 20;
+      const max = Math.max(...EG);
+      const paso = (W - L - R) / EG.length;
+      const ancho = Math.max(3.4, paso * 0.56);
+      const esc = (v) => ((H - T - B) * v) / max;
+      let s = "";
+      for (let i = 1; i <= 3; i++) {
+        const y = T + ((H - T - B) * i) / 4;
+        s += `<line x1="${L}" y1="${y}" x2="${W - R}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+      }
+      const top = EG.indexOf(max);
+      EG.forEach((v, i) => {
+        if (!v) return;
+        const x = L + paso * i + (paso - ancho) / 2;
+        const h = esc(v);
+        s += `<rect x="${x}" y="${H - B - h}" width="${ancho}" height="${Math.max(h, 1.6)}" rx="1.6" fill="${i === top ? "var(--sig)" : "var(--acc)"}"/>`;
+      });
+      s += `<line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--line)" stroke-width="1"/>`;
+      [1, 8, 15, 22, 31].forEach((d) => {
+        const x = L + paso * (d - 1) + paso / 2;
+        s += `<text x="${x}" y="${H - 7}" text-anchor="middle" font-family="Inter,sans-serif" font-size="7.5" fill="var(--ink-4)">${d}</text>`;
+      });
+      return s;
+    }
+
+    const pantalla = () =>
+      '<div class="tel"><div class="tel-in">' +
+      '<div class="topbar">' +
+      `<span class="sello-marca">${svg(I.billetera)}</span>` +
+      '<span class="marca">Epic Wallet</span>' +
+      `<span class="sp"><span class="ic">${svg(I.campana)}<span class="badge">2</span></span></span>` +
+      "</div>" +
+      '<div class="monthbar">' +
+      '<button class="chip" type="button" aria-label="Mes anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>' +
+      '<span class="mb-t"><b>Octubre 2026</b><span>Mes abierto</span></span>' +
+      '<button class="chip" type="button">Hoy</button>' +
+      '<button class="chip" type="button" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>' +
+      "</div>" +
+      '<div class="hero"><div class="lab">Ahorro del mes</div>' +
+      '<div class="cifra tnum">$612.480</div>' +
+      '<div class="sub">Ingresos menos egresos</div>' +
+      '<div class="aro">' +
+      '<svg viewBox="0 0 40 40" role="img" aria-label="Tasa de ahorro 24 por ciento">' +
+      '<circle cx="20" cy="20" r="15.9" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="5"/>' +
+      '<circle cx="20" cy="20" r="15.9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" pathLength="100" stroke-dasharray="24.4 75.6" transform="rotate(-90 20 20)"/>' +
+      '<text x="20" y="23.4" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" font-weight="800" fill="currentColor">24%</text>' +
+      "</svg>" +
+      '<span class="g"><span class="barra"><i style="width:24.4%"></i></span>' +
+      "<span>Tasa de ahorro 24,4%</span></span>" +
+      "</div></div>" +
+      tarjetas() +
+      '<div class="card">' +
+      '<div class="card-head"><h4>Día por día</h4><span class="pill">Octubre</span></div>' +
+      `<div class="chart-wrap"><svg viewBox="0 0 300 108" role="img" aria-label="Gasto de cada día">${grafico()}</svg></div>` +
+      "</div>" +
+      '<div class="card">' +
+      '<div class="card-head"><h4>Gastos por categoría</h4></div>' +
+      '<div class="rows">' +
+      '<div class="row"><span class="row-ico sig">SU</span><span class="row-main"><b>Supermercado</b><span>28,4% del gasto</span></span><span class="amt tnum">$412.300</span></div>' +
+      '<div class="row"><span class="row-ico">VI</span><span class="row-main"><b>Vivienda</b><span>26,2% del gasto</span></span><span class="amt tnum">$380.000</span></div>' +
+      "</div></div>" +
+      "</div></div>";
+
+    const VARIANTES = [
+      {
+        id: "hoy",
+        tag: "Hoy, en la aplicación",
+        titulo: "La superficie teñida",
+        texto:
+          "Cada tarjeta lleva un 18% de su color mezclado en la superficie. Es lo que hace que se vean como cuatro bloques pastel en una pantalla que por lo demás es piedra, negro y un naranja.",
+      },
+      {
+        id: "a",
+        tag: "Propuesta A",
+        titulo: "El sello manda",
+        texto:
+          "Cero tinte: la tarjeta es la misma piedra que todo lo demás. Lo que la identifica es el sello —más grande, sólido— y la cifra, que crece. Color sólo donde la paleta lo permite: el naranja del egreso. Es la más sobria y la que mejor respeta el 60/30/10.",
+      },
+      {
+        id: "b",
+        tag: "Propuesta B",
+        titulo: "Dos macizas y dos de material",
+        texto:
+          "Las dos que son una dirección de la plata se vuelven macizas, en los dos colores que la paleta ya tiene: carbón para lo que entra, naranja para lo que sale. Las otras dos son saldos y se quedan en material. Jerarquía de dos y dos, en lugar de cuatro bloques iguales.",
+      },
+      {
+        id: "c",
+        tag: "Propuesta C",
+        titulo: "El color, sin pintar la superficie",
+        texto:
+          "Se conservan las cuatro familias de color —son útiles para reconocerlas—, pero la superficie queda limpia: el color vive en el sello y en la cifra, y los tonos bajan de saturación. Es lo de hoy con el tinte en cero.",
+      },
+    ];
+
+    document.getElementById("tira").innerHTML = VARIANTES.map(
+      (v) =>
+        `<section class="var" data-trat="${v.id}">` +
+        `<header><span class="tag">${v.tag}</span>` +
+        `<h2>${v.titulo}</h2><p>${v.texto}</p></header>` +
+        pantalla() +
+        "</section>",
+    ).join("");
+
+    document.getElementById("cerca").innerHTML = VARIANTES.map(
+      (v) => `<div data-trat="${v.id}"><h5>${v.tag}</h5>${tarjetas()}</div>`,
+    ).join("");
+  </script>
+</html>
