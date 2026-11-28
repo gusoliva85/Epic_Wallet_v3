@@ -518,7 +518,19 @@ sello    --card-chip                  calado en la propia superficie
 brillo   .kpi-maciza::before { content: none }   igual que la héroe
 ```
 
-**El carbón NO es el azabache de la héroe**, es un paso más claro: si fueran el mismo, la tarjeta chica y la grande se leerían como una sola pieza partida. Y en oscuro las dos macizas se invierten —son las superficies CLARAS sobre el material casi negro— así que su texto va oscuro. Los dos casos son el mismo token: el componente no conoce el tema.
+**El carbón NO es el azabache de la héroe**, es un paso más claro: si fueran el mismo, la tarjeta chica y la grande se leerían como una sola pieza partida.
+
+**EN OSCURO LA MACIZA TAMBIEN VA EN PROFUNDO, y es lo que hace que el tema funcione** (F20-T06). En claro, lo macizo es más oscuro que el fondo y por eso pesa sin molestar. F20-T05 tradujo eso al oscuro al revés —pewter y naranja pleno, texto oscuro— y las dos tarjetas quedaron como las superficies más brillantes de la pantalla, por encima de la tarjeta héroe. Duró un día. Ahora son **pizarra** `#39414a` para lo que entra y el **naranja hondo de la héroe** `#c4511a` para lo que sale, las dos con el texto en blanco, igual que en claro.
+
+| | claro | oscuro |
+|---|---|---|
+| `--card-entra` | carbón `#343a42` | pizarra `#39414a` |
+| `--card-sale` | naranja `#d9480f` | naranja hondo `#c4511a` |
+| `--on-card-maciza` | blanco | blanco |
+
+**La regla de fondo es la misma en los dos temas** —maciza lo que es dirección, material lo que es saldo—; lo único que cambia es de qué lado del fondo cae el macizo. Y sigue siendo todo tokens: el componente no conoce el tema.
+
+**El subtítulo de una maciza va a 0,80 de opacidad y no menos.** Sobre el naranja hondo, el blanco pleno da 4,6:1: cualquier opacidad más baja deja un texto de 11 px por debajo del mínimo. Es la misma proporción que usa la héroe, que vive sobre ese mismo naranja.
 
 **La de saldo no lleva nada**: es la pieza de material de siempre, con la cifra en tinta. Lo único suyo es el sello, sólido en el acento.
 

@@ -1381,8 +1381,12 @@
   opacity: 0.78;
 }
 
+/* 0,80 y no menos: sobre el naranja hondo del oscuro, el blanco pleno
+   da 4,6:1 y cualquier opacidad más baja deja el subtítulo de 11 px por
+   debajo del mínimo. Es la misma proporción que usa la tarjeta héroe,
+   que vive sobre ese mismo naranja. */
 .kpi-maciza .kpi-sub {
-  opacity: 0.72;
+  opacity: 0.8;
 }
 
 /* El brillo diagonal, fuera: sobre una superficie de color es un velo
@@ -1411,8 +1415,8 @@
   background: var(--card-sale);
   box-shadow:
     var(--card-maciza-in),
-    5px 5px 11px var(--sig-sh-lo),
-    -4px -4px 9px var(--sig-sh-hi);
+    5px 5px 11px var(--card-sale-sh-lo),
+    -4px -4px 9px var(--card-sale-sh-hi);
 }
 
 /* El hover de `.kpi` reemplaza la sombra entera, así que las dos
@@ -1427,8 +1431,8 @@
 .kpi-sale:hover {
   box-shadow:
     var(--card-maciza-in),
-    8px 8px 17px var(--sig-sh-lo),
-    -6px -6px 14px var(--sig-sh-hi);
+    8px 8px 17px var(--card-sale-sh-lo),
+    -6px -6px 14px var(--card-sale-sh-hi);
 }
 
 /* RESTOS DE LA TARJETA DE COLOR SOLIDA, ESCONDIDOS A PROPOSITO.

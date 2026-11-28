@@ -516,6 +516,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas. Inicio: Ingresos carbón y Egresos naranja, macizas; Gasto de hoy y Total de ahorros de material, con la etiqueta entera. Cartera: Rendimiento macizo —carbón en verde, naranja si está en rojo— e Invertido de material.
   **Respaldo:** no toca la base ni los datos — frontend, pruebas y documentación.
 
+- [~] **F20-T06 · Las macizas del oscuro, en profundo**
+  **Tipo:** interfaz
+  **Hacer:** arreglar el tema oscuro, que F20-T05 rompió. En claro lo macizo es más oscuro que el fondo y por eso pesa sin molestar; traducido al oscuro al revés —pewter y naranja pleno—, Ingresos y Egresos quedaron como las dos superficies más brillantes de la pantalla y le ganaron a la tarjeta héroe. Pasan a **pizarra `#39414a`** lo que entra y al **naranja hondo de la héroe `#c4511a`** lo que sale, las dos con texto blanco, igual que en claro. Es la propuesta A de `documentacion/mockups/08_Mockup_Oscuro_Tarjetas.html`, elegida por Gustavo el 2026-11-28. **El tema claro no cambia** y la regla de F20-T05 tampoco: sólo cambian valores de token del oscuro.
+  **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, **en oscuro**: Inicio con Ingresos en pizarra y Egresos en el naranja de la héroe, las dos macizas pero hundiéndose en el fondo y no iluminándolo; Gasto de hoy y Total de ahorros de material. Cartera con Rendimiento macizo e Invertido de material. Y después **pasar a claro**, que tiene que estar igual que ayer.
+  **Respaldo:** no toca la base ni los datos — frontend y documentación.
+
 ---
 
 # Después del traslado

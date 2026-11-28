@@ -118,6 +118,11 @@
   --card-chip: rgba(255, 255, 255, 0.16); /* el sello, dentro de una maciza */
   --card-entra-sh-lo: rgba(0, 0, 0, 0.35);
   --card-entra-sh-hi: #ffffff;
+  /* La maciza que sale toma la sombra de la señal. Tiene token propio
+     —y no usa `--sig-sh-*` directo— porque en oscuro no coinciden: allá
+     esta tarjeta no es el naranja pleno sino el hondo de la héroe. */
+  --card-sale-sh-lo: var(--sig-sh-lo);
+  --card-sale-sh-hi: var(--sig-sh-hi);
   --card-maciza-in: inset 1px 1px 0 rgba(255, 255, 255, 0.18);
 
   /* ---- avatar de la cuenta ----
@@ -430,18 +435,34 @@ html[data-theme="dark"] {
   --color-accent-soft: #242a30;
   --color-on-accent: #14171b;
 
-  /* Las dos macizas, invertidas respecto del claro: acá la que
-     resalta es la superficie CLARA sobre el material casi negro, así
-     que el texto de adentro va oscuro. Pewter para lo que entra
-     —el 30% del oscuro— y molten orange pleno para lo que sale.
-     Contra `--on-card-maciza`: 5,9:1 y 6,3:1. */
-  --card-entra: #8d949d;
-  --card-sale: #ff6a1f;
-  --on-card-maciza: #14171b;
-  --card-chip: rgba(0, 0, 0, 0.16);
-  --card-entra-sh-lo: rgba(0, 0, 0, 0.6);
-  --card-entra-sh-hi: rgba(203, 209, 215, 0.3);
-  --card-maciza-in: inset 1px 1px 0 rgba(255, 255, 255, 0.18);
+  /* LAS DOS MACIZAS VAN EN PROFUNDO, NO EN CLARO, y es la
+     diferencia que hace que el oscuro funcione.
+
+     En el claro, lo macizo es más OSCURO que el fondo: por eso pesa
+     sin molestar. F20-T05 tradujo eso al oscuro al revés —pewter y
+     naranja pleno— y las dos tarjetas quedaron como las superficies
+     más brillantes de la pantalla, por encima de la tarjeta héroe.
+     Duró un día: "arruinaste el diseño que había antes" (Gustavo,
+     2026-11-28). De las tres variantes de
+     `mockups/08_Mockup_Oscuro_Tarjetas.html` eligió ésta.
+
+     Acá la maciza vuelve a ser una superficie que se hunde en el
+     fondo y no una que lo ilumina: pizarra para lo que entra y el
+     naranja HONDO de la héroe para lo que sale, los dos con el texto
+     en blanco, igual que en claro. La regla de fondo es la misma en
+     los dos temas —maciza lo que es dirección, material lo que es
+     saldo—; lo que cambia es de qué lado del fondo cae el macizo.
+
+     Contraste con el blanco: 10,4:1 la pizarra y 4,6:1 el naranja. */
+  --card-entra: #39414a;
+  --card-sale: #c4511a;
+  --on-card-maciza: #ffffff;
+  --card-chip: rgba(255, 255, 255, 0.16);
+  --card-entra-sh-lo: rgba(0, 0, 0, 0.55);
+  --card-entra-sh-hi: var(--sh-hi);
+  --card-sale-sh-lo: rgba(0, 0, 0, 0.55);
+  --card-sale-sh-hi: rgba(255, 150, 86, 0.28);
+  --card-maciza-in: inset 1px 1px 0 rgba(255, 255, 255, 0.11);
 
   --color-avatar-1: #4a5157;
   --color-avatar-2: #2d3237;
@@ -540,18 +561,34 @@ html[data-theme="dark"] {
     --color-accent-soft: #242a30;
     --color-on-accent: #14171b;
 
-    /* Las dos macizas, invertidas respecto del claro: acá la que
-       resalta es la superficie CLARA sobre el material casi negro, así
-       que el texto de adentro va oscuro. Pewter para lo que entra
-       —el 30% del oscuro— y molten orange pleno para lo que sale.
-       Contra `--on-card-maciza`: 5,9:1 y 6,3:1. */
-    --card-entra: #8d949d;
-    --card-sale: #ff6a1f;
-    --on-card-maciza: #14171b;
-    --card-chip: rgba(0, 0, 0, 0.16);
-    --card-entra-sh-lo: rgba(0, 0, 0, 0.6);
-    --card-entra-sh-hi: rgba(203, 209, 215, 0.3);
-    --card-maciza-in: inset 1px 1px 0 rgba(255, 255, 255, 0.18);
+    /* LAS DOS MACIZAS VAN EN PROFUNDO, NO EN CLARO, y es la
+       diferencia que hace que el oscuro funcione.
+
+       En el claro, lo macizo es más OSCURO que el fondo: por eso pesa
+       sin molestar. F20-T05 tradujo eso al oscuro al revés —pewter y
+       naranja pleno— y las dos tarjetas quedaron como las superficies
+       más brillantes de la pantalla, por encima de la tarjeta héroe.
+       Duró un día: "arruinaste el diseño que había antes" (Gustavo,
+       2026-11-28). De las tres variantes de
+       `mockups/08_Mockup_Oscuro_Tarjetas.html` eligió ésta.
+
+       Acá la maciza vuelve a ser una superficie que se hunde en el
+       fondo y no una que lo ilumina: pizarra para lo que entra y el
+       naranja HONDO de la héroe para lo que sale, los dos con el texto
+       en blanco, igual que en claro. La regla de fondo es la misma en
+       los dos temas —maciza lo que es dirección, material lo que es
+       saldo—; lo que cambia es de qué lado del fondo cae el macizo.
+
+       Contraste con el blanco: 10,4:1 la pizarra y 4,6:1 el naranja. */
+    --card-entra: #39414a;
+    --card-sale: #c4511a;
+    --on-card-maciza: #ffffff;
+    --card-chip: rgba(255, 255, 255, 0.16);
+    --card-entra-sh-lo: rgba(0, 0, 0, 0.55);
+    --card-entra-sh-hi: var(--sh-hi);
+    --card-sale-sh-lo: rgba(0, 0, 0, 0.55);
+    --card-sale-sh-hi: rgba(255, 150, 86, 0.28);
+    --card-maciza-in: inset 1px 1px 0 rgba(255, 255, 255, 0.11);
 
     --color-avatar-1: #4a5157;
     --color-avatar-2: #2d3237;
