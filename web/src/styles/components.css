@@ -1150,7 +1150,7 @@
    patrimonio neto. Jade en claro, Molten Orange profundo en oscuro,
    el texto en blanco y su propia sombra teñida.
 
-   Es la contracara de la tarjeta teñida de más abajo: en Vidrio
+   Es la contracara de las tarjetas de más abajo: en Vidrio
    Grafito la héroe era de vidrio y las cuatro métricas eran sólidas;
    en el sistema neumórfico es al revés (F20-T01). El peso visual
    queda donde está la cifra que importa. */
@@ -1218,7 +1218,12 @@
   gap: 6px;
   font-size: var(--text-label);
   font-weight: 700;
-  letter-spacing: var(--tracking-caps);
+  /* 0,08em y no `--tracking-caps` (0,07): con el interletrado de las
+     mayúsculas del sistema, "TOTAL DE AHORROS" a 10,5 px no entraba en
+     media tarjeta de 390 px. Ver también el salto de línea de
+     `.kpi-top`. */
+  letter-spacing: 0.08em;
+  line-height: 1.3;
   text-transform: uppercase;
   color: var(--color-ink-3);
 }
@@ -1255,8 +1260,11 @@
   line-height: 1;
 }
 
+/* La cifra de las cuatro del tablero pesa lo mismo que cualquier
+   cifra de indicador (F20-T05): eran 17,5 px y son el resumen de todo
+   lo que muestra la pantalla. */
 .kpi-metric .kpi-num {
-  font-size: var(--text-kpi-sm);
+  font-size: var(--text-kpi);
 }
 
 .kpi-sub {
@@ -1265,11 +1273,22 @@
   color: var(--color-ink-3);
 }
 
+/* LA ETIQUETA PARTE EN DOS LINEAS, NO SE CORTA (F20-T05). "Total de
+   ahorros" no entra en una línea en media tarjeta de 390 px y salía
+   "TOTAL DE AHORR…". El alto mínimo son esas dos líneas: así las
+   cuatro tarjetas alinean su cifra aunque sólo una etiqueta use las
+   dos. Y por eso el sello se alinea arriba y no al medio. */
 .kpi-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  min-height: 27px;
+}
+
+.kpi-top .kpi-label {
+  flex: 1;
+  min-width: 0;
 }
 
 .kpi-ico {
@@ -1299,43 +1318,117 @@
   stroke-linejoin: round;
 }
 
-/* ---- la tarjeta teñida · F20-T01, redibujada en F20-T03 ----
-   Las cuatro del tablero: ingresos, egresos, gasto de hoy y total de
-   ahorros. Siguen siendo la misma pieza de material levantada que
-   todo lo demás, pero son LAS CUATRO MAS DISTINTIVAS DE LA PANTALLA,
-   y eso es un pedido explícito de Gustavo (2026-11-28): son el
-   resumen de todo lo que el tablero muestra, y hasta F20-T02 se
-   distinguían tan poco que había que leerlas para saber cuál era
-   cuál. Cada una tiene su color —verde, naranja, pizarra, azul— y el
-   color entra en cuatro lugares:
+/* ---- las tarjetas de indicador del tablero · F20-T05 ----
+   DOS MACIZAS Y DOS DE MATERIAL, y lo que decide cuál es cuál no es la
+   pantalla sino QUE CLASE DE DATO muestra la tarjeta:
 
-   1. UN 18% MEZCLADO EN LA SUPERFICIE, contra `--kpi-surf`, que es un
-      escalón del material y no la pieza: la tarjeta tiene que leerse
-      como una pieza aparte. Dieciocho y no más: con el color al 25%
-      dejan de ser material y pasan a ser cuatro rectángulos. Era 10%
-      (y 5% la de "gasto de hoy") y no alcanzaba — las cuatro se veían
-      del mismo gris.
+     entra   lo que suma      maciza, carbón    ingresos · rendimiento +
+     sale    lo que resta     maciza, naranja   egresos  · rendimiento −
+     saldo   una posición     material          gasto de hoy, total de
+                                                ahorros, invertido
 
-   2. EL SELLO DE ICONO, el único lugar del sistema donde el color de
-      una tarjeta va SOLIDO: flecha arriba, flecha abajo, calendario y
-      alcancía. Es lo que hace que la tarjeta se reconozca sin leerla,
-      y reemplaza al punto de la etiqueta, que se fue con el sello.
+   Por eso la regla vale sola en Cartera —"Rendimiento" sale macizo y
+   "Invertido" de material— sin que esa pantalla sepa nada de esto, y
+   va a valer para la tarjeta que se agregue mañana. El catálogo está
+   en `components/kpi.js`.
 
-   3. LA ETIQUETA, con el color casi pleno (85% contra la tinta, para
-      que 10,5 px no queden al límite del contraste).
+   QUE HABIA ANTES Y POR QUE SE FUE. En F20-T03 las cuatro eran
+   material teñido, cada una con su color: verde, naranja, pizarra y
+   azul, con un 18% mezclado en la superficie. Duró un día. La pantalla
+   no tiene más color que el naranja, y cuatro superficies pastel
+   quedaban como manchas: "arruinan un poco la estética", Gustavo, el
+   2026-11-28, eligiendo esta variante entre tres probadas en
+   `mockups/07_Mockup_Cuatro_Tarjetas.html`.
 
-   4. LA CIFRA, en el color pleno. En claro van las cuatro: los cuatro
-      colores pasan 4,5:1 sobre la pieza y es lo que las separa de un
-      vistazo. Las dos BLANDAS —gasto de hoy y total de ahorros— se
-      gobiernan con `--card-num-blando`, que en oscuro vale 0% y las
-      devuelve a la tinta porque allá son pewter sobre pewter.
-
-   El único texto que cae encima del color es el trazo del sello, que
-   va en `--on-card`.
+   Lo que se ganó con el cambio: el color sale ENTERO de la paleta (el
+   carbón es un escalón del azabache del 30%, el naranja es el 10%), y
+   la pantalla pasó de cuatro bloques iguales a una jerarquía de dos y
+   dos — las que dicen para dónde se movió la plata, y las que dicen
+   cuánto hay.
    ============================================================ */
 
-.kpi-color {
-  background: color-mix(in srgb, var(--kpi-surf) 82%, var(--c-card));
+/* ---- la de saldo ----
+   No lleva nada: es la pieza de material de siempre (`.shell`). Lo
+   único suyo es el sello, que va sólido en el acento. */
+.kpi-saldo .kpi-ico {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow:
+    2px 2px 5px var(--acc-sh-lo),
+    -1px -1px 4px var(--acc-sh-hi);
+}
+
+/* ---- la maciza ----
+   La segunda superficie sólida del sistema, después de la héroe. Todo
+   su texto va en `--on-card-maciza`: blanco en claro sobre el carbón y
+   el naranja, oscuro en tema oscuro, donde las dos superficies son
+   claras. Ningún componente conoce el tema: los dos valores son el
+   mismo token. */
+.kpi-maciza {
+  color: var(--on-card-maciza);
+}
+
+.kpi-maciza .kpi-label,
+.kpi-maciza .kpi-num,
+.kpi-maciza .kpi-sub {
+  color: var(--on-card-maciza);
+}
+
+/* La etiqueta y el subtítulo bajan de peso con opacidad y no con otro
+   color: sobre una superficie sólida, mezclar el texto con el fondo da
+   un gris sucio distinto en cada tarjeta. */
+.kpi-maciza .kpi-label {
+  opacity: 0.78;
+}
+
+.kpi-maciza .kpi-sub {
+  opacity: 0.72;
+}
+
+/* El brillo diagonal, fuera: sobre una superficie de color es un velo
+   blanco que ensucia el tono. Misma razón que en la héroe. */
+.kpi-maciza::before {
+  content: none;
+}
+
+/* El sello, acá, es un hueco de luz en la propia superficie: el color
+   sólido ya lo puso la tarjeta. */
+.kpi-maciza .kpi-ico {
+  background: var(--card-chip);
+  color: var(--on-card-maciza);
+  box-shadow: none;
+}
+
+.kpi-entra {
+  background: var(--card-entra);
+  box-shadow:
+    var(--card-maciza-in),
+    5px 5px 11px var(--card-entra-sh-lo),
+    -4px -4px 9px var(--card-entra-sh-hi);
+}
+
+.kpi-sale {
+  background: var(--card-sale);
+  box-shadow:
+    var(--card-maciza-in),
+    5px 5px 11px var(--sig-sh-lo),
+    -4px -4px 9px var(--sig-sh-hi);
+}
+
+/* El hover de `.kpi` reemplaza la sombra entera, así que las dos
+   macizas repiten la suya o al pasar el dedo se vuelven piedra. */
+.kpi-entra:hover {
+  box-shadow:
+    var(--card-maciza-in),
+    8px 8px 17px var(--card-entra-sh-lo),
+    -6px -6px 14px var(--card-entra-sh-hi);
+}
+
+.kpi-sale:hover {
+  box-shadow:
+    var(--card-maciza-in),
+    8px 8px 17px var(--sig-sh-lo),
+    -6px -6px 14px var(--sig-sh-hi);
 }
 
 /* RESTOS DE LA TARJETA DE COLOR SOLIDA, ESCONDIDOS A PROPOSITO.
@@ -1350,53 +1443,6 @@
 .kpi-peso,
 .kpi-glifo {
   display: none;
-}
-
-/* La etiqueta lleva el color del dato, apenas oscurecido con la tinta
-   para que una etiqueta de 10,5 px no quede al límite del contraste. */
-.kpi-color .kpi-label {
-  color: color-mix(in srgb, var(--c-card) 85%, var(--mix-ink));
-}
-
-/* El sello de icono. Es la pieza que hace el trabajo de distinguir las
-   cuatro, así que acá el color va sólido y el trazo encima: es el único
-   lugar de la tarjeta donde eso pasa. La sombra se tiñe del lado
-   oscuro con el color propio —como cualquier pieza chica de acento
-   (skill §1)— y del claro con la luz del material. */
-.kpi-color .kpi-ico {
-  background: var(--c-card);
-  color: var(--on-card);
-  box-shadow:
-    2px 2px 5px color-mix(in srgb, var(--c-card) 55%, var(--sh-lo)),
-    -1px -1px 4px var(--sh-hi);
-}
-
-/* La cifra en el color pleno del dato. Las dos blandas la bajan abajo
-   con `--card-num-blando`, que es un token y no un selector de tema. */
-.kpi-color .kpi-num {
-  color: var(--c-card);
-}
-
-.kpi-color .kpi-sub {
-  color: var(--color-ink-3);
-}
-
-/* "Gasto de hoy" y "Total de ahorros" no son una dirección de la plata
-   sino un saldo. En claro igual van en su color —las cuatro tienen que
-   distinguirse— y en oscuro vuelven a la tinta: `--card-num-blando`
-   vale 100% en claro y 0% en oscuro.
-
-   EL SELECTOR CIERRA EL PARENTESIS, y es por lo mismo que en F20-T02
-   había que escribir los dos puntos: un `[style*="--color-card-dia"]`
-   a secas le pega también a cualquier token que empiece igual. El
-   atributo real es `--c-card:var(--color-card-dia)`. */
-.kpi-color[style*="--color-card-dia)"] .kpi-num,
-.kpi-color[style*="--color-card-pat)"] .kpi-num {
-  color: color-mix(
-    in srgb,
-    var(--c-card) var(--card-num-blando),
-    var(--color-ink)
-  );
 }
 
 /* ---- el pie de la tarjeta héroe: anillo, barra y leyenda ----

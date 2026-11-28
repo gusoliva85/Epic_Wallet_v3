@@ -62,19 +62,38 @@ function htmlDeCartera() {
 function htmlDeHojaAlta() {
   const html = readFileSync(INDEX, "utf8");
   const ancla = html.indexOf('id="hoja-inversion"');
-  assert.notEqual(ancla, -1, "no se encuentra la hoja de alta de inversión en index.html");
+  assert.notEqual(
+    ancla,
+    -1,
+    "no se encuentra la hoja de alta de inversión en index.html",
+  );
   return recortarEtiqueta(html, "aside", ancla);
 }
 
 function htmlDeHojaDetalle() {
   const html = readFileSync(INDEX, "utf8");
   const ancla = html.indexOf('id="hoja-inversion-detalle"');
-  assert.notEqual(ancla, -1, "no se encuentra la hoja de detalle de inversión en index.html");
+  assert.notEqual(
+    ancla,
+    -1,
+    "no se encuentra la hoja de detalle de inversión en index.html",
+  );
   return recortarEtiqueta(html, "aside", ancla);
 }
 
+/* OJO AL REFORMATEAR `cartera.js`: los reemplazos de acá abajo son
+   literales y esperan cada `import` EN UNA SOLA LINEA. Si Prettier los
+   parte en varias —lo hace apenas la lista de nombres pasa el ancho—,
+   el reemplazo no encuentra nada, el módulo queda pidiendo
+   "./components/estados.js" sin resolver y TODA esta suite falla con
+   un ERR_UNSUPPORTED_RESOLVE_REQUEST que no dice nada del formato.
+   Pasó el 2026-11-28. Por eso `cartera.js` no está formateado con
+   Prettier y no hay que "arreglarlo". */
 async function cargarConDobles() {
-  let codigo = readFileSync(resolve(RAIZ, "web", "src", "js", "cartera.js"), "utf8");
+  let codigo = readFileSync(
+    resolve(RAIZ, "web", "src", "js", "cartera.js"),
+    "utf8",
+  );
   codigo = codigo
     .replace(
       'import { api, ApiError } from "./api.js";',
@@ -173,12 +192,19 @@ async function montar({ apiGet, apiPost, apiPut, apiDel } = {}) {
   globalThis.document = dom.window.document;
   globalThis.HTMLElement = dom.window.HTMLElement;
   globalThis.CustomEvent = dom.window.CustomEvent;
-  globalThis.requestAnimationFrame = (fn) => dom.window.requestAnimationFrame(fn);
+  globalThis.requestAnimationFrame = (fn) =>
+    dom.window.requestAnimationFrame(fn);
   // Sin movimiento reducido, el conteo de cifras tarda 900ms: las
   // pruebas sólo necesitan el valor final (mismo truco que dashboard.test.mjs).
   dom.window.matchMedia = () => ({ matches: true });
 
-  const llamadas = { apiGet: [], apiPost: [], apiPut: [], apiDel: [], toasts: [] };
+  const llamadas = {
+    apiGet: [],
+    apiPost: [],
+    apiPut: [],
+    apiDel: [],
+    toasts: [],
+  };
   globalThis.__espia = {
     apiGet: async (...a) => {
       llamadas.apiGet.push(a);
@@ -186,11 +212,15 @@ async function montar({ apiGet, apiPost, apiPut, apiDel } = {}) {
     },
     apiPost: async (...a) => {
       llamadas.apiPost.push(a);
-      return (apiPost ?? (async () => structuredClone(respuestaBase().positions[0])))(...a);
+      return (
+        apiPost ?? (async () => structuredClone(respuestaBase().positions[0]))
+      )(...a);
     },
     apiPut: async (...a) => {
       llamadas.apiPut.push(a);
-      return (apiPut ?? (async () => structuredClone(respuestaBase().positions[0])))(...a);
+      return (
+        apiPut ?? (async () => structuredClone(respuestaBase().positions[0]))
+      )(...a);
     },
     apiDel: async (...a) => {
       llamadas.apiDel.push(a);
@@ -207,7 +237,9 @@ const $ = (dom, id) => dom.window.document.getElementById(id);
 const esperar = (ms = 15) => new Promise((listo) => setTimeout(listo, ms));
 
 function entrarA(dom, id) {
-  dom.window.document.dispatchEvent(new dom.window.CustomEvent("epic:ruta", { detail: { id } }));
+  dom.window.document.dispatchEvent(
+    new dom.window.CustomEvent("epic:ruta", { detail: { id } }),
+  );
 }
 
 function tarjeta(caja, etiqueta) {
@@ -226,7 +258,10 @@ function filas(dom) {
 
 function enviar(dom, idFormulario) {
   const form = $(dom, idFormulario);
-  const evento = new dom.window.Event("submit", { bubbles: true, cancelable: true });
+  const evento = new dom.window.Event("submit", {
+    bubbles: true,
+    cancelable: true,
+  });
   form.dispatchEvent(evento);
   return evento;
 }
@@ -302,7 +337,10 @@ describe("al entrar a Cartera", () => {
     await esperar();
 
     assert.equal(llamadas.apiGet.length, 2);
-    assert.match(cifraDe($(dom, "kpis-cartera"), "Valor de la cartera"), /\$1\.250\.000/);
+    assert.match(
+      cifraDe($(dom, "kpis-cartera"), "Valor de la cartera"),
+      /\$1\.250\.000/,
+    );
   });
 
   test("sin posiciones, la tabla muestra el estado vacío y no una fila inventada", async () => {
@@ -347,28 +385,54 @@ describe("la tabla de posiciones", () => {
     const [al30, dep] = filas(dom);
     const celdaAl30 = al30.querySelectorAll("td")[4];
     const celdaDep = dep.querySelectorAll("td")[4];
-    assert.equal(celdaAl30.classList.contains("amt-in"), false, "el monto no lleva color");
-    assert.ok(celdaAl30.querySelector("span").classList.contains("amt-in"), "el porcentaje sí: amt-in");
-    assert.equal(celdaDep.classList.contains("amt-out"), false, "el monto no lleva color");
-    assert.ok(celdaDep.querySelector("span").classList.contains("amt-out"), "el porcentaje sí: amt-out");
+    assert.equal(
+      celdaAl30.classList.contains("amt-in"),
+      false,
+      "el monto no lleva color",
+    );
+    assert.ok(
+      celdaAl30.querySelector("span").classList.contains("amt-in"),
+      "el porcentaje sí: amt-in",
+    );
+    assert.equal(
+      celdaDep.classList.contains("amt-out"),
+      false,
+      "el monto no lleva color",
+    );
+    assert.ok(
+      celdaDep.querySelector("span").classList.contains("amt-out"),
+      "el porcentaje sí: amt-out",
+    );
   });
 
-  test("Invertido y Rendimiento son tarjetas de color sólido, como las del tablero de Inicio", async () => {
+  test("la forma de cada tarjeta sale de la clase de dato, tambien aca", async () => {
+    // La regla del sistema (F20-T05): maciza si el dato es una
+    // dirección de la plata, material si es un saldo. Cartera no sabe
+    // nada de eso —pide `pat` e `inc`/`egr`—, y por eso esta prueba
+    // está: es la que avisa si la regla deja de valer fuera del
+    // tablero de Inicio.
     const { dom } = await montar();
     await entrarYEsperar(dom);
 
+    // Invertido es un saldo: material.
     const invertido = tarjeta($(dom, "kpis-cartera"), "Invertido");
-    assert.ok(invertido.classList.contains("kpi-color"));
-    assert.match(invertido.getAttribute("style"), /--c-card:var\(--color-card-pat\)/);
+    assert.ok(
+      invertido.classList.contains("kpi-saldo"),
+      "Invertido deberia ser de material",
+    );
+    assert.ok(!invertido.classList.contains("kpi-maciza"));
 
-    // Rendimiento total de la cartera (positivo en respuestaBase): la
-    // tarjeta usa el color "inc", nunca el "egr" de un rendimiento negativo.
+    // Rendimiento es una dirección. Positivo en respuestaBase: entra.
     const rendimiento = tarjeta($(dom, "kpis-cartera"), "Rendimiento");
-    assert.ok(rendimiento.classList.contains("kpi-color"));
-    assert.match(rendimiento.getAttribute("style"), /--c-card:var\(--color-card-inc\)/);
+    assert.ok(
+      rendimiento.classList.contains("kpi-maciza"),
+      "Rendimiento deberia ser maciza",
+    );
+    assert.ok(rendimiento.classList.contains("kpi-entra"));
+    assert.ok(!rendimiento.classList.contains("kpi-sale"));
   });
 
-  test("con la cartera entera en rojo, la tarjeta de Rendimiento usa el color egr", async () => {
+  test("con la cartera entera en rojo, Rendimiento es la maciza que resta", async () => {
     const { dom } = await montar({
       apiGet: async () => {
         const r = structuredClone(respuestaBase());
@@ -378,15 +442,19 @@ describe("la tabla de posiciones", () => {
     });
     await entrarYEsperar(dom);
 
-    const estiloTarjeta = tarjeta($(dom, "kpis-cartera"), "Rendimiento").getAttribute("style");
-    assert.match(estiloTarjeta, /--c-card:var\(--color-card-egr\)/);
+    const rendimiento = tarjeta($(dom, "kpis-cartera"), "Rendimiento");
+    assert.ok(rendimiento.classList.contains("kpi-sale"));
+    assert.ok(!rendimiento.classList.contains("kpi-entra"));
   });
 
   test("la tarjeta héroe colorea el porcentaje de su subtítulo según el signo", async () => {
     const { dom } = await montar();
     await entrarYEsperar(dom);
 
-    const sub = tarjeta($(dom, "kpis-cartera"), "Valor de la cartera").querySelector(".kpi-sub");
+    const sub = tarjeta(
+      $(dom, "kpis-cartera"),
+      "Valor de la cartera",
+    ).querySelector(".kpi-sub");
     assert.match(sub.innerHTML, /amt-in/);
     assert.match(sub.textContent, /sobre lo invertido/);
   });
@@ -402,7 +470,10 @@ describe("la tabla de posiciones", () => {
     });
     await entrarYEsperar(dom);
 
-    const sub = tarjeta($(dom, "kpis-cartera"), "Valor de la cartera").querySelector(".kpi-sub");
+    const sub = tarjeta(
+      $(dom, "kpis-cartera"),
+      "Valor de la cartera",
+    ).querySelector(".kpi-sub");
     assert.match(sub.innerHTML, /amt-out/);
   });
 });
@@ -431,15 +502,25 @@ describe("abrir la hoja de alta", () => {
     $(dom, "btn-nueva-inversion").click();
     await esperar();
 
-    const precioCompra = /** @type {HTMLInputElement} */ ($(dom, "inversion-precio-compra"));
+    const precioCompra = /** @type {HTMLInputElement} */ (
+      $(dom, "inversion-precio-compra")
+    );
     precioCompra.value = "150000";
-    precioCompra.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+    precioCompra.dispatchEvent(
+      new dom.window.Event("input", { bubbles: true }),
+    );
     assert.equal(precioCompra.value, "150.000");
 
-    const nominales = /** @type {HTMLInputElement} */ ($(dom, "inversion-nominales"));
+    const nominales = /** @type {HTMLInputElement} */ (
+      $(dom, "inversion-nominales")
+    );
     nominales.value = "732.5";
     nominales.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
-    assert.equal(nominales.value, "732.5", "nominales no lleva el enmascarado de miles");
+    assert.equal(
+      nominales.value,
+      "732.5",
+      "nominales no lleva el enmascarado de miles",
+    );
   });
 
   test("falta el símbolo o el nombre: no envía nada", async () => {
@@ -507,14 +588,21 @@ describe("guardar el alta", () => {
     await esperar();
 
     assert.equal($(dom, "hoja-inversion").classList.contains("abierta"), false);
-    assert.equal(llamadas.apiGet.length, 2, "recarga /api/investments después de comprar");
+    assert.equal(
+      llamadas.apiGet.length,
+      2,
+      "recarga /api/investments después de comprar",
+    );
     assert.match(llamadas.toasts[0][0], /AL30/);
   });
 
   test("si la API rechaza, muestra el mensaje y no cierra la hoja", async () => {
     const { dom, llamadas } = await montar({
       apiPost: async () => {
-        throw new ApiError({ code: "VALIDATION_ERROR", message: "Ya existe una posición con ese símbolo." });
+        throw new ApiError({
+          code: "VALIDATION_ERROR",
+          message: "Ya existe una posición con ese símbolo.",
+        });
       },
     });
     await entrarYEsperar(dom);
@@ -526,7 +614,10 @@ describe("guardar el alta", () => {
     await esperar();
 
     assert.equal($(dom, "hoja-inversion").classList.contains("abierta"), true);
-    assert.equal($(dom, "inversion-error").textContent, "Ya existe una posición con ese símbolo.");
+    assert.equal(
+      $(dom, "inversion-error").textContent,
+      "Ya existe una posición con ese símbolo.",
+    );
     assert.equal(llamadas.apiGet.length, 1, "no recarga la cartera si falló");
   });
 });
@@ -540,7 +631,9 @@ async function abrirDetalle(dom, { conClick = true } = {}) {
   if (conClick) {
     fila.click();
   } else {
-    fila.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    fila.dispatchEvent(
+      new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+    );
   }
   await esperar();
 }
@@ -551,7 +644,10 @@ describe("abrir el detalle de una posición", () => {
     await entrarYEsperar(dom);
     await abrirDetalle(dom);
 
-    assert.equal($(dom, "hoja-inversion-detalle").classList.contains("abierta"), true);
+    assert.equal(
+      $(dom, "hoja-inversion-detalle").classList.contains("abierta"),
+      true,
+    );
     assert.equal($(dom, "inversion-detalle-titulo").textContent, "AL30");
     assert.equal($(dom, "inversion-detalle-sub").textContent, "Bonar 2030");
     assert.match($(dom, "inversion-detalle-kv").textContent, /Nominales/);
@@ -563,7 +659,10 @@ describe("abrir el detalle de una posición", () => {
     await entrarYEsperar(dom);
     await abrirDetalle(dom, { conClick: false });
 
-    assert.equal($(dom, "hoja-inversion-detalle").classList.contains("abierta"), true);
+    assert.equal(
+      $(dom, "hoja-inversion-detalle").classList.contains("abierta"),
+      true,
+    );
   });
 
   test("el campo de precio actual arranca con el valor de hoy", async () => {
@@ -589,10 +688,19 @@ describe("abrir el detalle de una posición", () => {
     await abrirDetalle(dom);
 
     const kv = $(dom, "inversion-detalle-kv");
-    const filaRendimiento = [...kv.children].find((d) => d.textContent.includes("Rendimiento"));
+    const filaRendimiento = [...kv.children].find((d) =>
+      d.textContent.includes("Rendimiento"),
+    );
     const monto = filaRendimiento.querySelector("b");
-    assert.equal(monto.classList.contains("amt-in"), false, "el <b> que envuelve todo no lleva color");
-    assert.ok(monto.querySelector("span.amt-in"), "el porcentaje sí, en su propio span");
+    assert.equal(
+      monto.classList.contains("amt-in"),
+      false,
+      "el <b> que envuelve todo no lleva color",
+    );
+    assert.ok(
+      monto.querySelector("span.amt-in"),
+      "el porcentaje sí, en su propio span",
+    );
   });
 });
 
@@ -609,7 +717,10 @@ describe("actualizar el valor", () => {
     assert.equal(llamadas.apiPut.length, 1);
     assert.equal(llamadas.apiPut[0][0], "/investments/1");
     assert.deepEqual(llamadas.apiPut[0][1], { current_value: "1600000.00" });
-    assert.equal($(dom, "hoja-inversion-detalle").classList.contains("abierta"), false);
+    assert.equal(
+      $(dom, "hoja-inversion-detalle").classList.contains("abierta"),
+      false,
+    );
   });
 
   test("también sirve para una posición sin nominales", async () => {
@@ -628,7 +739,10 @@ describe("actualizar el valor", () => {
   test("si la API rechaza, muestra el error y no cierra la hoja", async () => {
     const { dom, llamadas } = await montar({
       apiPut: async () => {
-        throw new ApiError({ code: "NOT_FOUND", message: "No se encontró la posición." });
+        throw new ApiError({
+          code: "NOT_FOUND",
+          message: "No se encontró la posición.",
+        });
       },
     });
     await entrarYEsperar(dom);
@@ -638,8 +752,14 @@ describe("actualizar el valor", () => {
     enviar(dom, "form-inversion-valor");
     await esperar();
 
-    assert.equal($(dom, "hoja-inversion-detalle").classList.contains("abierta"), true);
-    assert.equal($(dom, "inversion-detalle-error").textContent, "No se encontró la posición.");
+    assert.equal(
+      $(dom, "hoja-inversion-detalle").classList.contains("abierta"),
+      true,
+    );
+    assert.equal(
+      $(dom, "inversion-detalle-error").textContent,
+      "No se encontró la posición.",
+    );
   });
 });
 
@@ -654,7 +774,10 @@ describe("vender (Regla 10: pide confirmación)", () => {
     await esperar();
 
     assert.equal(llamadas.apiDel.length, 0);
-    assert.equal($(dom, "hoja-inversion-detalle").classList.contains("abierta"), true);
+    assert.equal(
+      $(dom, "hoja-inversion-detalle").classList.contains("abierta"),
+      true,
+    );
   });
 
   test("confirmado: vende, cierra la hoja, recarga la cartera y avisa — sin acreditar nada al ahorro", async () => {
@@ -667,8 +790,15 @@ describe("vender (Regla 10: pide confirmación)", () => {
     await esperar();
 
     assert.deepEqual(llamadas.apiDel[0], ["/investments/1"]);
-    assert.equal($(dom, "hoja-inversion-detalle").classList.contains("abierta"), false);
-    assert.equal(llamadas.apiGet.length, 2, "recarga la cartera después de vender");
+    assert.equal(
+      $(dom, "hoja-inversion-detalle").classList.contains("abierta"),
+      false,
+    );
+    assert.equal(
+      llamadas.apiGet.length,
+      2,
+      "recarga la cartera después de vender",
+    );
     assert.match(llamadas.toasts[0][0], /AL30/);
     assert.match(llamadas.toasts[0][0], /vendida/i);
   });
@@ -692,7 +822,10 @@ describe("vender (Regla 10: pide confirmación)", () => {
   test("si la API rechaza, avisa con un toast de error y no cierra la hoja", async () => {
     const { dom, llamadas } = await montar({
       apiDel: async () => {
-        throw new ApiError({ code: "NOT_FOUND", message: "No se encontró la posición." });
+        throw new ApiError({
+          code: "NOT_FOUND",
+          message: "No se encontró la posición.",
+        });
       },
     });
     await entrarYEsperar(dom);
@@ -702,7 +835,10 @@ describe("vender (Regla 10: pide confirmación)", () => {
     $(dom, "inversion-detalle-vender").click();
     await esperar();
 
-    assert.equal($(dom, "hoja-inversion-detalle").classList.contains("abierta"), true);
+    assert.equal(
+      $(dom, "hoja-inversion-detalle").classList.contains("abierta"),
+      true,
+    );
     assert.deepEqual(llamadas.toasts[0][1], { severidad: "crit" });
   });
 });

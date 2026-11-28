@@ -90,33 +90,35 @@
      globo de alertas, el avatar, el botón de borrar. Siempre blanco. */
   --color-on-solid: #ffffff;
 
-  /* ---- tarjetas de indicador · F20-T03 ----
-     LAS CUATRO SE ESCAPAN DE LA PALETA A PROPOSITO, y es un pedido
-     explícito de Gustavo (2026-11-28): ingreso total, egreso total,
-     gasto del día y total acumulado son lo primero que se lee de la
-     pantalla, y con los tres colores del sistema las cuatro quedaban
-     casi iguales. Cuatro tonos distintos y reconocibles de un vistazo:
+  /* ---- tarjetas de indicador · F20-T05 ----
+     DOS MACIZAS Y DOS DE MATERIAL. La forma de la tarjeta la decide
+     qué clase de dato muestra, no en qué pantalla está:
 
-       inc  verde       el ingreso
-       egr  naranja     el egreso — es la señal de la paleta
-       dia  pizarra     el gasto de hoy
-       pat  azul        el total de ahorros
+       entra  lo que suma    maciza, carbón   ingresos · rendimiento +
+       sale   lo que resta   maciza, naranja  egresos  · rendimiento −
+       saldo  una posición   material, cifra en tinta  gasto de hoy,
+                                                       total de ahorros,
+                                                       invertido
 
-     Siguen siendo material teñido, no rectángulos de color: el tinte
-     es un 18% sobre `--kpi-surf` y la pieza conserva su relieve. Lo
-     que las hace distintivas es el sello de icono —el único lugar
-     donde el color va sólido— y la cifra en el color pleno.
+     En F20-T03 las cuatro eran material teñido, cada una con su color
+     —verde, naranja, pizarra, azul—. Se fue el 2026-11-28: la pantalla
+     no tiene más color que el naranja, y cuatro superficies pastel
+     quedaban como manchas (Gustavo: «arruinan un poco la estética»).
+     Acá el color sale ENTERO de la paleta: el carbón es un escalón del
+     azabache del 30% y el naranja es el 10%. Dos macizas marcan la
+     dirección de la plata y las dos de saldo se quedan calladas.
 
-     Estos cuatro valores SI necesitan contraste con la pieza: la cifra
-     va en el color. Medidos sobre `#f4f3f0`: 4,7 · 4,8 · 5,6 · 5,8:1.
-     El sello es la excepción: ahí el color es fondo y el trazo va en
-     `--on-card`. */
-  --color-card-inc: #0e7c5a; /* ingresos         verde */
-  --color-card-egr: #bf400d; /* egresos          naranja cohete, un paso
-                                 más profundo que `--sig` porque acá
-                                 el color ES texto (4,8:1 contra 3,9) */
-  --color-card-dia: #5b6168; /* gasto de hoy     pizarra */
-  --color-card-pat: #1f5fa8; /* total de ahorros azul */
+     La maciza es la segunda superficie sólida del sistema, después de
+     la héroe. Por eso el carbón NO es el azabache de la héroe: es un
+     paso más claro, o la tarjeta chica y la grande se leerían como la
+     misma pieza partida. */
+  --card-entra: #343a42; /* carbón: un escalón sobre el azabache */
+  --card-sale: #d9480f; /* Rocket Orange pleno: acá es fondo, no texto */
+  --on-card-maciza: #ffffff; /* todo el texto de una maciza */
+  --card-chip: rgba(255, 255, 255, 0.16); /* el sello, dentro de una maciza */
+  --card-entra-sh-lo: rgba(0, 0, 0, 0.35);
+  --card-entra-sh-hi: #ffffff;
+  --card-maciza-in: inset 1px 1px 0 rgba(255, 255, 255, 0.18);
 
   /* ---- avatar de la cuenta ----
      Material oscuro, no acento: es lo único de la barra que no es del
@@ -251,21 +253,6 @@
   --surf: #f4f3f0;
   --surf-2: #e9e7e2;
   --kpi-surf: #eeece8;
-
-  /* Contenido sobre el sello de icono de una tarjeta teñida, que es la
-     única pieza donde el color de la tarjeta va sólido. Se comporta
-     como `--color-on-accent`: blanco en claro, material en oscuro,
-     donde los colores de tarjeta son claros. */
-  --on-card: #ffffff;
-
-  /* Cuánto del color de la tarjeta entra en la cifra de las dos
-     tarjetas BLANDAS (gasto de hoy, total de ahorros). En claro, todo:
-     los cuatro colores pasan el contraste y las cuatro tarjetas tienen
-     que distinguirse. En oscuro, nada: allá esas dos son pewter sobre
-     pewter teñido (4,3:1) y la cifra vuelve a la tinta. Es un número y
-     no un color para que el componente no tenga que conocer el tema
-     (skill §1). */
-  --card-num-blando: 100%;
 
   /* ---- la tarjeta héroe ----
      Es la única superficie maciza de la aplicación: el ahorro del mes
@@ -443,21 +430,18 @@ html[data-theme="dark"] {
   --color-accent-soft: #242a30;
   --color-on-accent: #14171b;
 
-  --color-card-inc: #8d949d;
-  --color-card-egr: #ff6a1f;
-  --color-card-dia: #7d848c;
-  --color-card-pat: #8d949d;
-  /* Los cuatro colores del oscuro NO cambiaron con F20-T03: el tema
-     oscuro quedó aprobado como está. Lo que cambió es la pieza —el
-     sello de icono y el tinte al 18%— y eso vale para los dos temas,
-     porque es un solo componente.
-
-     El trazo del sello va en el material y no en blanco: acá los
-     colores de tarjeta son CLAROS (pewter, naranja), y un trazo
-     blanco encima no se vería. Y la cifra de las dos tarjetas
-     blandas vuelve a la tinta: pewter sobre pewter teñido da 4,3:1. */
-  --on-card: #14171b;
-  --card-num-blando: 0%;
+  /* Las dos macizas, invertidas respecto del claro: acá la que
+     resalta es la superficie CLARA sobre el material casi negro, así
+     que el texto de adentro va oscuro. Pewter para lo que entra
+     —el 30% del oscuro— y molten orange pleno para lo que sale.
+     Contra `--on-card-maciza`: 5,9:1 y 6,3:1. */
+  --card-entra: #8d949d;
+  --card-sale: #ff6a1f;
+  --on-card-maciza: #14171b;
+  --card-chip: rgba(0, 0, 0, 0.16);
+  --card-entra-sh-lo: rgba(0, 0, 0, 0.6);
+  --card-entra-sh-hi: rgba(203, 209, 215, 0.3);
+  --card-maciza-in: inset 1px 1px 0 rgba(255, 255, 255, 0.18);
 
   --color-avatar-1: #4a5157;
   --color-avatar-2: #2d3237;
@@ -556,21 +540,18 @@ html[data-theme="dark"] {
     --color-accent-soft: #242a30;
     --color-on-accent: #14171b;
 
-    --color-card-inc: #8d949d;
-    --color-card-egr: #ff6a1f;
-    --color-card-dia: #7d848c;
-    --color-card-pat: #8d949d;
-    /* Los cuatro colores del oscuro NO cambiaron con F20-T03: el tema
-       oscuro quedó aprobado como está. Lo que cambió es la pieza —el
-       sello de icono y el tinte al 18%— y eso vale para los dos temas,
-       porque es un solo componente.
-
-       El trazo del sello va en el material y no en blanco: acá los
-       colores de tarjeta son CLAROS (pewter, naranja), y un trazo
-       blanco encima no se vería. Y la cifra de las dos tarjetas
-       blandas vuelve a la tinta: pewter sobre pewter teñido da 4,3:1. */
-    --on-card: #14171b;
-    --card-num-blando: 0%;
+    /* Las dos macizas, invertidas respecto del claro: acá la que
+       resalta es la superficie CLARA sobre el material casi negro, así
+       que el texto de adentro va oscuro. Pewter para lo que entra
+       —el 30% del oscuro— y molten orange pleno para lo que sale.
+       Contra `--on-card-maciza`: 5,9:1 y 6,3:1. */
+    --card-entra: #8d949d;
+    --card-sale: #ff6a1f;
+    --on-card-maciza: #14171b;
+    --card-chip: rgba(0, 0, 0, 0.16);
+    --card-entra-sh-lo: rgba(0, 0, 0, 0.6);
+    --card-entra-sh-hi: rgba(203, 209, 215, 0.3);
+    --card-maciza-in: inset 1px 1px 0 rgba(255, 255, 255, 0.18);
 
     --color-avatar-1: #4a5157;
     --color-avatar-2: #2d3237;

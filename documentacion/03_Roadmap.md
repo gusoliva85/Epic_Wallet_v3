@@ -510,6 +510,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas: el gráfico de Inicio y el de los últimos seis meses sobresalen de su tarjeta, los iconos de Gastos por categoría y de Movimientos son pastillas levantadas, las fichas de Mes a mes y los ítems de Vencimientos sobresalen, y el buscador, el combo de categoría y los conmutadores siguen hundidos.
   **Respaldo:** no toca la base ni los datos — frontend y documentación.
 
+- [~] **F20-T05 · Dos macizas y dos de material**
+  **Tipo:** interfaz
+  **Hacer:** rehacer las tarjetas de indicador. Las de F20-T03 —material teñido al 18%, cada una con su color— no encajaban con la estética del claro: la pantalla no tiene más color que el naranja y quedaban como cuatro manchas pastel. Se probaron tres variantes en `documentacion/mockups/07_Mockup_Cuatro_Tarjetas.html` y Gustavo eligió la B. **La forma sale de la clase de dato, no de la pantalla:** maciza carbón lo que entra, maciza naranja lo que sale, material lo que es un saldo. Vale también para Cartera —Rendimiento macizo, Invertido de material— y para cualquier tarjeta futura. De paso, la etiqueta parte en dos líneas en vez de cortarse y la cifra sube de 17,5 a 20 px.
+  **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas. Inicio: Ingresos carbón y Egresos naranja, macizas; Gasto de hoy y Total de ahorros de material, con la etiqueta entera. Cartera: Rendimiento macizo —carbón en verde, naranja si está en rojo— e Invertido de material.
+  **Respaldo:** no toca la base ni los datos — frontend, pruebas y documentación.
+
 ---
 
 # Después del traslado

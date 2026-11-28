@@ -36,26 +36,42 @@ const COLORES = {
 
 export const COLORES_VALIDOS = Object.freeze(Object.keys(COLORES));
 
-/* Las cuatro tarjetas teñidas del tablero. Cada una tiene su color y
-   su icono, y los dos salen de acá: el color entra mezclado en la
-   superficie, sólido en el sello y pleno en la cifra (F20-T03). Se
-   reconocen de un vistazo sin leerlas y sin ser cuatro rectángulos de
-   color.
+/* El catálogo de tarjetas del tablero. Cada entrada dice DOS cosas, y
+   las dos salen de acá: qué clase de dato es y con qué icono se marca.
+   La forma —maciza o de material— la decide la clase de dato, nunca la
+   pantalla donde se usa (F20-T05):
 
-   EL ICONO VA EN EL CATALOGO Y NO LO ELIGE QUIEN LLAMA. Son cuatro
-   tarjetas fijas del tablero: si el icono fuera un parámetro, el
-   mismo dato podría salir con la flecha para arriba en una pantalla y
-   con el calendario en otra. El que llama dice qué tarjeta es, no cómo
-   se dibuja.
+     entra   lo que suma      maciza, carbón
+     sale    lo que resta     maciza, naranja
+     saldo   una posición     material, cifra en tinta
 
-   Es una lista cerrada por lo mismo que los colores: el valor termina
-   dentro de un atributo `style`. Y además porque son cuatro y son
-   éstas: no es un parámetro libre, es un catálogo. */
+   Por eso Cartera sale bien sin saber nada de esto: pide `inc`/`egr`
+   para el rendimiento según el signo y `pat` para lo invertido, y la
+   regla hace el resto. Lo mismo va a pasar con la tarjeta que se
+   agregue mañana: lo único que hay que contestar es si el dato es una
+   dirección de la plata o un saldo.
+
+   EL ICONO VA EN EL CATALOGO Y NO LO ELIGE QUIEN LLAMA. Si fuera un
+   parámetro, el mismo dato podría salir con la flecha para arriba en
+   una pantalla y con el calendario en otra. El que llama dice qué
+   tarjeta es, no cómo se dibuja.
+
+   Es una lista cerrada, y eso vale aunque ya no haya colores en línea:
+   son cuatro y son éstas: no es un parámetro libre, es un catálogo. */
 const TARJETAS = {
-  inc: { fondo: "var(--color-card-inc)", icono: "sube" },
-  egr: { fondo: "var(--color-card-egr)", icono: "baja" },
-  dia: { fondo: "var(--color-card-dia)", icono: "calendario" },
-  pat: { fondo: "var(--color-card-pat)", icono: "caja_fuerte" },
+  inc: { tipo: "entra", icono: "sube" },
+  egr: { tipo: "sale", icono: "baja" },
+  dia: { tipo: "saldo", icono: "calendario" },
+  pat: { tipo: "saldo", icono: "caja_fuerte" },
+};
+
+/* La clase de la pieza, por tipo de dato. Las dos macizas llevan
+   además `.kpi-maciza`, que es donde vive todo lo común: el texto en
+   `--on-card-maciza`, el sello calado y el brillo diagonal apagado. */
+const FORMA = {
+  entra: "kpi-maciza kpi-entra",
+  sale: "kpi-maciza kpi-sale",
+  saldo: "kpi-saldo",
 };
 
 export const TARJETAS_VALIDAS = Object.freeze(Object.keys(TARJETAS));
@@ -67,11 +83,11 @@ function color(nombre) {
 /**
  * Tarjeta de métrica: etiqueta, icono, cifra y subtítulo.
  *
- * Con `tarjeta` —uno de `TARJETAS_VALIDAS`— pasa a ser una tarjeta
- * teñida: la superficie lleva mezclado el color del dato, y el color
- * vuelve sólido en el sello de icono y pleno en la cifra. El icono lo
- * decide el catálogo, no quien llama. Sin `tarjeta`, es la pieza de
- * material de siempre y el icono sale de `icono`.
+ * Con `tarjeta` —uno de `TARJETAS_VALIDAS`— pasa a ser una tarjeta del
+ * tablero: maciza si el dato es una dirección de la plata (entra o
+ * sale), de material si es un saldo. El icono y la forma los decide el
+ * catálogo, no quien llama. Sin `tarjeta`, es la pieza de material de
+ * siempre y el icono sale de `icono`.
  *
  * @param {{etiqueta: string, cifra: string, sub?: string,
  *          color?: string, icono?: string, tarjeta?: string}} datos
@@ -87,27 +103,16 @@ export function tarjetaMetrica({
   const t = TARJETAS[tarjeta];
 
   if (t) {
-    // Tarjeta teñida (F20-T01, redibujada en F20-T03): la pieza de
-    // material de siempre, con un 18% del color mezclado en la
-    // superficie, el sello de icono con el color sólido y la cifra en
-    // el color pleno. Las cuatro del tablero son el resumen de la
-    // pantalla y tienen que distinguirse entre ellas de un vistazo
-    // (pedido de Gustavo, 2026-11-28).
+    // Tarjeta del tablero (F20-T05). La forma sale del tipo de dato:
+    // maciza si es una dirección de la plata, material si es un saldo.
+    // El CSS hace todo lo demás; acá no se elige ningún color, y ya no
+    // viaja ninguno en un atributo `style`.
     //
-    // El sello REEMPLAZA al punto de la etiqueta de F20-T01: dos
-    // marcas de color en la misma línea para el mismo dato es una de
-    // más. El punto lo ponía el CSS y se fue con él.
-    //
-    // Va `aria-hidden`: el icono repite lo que dice la etiqueta de al
-    // lado, y sin ocultarlo el lector de pantalla lo anuncia dos veces.
-    //
-    // Hasta F20-T01 era una tarjeta de color sólido con texto blanco,
-    // el signo pesos grande recortado contra el borde y el símbolo
-    // arriba a la derecha. Eso se fue con Vidrio Grafito: cuatro
-    // rectángulos de color le competían a la tarjeta héroe, que en el
-    // sistema nuevo es la única superficie maciza.
+    // El sello va `aria-hidden`: el icono repite lo que dice la
+    // etiqueta de al lado, y sin ocultarlo el lector lo anuncia dos
+    // veces.
     return (
-      `<article class="kpi kpi-metric shell kpi-color" style="--c-card:${t.fondo}">` +
+      `<article class="kpi kpi-metric shell ${FORMA[t.tipo]}">` +
       '<div class="kpi-top">' +
       `<div class="kpi-label">${esc(etiqueta)}</div>` +
       '<span class="kpi-ico" aria-hidden="true">' +

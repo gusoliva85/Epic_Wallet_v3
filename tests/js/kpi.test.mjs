@@ -521,86 +521,91 @@ describe("tarjetas de indicador", () => {
     return b;
   }
 
-  // ------------------------------- las cuatro tarjetas teñidas del catálogo
+  // ----------------------------- las cuatro tarjetas del tablero
   //
-  // F20-T01: eran tarjetas de color sólido con el signo pesos de fondo
-  // y el símbolo de la esquina. Pasaron a ser material teñido: el color
-  // entra por `--c-card` y el CSS lo usa en la superficie y en el punto
-  // de la etiqueta. Las pruebas del signo y del símbolo se fueron con
-  // ellos — fijaban un diseño que ya no es el del sistema.
+  // LA REGLA QUE CUIDAN ESTAS PRUEBAS (F20-T05): la forma de una
+  // tarjeta sale de la CLASE DE DATO que muestra, no de la pantalla
+  // donde está. Maciza si es una dirección de la plata —lo que entra o
+  // lo que sale—, material si es un saldo. Es lo que hace que Cartera
+  // salga bien sin saber nada del sistema, y lo que tiene que seguir
+  // valiendo para la tarjeta que se agregue mañana.
+  //
+  // Por eso no se prueba ningún color: los colores cambiaron tres veces
+  // entre F20-T01 y F20-T05 y las pruebas se caían cada vez sin que
+  // hubiera nada roto. Lo que no puede cambiar en silencio es qué
+  // forma le toca a cada dato.
 
-  test("las tarjetas teñidas del catalogo son identificables", async () => {
+  test("cada tarjeta del catalogo toma la forma de su clase de dato", async () => {
     const { kpi, rejilla } = await montar();
-    for (const nombre of kpi.TARJETAS_VALIDAS) {
+    const ESPERADO = {
+      inc: ["kpi-maciza", "kpi-entra"],
+      egr: ["kpi-maciza", "kpi-sale"],
+      dia: ["kpi-saldo"],
+      pat: ["kpi-saldo"],
+    };
+
+    // Si mañana se agrega una tarjeta al catálogo, esta línea obliga a
+    // decidir acá qué forma le toca.
+    assert.deepEqual(
+      [...kpi.TARJETAS_VALIDAS].sort(),
+      Object.keys(ESPERADO).sort(),
+      "el catalogo cambio: falta decidir la forma de la tarjeta nueva",
+    );
+
+    for (const [nombre, clases] of Object.entries(ESPERADO)) {
       kpi.pintarTarjetas(rejilla, [
         kpi.tarjetaMetrica({ etiqueta: nombre, cifra: "$1", tarjeta: nombre }),
       ]);
       const t = rejilla.querySelector(".kpi");
-      assert.ok(
-        t.classList.contains("kpi-color"),
-        `${nombre}: no es tarjeta teñida`,
-      );
-      assert.match(
-        t.getAttribute("style") ?? "",
-        /--c-card/,
-        `${nombre}: falta el color del dato`,
+      for (const c of clases) {
+        assert.ok(t.classList.contains(c), `${nombre}: le falta .${c}`);
+      }
+      // Una maciza y una de material son excluyentes.
+      const esManiza = clases.includes("kpi-maciza");
+      assert.equal(
+        t.classList.contains("kpi-saldo"),
+        !esManiza,
+        `${nombre}: mezcla las dos formas`,
       );
     }
   });
 
-  test("ninguna tarjeta del catalogo repite el color del dato", async () => {
-    // Con el mismo color dejarían de identificar nada, que es para lo
-    // que están. Cada una nombra su propio token.
+  test("las dos macizas no se confunden entre si", async () => {
+    // Lo que entra y lo que sale son las dos macizas, y la única
+    // diferencia entre ellas es cuál de las dos clases llevan: si las
+    // dos salieran iguales, la pantalla diria que entro plata cuando
+    // salio.
     const { kpi, rejilla } = await montar();
-    const fondos = [];
-    for (const nombre of kpi.TARJETAS_VALIDAS) {
+    const clases = {};
+    for (const nombre of ["inc", "egr"]) {
       kpi.pintarTarjetas(rejilla, [
         kpi.tarjetaMetrica({ etiqueta: nombre, cifra: "$1", tarjeta: nombre }),
       ]);
-      fondos.push(rejilla.querySelector(".kpi").getAttribute("style"));
+      clases[nombre] = rejilla.querySelector(".kpi").className;
     }
-    assert.equal(
-      new Set(fondos).size,
-      kpi.TARJETAS_VALIDAS.length,
-      "hay colores repetidos",
-    );
+    assert.notEqual(clases.inc, clases.egr);
   });
 
-  test("el fondo sale del catalogo, no de un valor libre", async () => {
-    // Termina dentro de un atributo `style` y la política del sitio
-    // admite estilos en línea: un valor libre sería CSS inyectable.
+  test("la forma sale del catalogo, no de un valor libre", async () => {
+    // El nombre de la tarjeta llega de quien llama. Con una lista
+    // abierta, un nombre inventado terminaría como clase en el DOM.
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
       kpi.tarjetaMetrica({
         etiqueta: "x",
         cifra: "$1",
-        tarjeta: "red; background:url(http://malo/)",
+        tarjeta: "maciza kpi-entra' onload='malo",
       }),
     ]);
     const t = rejilla.querySelector(".kpi");
     assert.ok(
-      !t.classList.contains("kpi-color"),
+      !t.classList.contains("kpi-maciza") && !t.classList.contains("kpi-saldo"),
       "aceptó una tarjeta inventada",
     );
     assert.ok(!rejilla.innerHTML.includes("malo"));
   });
 
-  test("los cuatro nombres del catalogo se resuelven a un token", async () => {
-    const { kpi, rejilla } = await montar();
-    for (const nombre of kpi.TARJETAS_VALIDAS) {
-      kpi.pintarTarjetas(rejilla, [
-        kpi.tarjetaMetrica({ etiqueta: "x", cifra: "$1", tarjeta: nombre }),
-      ]);
-      const estilo = rejilla.querySelector(".kpi").getAttribute("style");
-      assert.match(
-        estilo,
-        /^--c-card: ?var\(--color-card-\w+\)$/,
-        `${nombre}: ${estilo}`,
-      );
-    }
-  });
-
-  test("la tarjeta teñida no deja restos de la tarjeta solida", async () => {
+  test("la tarjeta del tablero no deja restos de la tarjeta solida", async () => {
     // El signo pesos y el símbolo de la esquina eran nodos y se fueron
     // en F20-T01. El punto de la etiqueta lo ponía el CSS y se fue en
     // F20-T03, con el sello de icono que lo reemplaza.
@@ -613,7 +618,7 @@ describe("tarjetas de indicador", () => {
     assert.equal(t.querySelector(".kpi-glifo"), null);
   });
 
-  test("la tarjeta teñida lleva su sello, y lo elige el catalogo", async () => {
+  test("la tarjeta del tablero lleva su sello, y lo elige el catalogo", async () => {
     // F20-T03: el sello es lo que distingue las cuatro de un vistazo,
     // y su icono sale del catálogo. Quien llama dice QUE tarjeta es,
     // no cómo se dibuja: si pide otro icono, se ignora.
@@ -635,7 +640,7 @@ describe("tarjetas de indicador", () => {
           icono: "porcentaje", // lo que pida el que llama no manda
         }),
       ]);
-      const sello = rejilla.querySelector(".kpi-color .kpi-ico");
+      const sello = rejilla.querySelector(".kpi .kpi-ico");
       assert.ok(sello, `${nombre}: sin sello`);
       assert.equal(
         sello.getAttribute("aria-hidden"),

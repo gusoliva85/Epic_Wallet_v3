@@ -6,7 +6,8 @@ description: Sistema de diseño "Neumorfismo" de Epic Wallet 3.0 — paletas y t
 # Epic Wallet 3.0 · Sistema de diseño "Neumorfismo"
 
 **Aprobado por Gustavo el 2026-11-27 (F20-T01)** sobre un mockup de prueba de cuatro pantallas, y **llevado al detalle del mockup en F20-T02** (2026-11-28): escala tipográfica, filas, anillo de la héroe y color de cada pieza, medidos uno por uno sobre el archivo. Reemplaza al sistema **"Vidrio Grafito"**, que rigió desde la Fase 1; su versión de esta skill y su mockup están en el historial de Git.
-**La paleta clara se reemplazó en F20-T03** (2026-11-28): Ivory Porcelain / Jade Lacquer / Scarlet Signal salieron y entraron **Gallery Stone / Jet Black / Rocket Orange**, elegida por Gustavo entre seis versiones probadas en un mockup. En la misma tarea las cuatro tarjetas del tablero pasaron a ser las piezas más distintivas de la pantalla. **El tema oscuro no cambió.**
+**La paleta clara se reemplazó en F20-T03** (2026-11-28): Ivory Porcelain / Jade Lacquer / Scarlet Signal salieron y entraron **Gallery Stone / Jet Black / Rocket Orange**, elegida por Gustavo entre seis versiones probadas en un mockup. **El tema oscuro no cambió.**
+**En F20-T04 se invirtió el relieve** (§3) y **en F20-T05 las cuatro tarjetas del tablero pasaron a ser dos macizas y dos de material** (§8).
 **Referencias vivas:** `documentacion/mockups/05_Mockup_Neumorfismo.html` para la forma —las cuatro pantallas y las piezas— y `documentacion/mockups/06_Mockup_Claro_Seis_Paletas.html`, versión 1, para el color del tema claro. Ante cualquier duda, esos archivos mandan.
 **Documento normativo:** `documentacion/02_Documento_Tecnico.md` §13 y §14.
 
@@ -42,7 +43,7 @@ Dónde va cada uno: el material es todo lo que no es dato (fondos, piezas, relie
 
 **El 30% es casi negro, y eso es a propósito:** es lo que hace que el claro y el oscuro se vean como la misma aplicación, porque el oscuro ya tenía el material casi negro. La tarjeta héroe en claro es azabache con la cifra en blanco.
 
-**Dos colores no salen de la paleta y son los únicos:** el verde del ingreso y el azul del total de ahorros, los dos en las cuatro tarjetas del tablero (§8). Está explicado ahí y no se extiende a nada más.
+**Ningún color sale de la paleta.** En F20-T03 las cuatro tarjetas del tablero traían un verde y un azul propios; duró un día (§8). Si una pieza nueva parece necesitar un color que no está acá, la respuesta es que no.
 
 ## 1 · Tokens
 
@@ -66,10 +67,11 @@ Van en `web/src/styles/tokens.css` y se registran en Tailwind con `@theme`. **Lo
   /* acento y señal */
   --color-accent:#1f2227; --color-accent-2:#0d0f12; --color-on-accent:#f7f6f4;
   --color-inc:#0e7c5a; --color-egr:#bf400d; --color-sav:#0e7c5a;
-  --color-card-inc:#0e7c5a; --color-card-egr:#bf400d;
-  --color-card-dia:#5b6168; --color-card-pat:#1f5fa8;
-  --on-card:#ffffff;        /* el trazo del sello de una tarjeta */
-  --card-num-blando:100%;   /* color en la cifra de las dos blandas */
+  /* las dos tarjetas macizas del tablero (§8) */
+  --card-entra:#343a42; --card-sale:#d9480f;
+  --on-card-maciza:#ffffff; --card-chip:rgba(255,255,255,.16);
+  --card-entra-sh-lo:rgba(0,0,0,.35); --card-entra-sh-hi:#ffffff;
+  --card-maciza-in:inset 1px 1px 0 rgba(255,255,255,.18);
   --color-ok:#0e7c5a; --color-warn:#8a6a05; --color-pend:#a2522a; --color-crit:#bf400d;
 
   /* levantado, a tres distancias */
@@ -98,9 +100,10 @@ html[data-theme="dark"]{
   --color-ink:#e7e9ec; --color-ink-2:#b9bfc6; --color-ink-3:#9aa1a9; --color-ink-4:#767d85;
   --color-accent:#8d949d; --color-accent-2:#a7aeb6; --color-on-accent:#14171b;
   --color-inc:#a7aeb6; --color-egr:#ff6a1f; --color-sav:#ff8a4c;
-  --color-card-inc:#8d949d; --color-card-egr:#ff6a1f;
-  --color-card-dia:#7d848c; --color-card-pat:#8d949d;
-  --on-card:#14171b; --card-num-blando:0%;
+  --card-entra:#8d949d; --card-sale:#ff6a1f;   /* invertidas: acá la
+     maciza es la superficie CLARA, y su texto va oscuro */
+  --on-card-maciza:#14171b; --card-chip:rgba(0,0,0,.16);
+  --card-entra-sh-lo:rgba(0,0,0,.6); --card-entra-sh-hi:rgba(203,209,215,.3);
   --hero-in:inset 1px 1px 0 rgba(255,255,255,.14);
   --color-ok:#a7aeb6; --color-warn:#e8b454; --color-pend:#ff8a4c; --color-crit:#ff6a1f;
   --hero:#c4511a; --on-hero:#fffaf6;     /* naranja profundo: el texto va en blanco */
@@ -194,14 +197,13 @@ Así se encontró, en F20-T01, un `var(--color-line-2)` —el token se llama `--
 
 `Outfit` para cifras y títulos, `Inter` para todo lo demás. Base **15 px / 1,55**. Las cifras llevan `font-variant-numeric:tabular-nums` **siempre**, para que no bailen al actualizarse.
 
-**La escala sale del mockup, medida sobre el archivo** (F20-T02). Lo que importa de ella no es cada valor sino la DISTANCIA entre la cifra héroe y todo lo demás: con la escala de Vidrio Grafito —cifra de indicador a 27,5 px contra una héroe de 35— las dos pesaban casi igual y el tablero quedaba plano. Ahora la héroe pesa el doble que la tarjeta de al lado, y eso es el tablero.
+**La escala sale del mockup, medida sobre el archivo** (F20-T02). Lo que importa de ella no es cada valor sino la DISTANCIA entre la cifra héroe y todo lo demás: con la escala de Vidrio Grafito —cifra de indicador a 27,5 px contra una héroe de 35— las dos pesaban casi igual y el tablero quedaba plano. Ahora la héroe le saca doce píxeles y medio peso a la cifra de al lado, y eso es el tablero. (La de indicador subió de 17,5 a 20 px en F20-T05, cuando las cuatro del tablero pasaron a ser la pieza principal de la pantalla.)
 
 | Rol | Fuente | Tamaño | Peso |
 |---|---|---|---|
 | Cifra héroe (ahorro del mes, cartera) | Outfit | 32 px | 800 |
 | Importe en formulario | Outfit | 33 px | 700 |
 | Cifra de indicador | Outfit | 20 px | 700 |
-| Cifra de tarjeta teñida | Outfit | 17,5 px | 700 |
 | Título de hoja / marca | Outfit | 18 px | 700 |
 | Título de panel y de sección | Outfit | 14,5 px | 700 |
 | Importe en fila · cifra en ficha `.kv` | Outfit | 14 px | 700 |
@@ -488,37 +490,43 @@ pintarTarjetas(contenedor, [ ...tarjetas ])   // escribe y arranca las barras
 
 **La barra nace en 0 en el CSS y recibe su ancho en `requestAnimationFrame`.** Puesta directo, la transición no tiene de dónde partir y aparece ya llena. Y tiene que ser `requestAnimationFrame`: una microtarea corre antes del pintado, así que el ancho se junta con el primer render y tampoco se ve crecer. Ojo: **esa diferencia no se puede probar en jsdom**, los dos se ven iguales; por eso `tests/unit/test_kpi.py` la verifica leyendo el código y lo dice.
 
-#### Tarjeta teñida
+#### Las cuatro tarjetas del tablero
 
-Las cuatro métricas del tablero son **piezas de material teñidas por el color de su dato** (F20-T01), y desde F20-T03 son **las cuatro piezas más distintivas de la pantalla**. Es un pedido explícito de Gustavo (2026-11-28): son el resumen de todo lo que el tablero muestra, y hasta F20-T02 había que leerlas para saber cuál era cuál.
+**La forma de una tarjeta sale de la CLASE DE DATO que muestra, no de la pantalla donde está.** Es la regla, y es lo único de esta sección que no se negocia:
+
+| Tipo | Qué es | Forma | Dónde cae hoy |
+|---|---|---|---|
+| `entra` | lo que suma | **maciza**, carbón | Ingresos · Rendimiento positivo |
+| `sale` | lo que resta | **maciza**, naranja | Egresos · Rendimiento negativo |
+| `saldo` | una posición | **material**, cifra en tinta | Gasto de hoy · Total de ahorros · Invertido |
 
 ```javascript
 tarjetaMetrica({ etiqueta, cifra, sub, tarjeta: "inc" | "egr" | "dia" | "pat" })
 ```
 
+El catálogo de `components/kpi.js` traduce cada nombre a su tipo y a su icono, y el CSS hace el resto. **Por eso Cartera sale bien sin saber nada de esto** —pide `inc`/`egr` para el rendimiento según el signo y `pat` para lo invertido— y por eso vale para la tarjeta que se agregue mañana: la única pregunta es si el dato es una dirección de la plata o un saldo. Hay una prueba que lo cuida en las dos pantallas, y otra que obliga a decidir la forma si el catálogo crece.
+
+**La maciza es la segunda superficie sólida del sistema**, después de la héroe:
+
 ```text
-inc  verde    (pewter en oscuro)    ingresos          flecha arriba
-egr  naranja  (molten orange)       egresos           flecha abajo
-dia  pizarra  (pewter apagado)      gasto de hoy      calendario
-pat  azul     (pewter)              total de ahorros  alcancía
+fondo    --card-entra / --card-sale   carbón y naranja · pewter y naranja en oscuro
+texto    --on-card-maciza             TODO el texto, incluido el sello
+etiqueta y subtítulo     bajan con OPACIDAD (.78 y .72), no con otro color:
+                         mezclar el texto con el fondo da un gris sucio
+                         distinto en cada tarjeta
+sello    --card-chip                  calado en la propia superficie
+brillo   .kpi-maciza::before { content: none }   igual que la héroe
 ```
 
-**Los cuatro colores del claro se escapan de la paleta, y son la única excepción del sistema.** Con los tres colores no se pueden distinguir cuatro datos: salían todas del mismo gris. El verde y el azul no se usan en ningún otro lado.
+**El carbón NO es el azabache de la héroe**, es un paso más claro: si fueran el mismo, la tarjeta chica y la grande se leerían como una sola pieza partida. Y en oscuro las dos macizas se invierten —son las superficies CLARAS sobre el material casi negro— así que su texto va oscuro. Los dos casos son el mismo token: el componente no conoce el tema.
 
-El color entra en cuatro lugares y en ninguno más:
+**La de saldo no lleva nada**: es la pieza de material de siempre, con la cifra en tinta. Lo único suyo es el sello, sólido en el acento.
 
-1. **Un 18% mezclado en la superficie**, contra `--kpi-surf` (un escalón del material, no la pieza). Era 10% —y 5% la de «gasto de hoy»— y no alcanzaba. Dieciocho y no más: con el color al 25% dejan de ser material y pasan a ser cuatro rectángulos de color.
-2. **El sello de icono**, el único lugar del sistema donde el color de una tarjeta va **sólido**, con el trazo en `--on-card`. Es lo que la hace reconocible sin leerla. **Reemplaza al punto de la etiqueta de F20-T01**: dos marcas de color en la misma línea para el mismo dato es una de más.
-3. **La etiqueta**, con el color casi pleno (85% contra la tinta, para que 10,5 px no queden al límite del contraste).
-4. **La cifra, en el color pleno.** En claro van las cuatro: los cuatro pasan 4,5:1 sobre la pieza y es lo que las separa de un vistazo.
+**El icono sale del catálogo y no lo elige quien llama** —flecha arriba, flecha abajo, calendario, caja fuerte—. Si fuera un parámetro, el mismo dato podría salir con la flecha en una pantalla y con el calendario en otra. Va `aria-hidden`: repite lo que dice la etiqueta de al lado.
 
-**El icono sale del catálogo y no lo elige quien llama.** Son cuatro tarjetas fijas del tablero: si fuera un parámetro, el mismo dato podría salir con la flecha en una pantalla y con el calendario en otra. Va `aria-hidden`, porque repite lo que dice la etiqueta de al lado.
+**La etiqueta parte en dos líneas, no se corta.** «Total de ahorros» a 10,5 px no entra en media tarjeta de 390 px y salía «TOTAL DE AHORR…». `.kpi-top` lleva el alto mínimo de esas dos líneas, así las cuatro alinean su cifra aunque sólo una use las dos, y el sello se alinea arriba.
 
-**La cifra de las dos blandas se gobierna con un número, no con un selector de tema.** «Gasto de hoy» y «Total de ahorros» no son una dirección de la plata sino un saldo: en claro van igual en su color —las cuatro tienen que distinguirse—, y en oscuro vuelven a la tinta, porque allá son pewter sobre pewter teñido (4,3:1). La diferencia la lleva `--card-num-blando`: 100% en claro, 0% en oscuro. Así el componente sigue sin conocer el tema.
-
-**El único texto que cae encima del color es el trazo del sello**, y para eso está `--on-card`. Los otros tres usos del color son texto SOBRE el material, así que los cuatro valores sí necesitan contraste con la pieza: 4,7 · 4,8 · 5,6 · 5,8:1 sobre `#f4f3f0`. Por eso el naranja de la tarjeta (`#bf400d`) es un paso más profundo que el de la señal (`#d9480f`, que da 3,9:1 y sólo sirve de fondo).
-
-> **Qué había antes y por qué se fue.** Hasta el 2026-11-27 eran cuatro tarjetas de **color sólido con texto blanco**, con el signo pesos grande recortado contra el borde y el símbolo arriba a la derecha (diseño de Gustavo, `mockups/tarjetas.png`). Los cuatro fondos estaban calibrados a 5,3–6,0:1 con blanco, y el signo pesos iba más oscuro que la tarjeta porque aclarándolo la cifra blanca caía a 3,3:1. Todo eso se fue con Vidrio Grafito: en el sistema nuevo **la única superficie maciza es la tarjeta héroe**, y cuatro rectángulos de color al lado le competían. Se invirtieron entre sí.
+> **Las dos formas que tuvo esta pieza antes, y por qué se fueron.** Hasta F20-T01 eran cuatro tarjetas de **color sólido con texto blanco**, con el signo pesos recortado contra el borde (diseño de Gustavo, `mockups/tarjetas.png`): le competían a la héroe y se invirtieron, pasando a material teñido. En F20-T03 ese tinte subió al 18% y cada una recibió su color propio —verde, naranja, pizarra, azul— para que se distinguieran. Duró un día: la pantalla no tiene más color que el naranja y cuatro superficies pastel quedaban como manchas («arruinan un poco la estética», 2026-11-28). De las tres variantes de `mockups/07_Mockup_Cuatro_Tarjetas.html`, Gustavo eligió ésta. Lo que se ganó: el color sale entero de la paleta, y la pantalla pasó de cuatro bloques iguales a una jerarquía de dos y dos.
 
 #### La tarjeta héroe
 

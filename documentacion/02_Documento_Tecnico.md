@@ -1280,11 +1280,10 @@ Se declaran en `web/src/styles/tokens.css` y se registran en Tailwind con `@them
   /* semántica financiera */
   --color-inc: #0e7c5a;  --color-egr: #bf400d;  --color-sav: #0e7c5a;
 
-  /* las cuatro tarjetas del tablero: se escapan de la paleta */
-  --color-card-inc: #0e7c5a;  --color-card-egr: #bf400d;
-  --color-card-dia: #5b6168;  --color-card-pat: #1f5fa8;
-  --on-card: #ffffff;          /* el trazo del sello de icono */
-  --card-num-blando: 100%;     /* cuánto color lleva la cifra blanda */
+  /* las dos tarjetas macizas del tablero (§13.4.2) */
+  --card-entra: #343a42;  --card-sale: #d9480f;
+  --on-card-maciza: #ffffff;
+  --card-chip: rgba(255,255,255,.16);
 
   /* severidad de alertas */
   --color-ok: #0e7c5a; --color-warn: #8a6a05;
@@ -1368,7 +1367,6 @@ Lo que define esta escala no es cada número sino **la distancia entre la cifra 
 | Cifra héroe (ahorro del mes, cartera) | Outfit | 32 px | 800 |
 | Importe del formulario de alta | Outfit | 33 px | 700 |
 | Cifra de indicador | Outfit | 20 px | 700 |
-| Cifra de tarjeta teñida | Outfit | 17,5 px | 700 |
 | Título de hoja y marca | Outfit | 18 px | 700 |
 | Título de panel y de sección | Outfit | 14,5 px | 700 |
 | Importe en fila | Outfit | 14 px | 700 |
@@ -1390,22 +1388,23 @@ Las cifras usan `font-variant-numeric: tabular-nums` siempre, para que no "baile
 
 **El color de un importe significa dirección.** Verde y naranja plenos, sin mezclar con la tinta: sobre el material pasan el contraste mínimo y mezclados quedaban dos grises con un tinte. Un importe que no tiene dirección —el total de una categoría, el valor de una posición— va en tinta. En la lista de categorías, lo único en el color de la señal es la que más gastó.
 
-### 13.4.2 Las cuatro tarjetas del tablero · F20-T03
+### 13.4.2 Las cuatro tarjetas del tablero · F20-T05
 
-**Son las cuatro piezas más distintivas de la pantalla, y es un pedido explícito de Gustavo** (2026-11-28): ingreso total, egreso total, gasto del día y total acumulado son el resumen de todo lo que el tablero muestra, y hasta F20-T02 había que leerlas para saber cuál era cuál. **Cada una tiene su color y los cuatro se escapan de la paleta** —verde, naranja, pizarra, azul—, que es la única excepción de este tipo en el sistema.
+**La forma de una tarjeta de indicador sale de la clase de dato que muestra, no de la pantalla donde está.**
 
-Lo que no cambia: siguen siendo material teñido y no cuatro rectángulos de color, así que no le compiten a la tarjeta héroe, que es la única superficie maciza. El color entra en cuatro lugares y en ninguno más:
+| Tipo | Qué es | Forma | Dónde cae hoy |
+|---|---|---|---|
+| `entra` | lo que suma | maciza, carbón (pewter en oscuro) | Ingresos · Rendimiento positivo |
+| `sale` | lo que resta | maciza, naranja | Egresos · Rendimiento negativo |
+| `saldo` | una posición | material, cifra en tinta | Gasto de hoy · Total de ahorros · Invertido |
 
-| Lugar | Cuánto | Por qué |
-|---|---|---|
-| La superficie | 18% sobre `--kpi-surf` | Era 10% (y 5% la de «gasto de hoy») y las cuatro se veían del mismo gris. Con 25% dejan de ser material. |
-| El sello de icono | sólido | Es el único lugar del sistema donde el color de una tarjeta va sólido. Es lo que la hace reconocible sin leerla. |
-| La etiqueta | 85% contra la tinta | Para que 10,5 px no queden al límite del contraste. |
-| La cifra | pleno | Es lo que separa las cuatro de un vistazo. |
+El catálogo vive en `components/kpi.js` y traduce el nombre que pide la vista (`inc`, `egr`, `dia`, `pat`) a su tipo y a su icono. **Cartera no sabe nada de la regla** —pide `inc`/`egr` según el signo del rendimiento y `pat` para lo invertido— y sale bien igual; lo mismo va a pasar con la tarjeta que se agregue mañana. Hay pruebas que cuidan la regla en las dos pantallas y que obligan a decidir la forma si el catálogo crece.
 
-**El sello reemplaza al punto de la etiqueta de F20-T01**: dos marcas de color en la misma línea para el mismo dato es una de más. Su icono sale del catálogo de `components/kpi.js` —flecha arriba, flecha abajo, calendario, alcancía— y **no lo elige quien llama**: son cuatro tarjetas fijas, y si el icono fuera un parámetro el mismo dato podría salir con la flecha en una pantalla y con el calendario en otra. Va `aria-hidden`: repite lo que dice la etiqueta de al lado.
+La maciza es la **segunda superficie sólida del sistema**, después de la héroe. Su texto entero —etiqueta, cifra, subtítulo y el trazo del sello— va en `--on-card-maciza`; la etiqueta y el subtítulo bajan de peso con opacidad y no con otro color, porque mezclar texto con el fondo da un gris sucio distinto en cada tarjeta. El carbón **no es** el azabache de la héroe sino un paso más claro: con el mismo valor, la tarjeta chica y la grande se leerían como una pieza partida. En tema oscuro las dos macizas se invierten (son las superficies claras sobre el material casi negro) y su texto pasa a oscuro, con el mismo token.
 
-**La cifra de las dos tarjetas blandas se gobierna con un número, no con un selector de tema.** «Gasto de hoy» y «Total de ahorros» no son una dirección de la plata sino un saldo. En claro van igual en su color, porque las cuatro tienen que distinguirse; en oscuro vuelven a la tinta, porque allá son pewter sobre pewter teñido (4,3:1). La diferencia la lleva `--card-num-blando` —100% en claro, 0% en oscuro— y así el componente sigue sin conocer el tema.
+**La etiqueta parte en dos líneas y no se corta.** «Total de ahorros» a 10,5 px no entra en media tarjeta de 390 px: `.kpi-top` reserva el alto de dos líneas para que las cuatro alineen su cifra.
+
+> **Las dos formas anteriores.** Hasta F20-T01 eran cuatro tarjetas de color sólido con texto blanco y el signo pesos de fondo; competían con la héroe y se invirtieron a material teñido. En F20-T03 el tinte subió al 18% y cada una recibió un color propio —verde, naranja, pizarra, azul— para distinguirse entre sí. Duró un día: la pantalla no tiene más color que el naranja y cuatro superficies pastel quedaban como manchas. Gustavo eligió esta variante entre tres, el 2026-11-28, en `mockups/07_Mockup_Cuatro_Tarjetas.html`. Lo que se ganó: el color sale entero de la paleta y la pantalla pasó de cuatro bloques iguales a una jerarquía de dos y dos.
 
 ### 13.5 Puntos de corte
 

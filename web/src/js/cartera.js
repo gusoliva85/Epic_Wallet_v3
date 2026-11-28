@@ -66,11 +66,13 @@ function tarjetasDeCartera(ind) {
       pieDer: posiciones,
       color: "sav",
     }),
-    // Tarjetas teñidas, las mismas que las cuatro del tablero de
-    // Inicio (kpi.js, variante `tarjeta`): "Invertido" con el color
-    // del patrimonio, "Rendimiento" con el de ingreso o egreso según
-    // el signo — inc/egr con su significado de siempre (ganó/perdió
-    // plata), no literalmente ingreso/egreso del mes.
+    // Las mismas tarjetas que las del tablero de Inicio (kpi.js,
+    // variante `tarjeta`). Acá sólo se dice QUE CLASE DE DATO es cada
+    // una y el sistema le da la forma (F20-T05): "Invertido" es un
+    // saldo y sale de material; "Rendimiento" es una dirección y sale
+    // macizo, en el carbón de lo que entra o en el naranja de lo que
+    // sale según el signo — inc/egr con su significado de siempre
+    // (ganó/perdió plata), no literalmente ingreso/egreso del mes.
     tarjetaMetrica({
       etiqueta: "Invertido",
       cifra: fmt(ind.total_invested),
