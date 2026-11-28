@@ -21,7 +21,7 @@ description: Sistema de diseño "Neumorfismo" de Epic Wallet 3.0 — paletas y t
 7. **Sin framework de UI** y sin librería de gráficos: HTML, CSS (Tailwind + tokens) y JavaScript nativo.
 8. Los textos de interfaz van en **español rioplatense** ("cargá", "tocá", "seguís").
 9. **La aplicación es multiusuario.** Nunca se escribe un nombre de usuario en el código ni en una plantilla: siempre sale del perfil de la sesión.
-10. **Levantado se toca, hundido está elegido.** Es la gramática del sistema y vale para cada pieza nueva (§3).
+10. **Todo va levantado. Hundido es sólo donde se escribe o se elige** —un campo, un combo, el surco de un control, la pista de una barra— **y el botón mientras está apretado.** Es la gramática del sistema (F20-T04) y vale para cada pieza nueva (§3). Ante la duda: levantado.
 
 ## Identidad
 
@@ -144,7 +144,7 @@ Toda la profundidad sale de dos clases. **No se inventan variantes.**
 | Clase | Forma | Uso |
 |---|---|---|
 | `.shell` | **levantado** · `--glass-in, --sh-md` | contenedores: topbar, tarjetas, paneles, hojas, navegación |
-| `.cg` | **hundido** · `--hundido-sm` | contenido dentro de un `.shell`: filas, fichas, campos |
+| `.cg` | **levantado** · `--glass-in, --sh-sm` | contenido dentro de un `.shell`: fichas, ítems de lista, bloques |
 
 ```css
 .shell{position:relative;overflow:hidden;background:var(--glass-shell-bg);
@@ -152,7 +152,7 @@ Toda la profundidad sale de dos clases. **No se inventan variantes.**
 .shell::before{content:"";position:absolute;inset:0;background:var(--glass-sheen);pointer-events:none}
 
 .cg{background:var(--glass-content-bg);
-  border:1px solid var(--borde-pieza);box-shadow:var(--hundido-sm)}
+  border:1px solid var(--borde-pieza);box-shadow:var(--glass-in),var(--sh-sm)}
 ```
 
 Y la gramática, que vale para cada pieza nueva:
@@ -160,7 +160,9 @@ Y la gramática, que vale para cada pieza nueva:
 | Forma | Qué significa | Ejemplos |
 |---|---|---|
 | **Levantado** | esto se toca | botón, píldora, tarjeta, barra, hoja |
-| **Hundido** | está elegido, o contiene contenido | surco del conmutador, campo, bloque de gráfico (`--hundido`, la más honda), fila, **botón apretado** |
+| **Hundido** | acá se escribe o se elige | campo de texto, `select`, surco del conmutador y del interruptor, pista de una barra, **botón apretado** |
+
+> **Esto se invirtió en F20-T04** (2026-11-28). Hasta F20-T03, hundido quería decir «está elegido, o contiene contenido», y por eso iban hundidos el bloque del gráfico, las fichas, los ítems de vencimientos y la marca de cada fila. En la pantalla no funcionó: se leían como agujeros. Gustavo lo pidió con todas las letras —«el gráfico del inicio está como para adentro… todo tiene que ir como superponiéndose; solamente las cosas que son input sí tienen que estar para adentro»—. **Al agregar una pieza nueva, la pregunta ya no es si está elegida: es si se escribe adentro.**
 
 Tres consecuencias que se verifican mirando:
 
@@ -319,7 +321,7 @@ destacarFilaNueva(contenedor, id)       // hace entrar la fila recién creada
 
 Rejilla de `34px 1fr auto`: marca, contenido, valor. **La fila es un `<button>`**, no un `div` con `onclick`: se abre para ver el detalle, así que tiene que alcanzarse con el tabulador y anunciarse.
 
-**La fila NO es una pieza** (F20-T02). No lleva relieve, ni fondo, ni borde: va apoyada sobre el panel y lo único que la separa de la de abajo es una hairline (`.row + .row`). Ocho categorías hechas de ocho piezas hundidas son ocho veces la misma sombra, y el relieve deja de significar algo. Lo que se hunde es el bloque que las contiene, una sola vez. Su marca —la flecha o las iniciales— sí es un hueco: `.row-ico` va hundido, con el color en el trazo y no en el fondo.
+**La fila NO es una pieza** (F20-T02). No lleva relieve, ni fondo, ni borde: va apoyada sobre el panel y lo único que la separa de la de abajo es una hairline (`.row + .row`). Ocho categorías hechas de ocho piezas hundidas son ocho veces la misma sombra, y el relieve deja de significar algo. Lo que se hunde es el bloque que las contiene, una sola vez. Su marca —la flecha o las iniciales— es una pastilla levantada: `.row-ico` va con relieve hacia afuera (F20-T04), con el color en el trazo y no en el fondo.
 
 **El signo lo decide `tipo`, nunca el valor del importe.** El importe llega ya formateado del backend y sin signo: el frontend sólo formatea y no hace aritmética. Si el signo saliera del texto, un importe que ya trajera un menos saldría con dos.
 
@@ -733,9 +735,9 @@ Y la pantalla **dice que son de muestra**: una cifra creíble sin aclaración se
 - No escribir colores, sombras ni radios fuera de los tokens.
 - **No usar `backdrop-filter`.** El sistema no desenfoca en ninguna parte.
 - **No poner borde a una pieza con relieve.** Es lo que rompe la ilusión.
-- **No levantar lo que está elegido ni hundir lo que se toca.** La gramática de §3 es lo que hace que la interfaz se entienda sin explicarla.
+- **No hundir nada que no sea un campo, un surco o un botón apretado.** La gramática de §3 es lo que hace que la interfaz se entienda sin explicarla, y desde F20-T04 tiene una sola excepción: donde entra la mano.
 - **No teñir el lado claro de la sombra en una pieza chica de acento.** Queda un aura de color alrededor del botón: para eso están `--acc-sh-*`.
-- **No poner relieve a cada fila de una lista.** La lista es un bloque; las filas son hairlines.
+- **No poner relieve a cada fila de una lista.** La lista es un bloque; las filas son hairlines. Lo que sí lleva relieve es la marca de icono de la fila, que es una pieza chica.
 - **No usar el color de la señal fuera de egreso, alerta, vencimiento y borrar.** La única excepción del sistema es el botón flotante, que es así en el mockup aprobado: es la acción que se toca cien veces por mes y la única pieza que flota.
 - **No escribir un `[style*="--c"]` sin los dos puntos.** `--c-card` también lo cumple, y el selector termina pintando tarjetas que no eran (F20-T02).
 - No usar `innerHTML` con datos del servidor sin `esc()`.

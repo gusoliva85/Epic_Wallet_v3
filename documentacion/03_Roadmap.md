@@ -504,6 +504,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, **en tema claro**, con la versión 1 del mockup al lado: Inicio (la héroe azabache con la cifra blanca y su anillo, las cuatro tarjetas con su sello y su color, el gráfico diario, las categorías), Movimientos, Historial, Cartera, Vencimientos y Ajustes. Y después **pasar a oscuro**, que tiene que haber quedado igual que antes salvo el sello de icono nuevo en las cuatro tarjetas.
   **Respaldo:** no toca la base ni los datos — frontend, pruebas y documentación.
 
+- [~] **F20-T04 · El relieve va para afuera**
+  **Tipo:** interfaz
+  **Hacer:** invertir la gramática del relieve. Todo levantado —el bloque de cada gráfico, las fichas y los ítems de lista (`.cg`), la marca de icono de cada fila y de cada tarjeta—, y hundido **sólo** donde se escribe o se elige: campos, `select`, el surco del conmutador y del interruptor, la pista de una barra de progreso y el botón mientras está apretado. Pedido de Gustavo el 2026-11-28: lo hundido se leía como agujeros.
+  **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas: el gráfico de Inicio y el de los últimos seis meses sobresalen de su tarjeta, los iconos de Gastos por categoría y de Movimientos son pastillas levantadas, las fichas de Mes a mes y los ítems de Vencimientos sobresalen, y el buscador, el combo de categoría y los conmutadores siguen hundidos.
+  **Respaldo:** no toca la base ni los datos — frontend y documentación.
+
 ---
 
 # Después del traslado

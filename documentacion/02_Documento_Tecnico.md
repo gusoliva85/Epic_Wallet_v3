@@ -1238,10 +1238,12 @@ Una sola pieza de material. El relieve no es un borde ni una capa encima: son **
 
 | Forma | Qué significa | Dónde |
 |---|---|---|
-| **Levantado** | esto se toca | tarjetas, paneles, botones, píldoras, barras, hojas |
-| **Hundido** | esto está elegido, o es un contenedor de contenido | surco del conmutador, campo de texto, bloque de gráfico, fila, botón apretado |
+| **Levantado** | todo lo demás | tarjetas, paneles, botones, píldoras, barras, hojas, bloques de gráfico, fichas, ítems de lista, marcas de icono |
+| **Hundido** | acá se escribe o se elige | campo de texto, `select`, surco del conmutador y del interruptor, pista de una barra de progreso, botón apretado |
 
-Un botón que se hunde al apretarlo y un filtro que queda hundido mientras está activo son la misma idea, y es lo que hace que el sistema se entienda sin explicarlo.
+**La gramática se invirtió en F20-T04** (2026-11-28). Hasta F20-T03, hundido quería decir «está elegido, o es un contenedor de contenido»: así iban el bloque del gráfico, las fichas del historial, los ítems de vencimientos y la marca de cada fila. En la pantalla se leían como agujeros, y Gustavo pidió lo contrario —«todo tiene que ir como superponiéndose; solamente las cosas que son input sí tienen que estar para adentro»—. Un botón que se hunde mientras el dedo lo aprieta es el mismo gesto que un campo hundido: ahí es donde la mano entra.
+
+**Al agregar una pieza nueva, la pregunta no es si está elegida: es si se escribe adentro.** Si no, va levantada.
 
 **Las dos paletas, con su reparto:**
 
@@ -1346,7 +1348,8 @@ Toda la profundidad de la interfaz sale de dos clases. No se inventan variantes.
 | Clase | Uso | Forma | Fondo (claro) |
 |---|---|---|---|
 | `.shell` | Contenedores: topbar, tarjetas, paneles, hojas, navegación | levantado: `--glass-in, --sh-md` | `#f4f3f0` |
-| `.cg` | Contenido dentro de un `.shell`: filas, fichas, campos | hundido: `--hundido-sm` | `#e9e7e2` |
+| `.cg` | Contenido dentro de un `.shell`: fichas, ítems de lista, bloques | levantado: `--glass-in, --sh-sm` | `#f4f3f0` |
+| (sin clase propia) | Campos y surcos: `.inp`, `select`, `.view-switch`, `.toggle`, las pistas de barra | hundido: `--hundido-sm` | `#e9e7e2` |
 
 Ninguna de las dos lleva borde (`--borde-pieza` es transparente): con relieve, un borde alrededor de la pieza es justo lo que rompe la ilusión de que el material es uno solo. El píxel se conserva para no cambiarle la caja al CSS que ya lo cuenta.
 

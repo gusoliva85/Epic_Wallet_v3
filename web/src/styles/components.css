@@ -57,14 +57,24 @@
   contain: paint;
 }
 
-/* Contenido dentro de un .shell: el bloque de un gráfico, una lista,
-   un campo. La pieza HUNDIDA del sistema. Es lo que hace que el
-   contenido se lea como excavado en el mismo material y no como una
-   tarjeta apoyada sobre otra tarjeta. */
+/* Contenido dentro de un .shell: una ficha, un ítem de lista, un
+   bloque. ES UNA PIEZA LEVANTADA, como todo lo demás (F20-T04).
+
+   Hasta F20-T03 iba hundida: la idea era que el contenido se leyera
+   como excavado en el mismo material. En la pantalla no funcionó —los
+   iconos de las categorías, los ítems de vencimientos y las fichas del
+   historial se veían como agujeros— y Gustavo pidió lo contrario el
+   2026-11-28: todo se superpone, nada se excava.
+
+   LO QUE SIGUE HUNDIDO, Y ES TODO: el campo donde se escribe o se
+   elige (`.inp`, `.campo`, un `select`), el surco de un control
+   (`.view-switch`, `.toggle`, `.nav-escritorio`), la pista de una
+   barra de progreso (`.fin-track`, `.cat-track`, `.comp-track`) y el
+   estado apretado de un botón, que dura lo que dura el dedo. */
 .cg {
-  background: var(--glass-content-bg);
+  background: var(--glass-shell-bg);
   border: 1px solid var(--borde-pieza);
-  box-shadow: var(--hundido-sm);
+  box-shadow: var(--glass-in), var(--sh-sm);
 }
 
 /* El respaldo sin `backdrop-filter` se queda, y no hace nada: los dos
@@ -1275,6 +1285,8 @@
     var(--mix-tint)
   );
   color: color-mix(in srgb, var(--c, var(--color-accent)) 80%, var(--mix-ink));
+  /* Levantado, como toda marca de icono del sistema (F20-T04). */
+  box-shadow: var(--glass-in), var(--sh-sm);
 }
 
 .kpi-ico svg {
@@ -1608,10 +1620,11 @@
 
 /* Marca de la fila: la flecha de dirección o las iniciales de la
    categoría. El color sale de `--c`, que pone cada fila. */
-/* El cuadradito HUNDIDO, no teñido: es el hueco del material donde
-   apoya el icono, y el color queda en el trazo. Teñido de fondo
+/* El cuadradito LEVANTADO, no teñido: es una pastilla del material
+   con el icono encima, y el color queda en el trazo. Teñido de fondo
    competía con las tarjetas del tablero, que son las que usan el
-   color de superficie. */
+   color de superficie; hundido se veía como un agujero en la fila
+   (F20-T04). */
 .row-ico {
   display: grid;
   place-items: center;
@@ -1622,8 +1635,8 @@
   font-size: var(--text-pill);
   font-weight: 700;
   letter-spacing: 0.02em;
-  background: var(--surf-2);
-  box-shadow: var(--hundido-sm);
+  background: var(--glass-shell-bg);
+  box-shadow: var(--glass-in), var(--sh-sm);
   color: var(--c, var(--color-accent));
 }
 
@@ -2429,13 +2442,19 @@
   padding: 14px 0 6px;
   overflow-x: auto;
   scrollbar-width: thin;
-  /* El gráfico vive en un hueco excavado en la tarjeta (F20-T01): es
-     la profundidad `--hundido`, la más honda del sistema, porque es un
-     bloque y no un control. La sombra queda en el contenedor y no se
-     desplaza con el dibujo. */
+  /* El gráfico va sobre una pieza LEVANTADA dentro de la tarjeta
+     (F20-T04). Hasta F20-T03 vivía en un hueco excavado, con la
+     profundidad más honda del sistema: era lo primero que Gustavo
+     nombró al pedir que se diera vuelta la gramática —"el gráfico del
+     inicio está como para adentro"—, y es el bloque más grande de la
+     pantalla, así que es donde más se notaba.
+
+     Lleva `--sh-md` y no `--sh-sm`: es una superficie grande, y con la
+     sombra chica se veía plana. La sombra queda en el contenedor y no
+     se desplaza con el dibujo. */
   border-radius: var(--radius-sm);
-  background: var(--surf-2);
-  box-shadow: var(--hundido);
+  background: var(--glass-shell-bg);
+  box-shadow: var(--glass-in), var(--sh-md);
   /* Los DOS ejes: `.app` pide `pan-y` para la navegación por gestos
      (F12-T04) y acá hace falta devolverle el horizontal al gráfico.
      Con `pan-x` a secas, la intersección con el ancestro dejaba el
