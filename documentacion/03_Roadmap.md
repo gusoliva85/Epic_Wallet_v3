@@ -498,6 +498,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Respaldo:** no toca la base ni los datos — frontend, pruebas y documentación.
   **Segunda vuelta (2026-11-28, con capturas del celular):** el teléfono mostraba el CSS nuevo sobre el HTML viejo —el borde servía `/src/*` sin cabecera de caché y Chrome se quedaba con el JavaScript anterior—. Se agregó `Cache-Control: no-cache` para el HTML y los módulos, y el service worker los pide con `cache: "reload"` para rescatar al que ya tenía la versión vieja guardada. Y los gráficos: entran enteros en la pantalla (se fue el piso de 520 px que los hacía desplazarse de costado), el tamaño de la letra de los ejes se calcula contra el ancho real del dibujo, los márgenes dan lugar a los valores y los meses del eje van abreviados.
 
+- [~] **F20-T03 · La paleta clara nueva y las cuatro tarjetas distintivas**
+  **Tipo:** interfaz
+  **Hacer:** reemplazar el tema claro. El de F20-T01 no gustó —el marfil se veía apagado y las cuatro tarjetas del tablero no se distinguían entre sí—, así que se probaron seis versiones en `documentacion/mockups/06_Mockup_Claro_Seis_Paletas.html` y Gustavo eligió la **versión 1: Gallery Stone 60 / Jet Black 30 / Rocket Orange 10**, con el 60% aclarado casi a papel. Entra tal cual el mockup. Además, **las cuatro tarjetas del tablero pasan a ser las piezas más distintivas de la pantalla**, con un color propio cada una —verde, naranja, pizarra, azul—, el tinte al 18% y un sello de icono con el color sólido. **El tema oscuro no se toca.**
+  **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, **en tema claro**, con la versión 1 del mockup al lado: Inicio (la héroe azabache con la cifra blanca y su anillo, las cuatro tarjetas con su sello y su color, el gráfico diario, las categorías), Movimientos, Historial, Cartera, Vencimientos y Ajustes. Y después **pasar a oscuro**, que tiene que haber quedado igual que antes salvo el sello de icono nuevo en las cuatro tarjetas.
+  **Respaldo:** no toca la base ni los datos — frontend, pruebas y documentación.
+
 ---
 
 # Después del traslado

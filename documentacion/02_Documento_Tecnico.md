@@ -1247,8 +1247,10 @@ Un botón que se hunde al apretarlo y un filtro que queda hundido mientras está
 
 | Tema | 60% material | 30% dato y acción | 10% señal |
 |---|---|---|---|
-| claro | Ivory Porcelain `#f1ece3` | Jade Lacquer `#1d6b58` | Scarlet Signal `#c62b36` |
+| claro | Gallery Stone `#f4f3f0` | Jet Black `#1f2227` | Rocket Orange `#d9480f` |
 | oscuro | Raven Black `#191c21` | Pewter Grey `#8d949d` | Molten Orange `#ff6a1f` |
+
+**La paleta clara es de F20-T03** (elegida por Gustavo el 2026-11-28 entre seis probadas en `mockups/06_Mockup_Claro_Seis_Paletas.html`). Reemplaza a Ivory Porcelain 60 / Jade Lacquer 30 / Scarlet Signal 10, el claro de F20-T01: el marfil se veía apagado y las cuatro tarjetas del tablero no se distinguían entre sí. Tres cosas la definen: el 60% va **aclarado casi a papel** —el color de catálogo es más oscuro, y el fondo tiene que acercarse al blanco sin llegar, o el relieve se vuelve gris sucio—, el 30% es casi negro, que es lo que hermana el claro con el oscuro, y el naranja es la única señal. **El tema oscuro no cambió.**
 
 **Sin neón, sin saturaciones altas, sin degradados estridentes.** El color se usa para significar (ingreso, egreso, ahorro, alerta), no para decorar. Y una regla que es propia de este sistema: **el fondo no tiene dibujo propio**. Los lavados radiales de color y la capa de ruido de Vidrio Grafito se fueron en F20-T01, porque cualquier textura detrás de las dos sombras de una pieza se lee como suciedad alrededor del borde.
 
@@ -1263,43 +1265,45 @@ Se declaran en `web/src/styles/tokens.css` y se registran en Tailwind con `@them
   /* material */
   --color-bg-1: #ebe5db;  --color-bg-2: #e7e0d5;
 
-  /* tinta: 4 niveles, calibrados sobre la pieza (#f1ece3) */
-  --color-ink:   #2a2620;  /* 12,8:1 · títulos y cifras */
-  --color-ink-2: #544d44;  /*  7,4:1 · texto normal */
-  --color-ink-3: #6d665b;  /*  4,9:1 · secundario y etiquetas */
-  --color-ink-4: #8c8373;  /*  3,1:1 · deshabilitado y ejes */
+  /* tinta: 4 niveles, calibrados sobre la pieza (#f4f3f0) */
+  --color-ink:   #23262b;  /* 13,7:1 · títulos y cifras */
+  --color-ink-2: #4c5058;  /*  7,3:1 · texto normal */
+  --color-ink-3: #656970;  /*  5,0:1 · secundario y etiquetas */
+  --color-ink-4: #878b93;  /*  3,1:1 · deshabilitado y ejes */
 
-  /* acento: Jade Lacquer */
-  --color-accent: #1d6b58;  --color-accent-2: #14503f;
-  --color-on-accent: #f3efe6;
+  /* acento: Jet Black */
+  --color-accent: #1f2227;  --color-accent-2: #0d0f12;
+  --color-on-accent: #f7f6f4;
 
   /* semántica financiera */
-  --color-inc: #1d6b58;  --color-egr: #c62b36;  --color-sav: #1d6b58;
+  --color-inc: #0e7c5a;  --color-egr: #bf400d;  --color-sav: #0e7c5a;
 
-  /* las cuatro tarjetas teñidas del tablero */
-  --color-card-inc: #1d6b58;  --color-card-egr: #c62b36;
-  --color-card-dia: #5f7d72;  --color-card-pat: #1d6b58;
+  /* las cuatro tarjetas del tablero: se escapan de la paleta */
+  --color-card-inc: #0e7c5a;  --color-card-egr: #bf400d;
+  --color-card-dia: #5b6168;  --color-card-pat: #1f5fa8;
+  --on-card: #ffffff;          /* el trazo del sello de icono */
+  --card-num-blando: 100%;     /* cuánto color lleva la cifra blanda */
 
   /* severidad de alertas */
-  --color-ok: #1d6b58; --color-warn: #9c7400;
-  --color-pend: #b35a16; --color-crit: #c62b36;
+  --color-ok: #0e7c5a; --color-warn: #8a6a05;
+  --color-pend: #a2522a; --color-crit: #bf400d;
 }
 ```
 
-**La severidad dobla la paleta a propósito.** Con tres colores no se pueden representar cuatro severidades: `warn` y `pend` son un ámbar y un naranja quemado, dentro de la temperatura cálida del material. Siguen cumpliendo la regla que importa: el color nunca es el único portador — cada severidad lleva su icono y su nombre.
+**La severidad dobla la paleta a propósito.** Con tres colores no se pueden representar cuatro severidades: `warn` y `pend` son un ámbar y una terracota, dentro de la misma temperatura que el naranja de la señal. Siguen cumpliendo la regla que importa: el color nunca es el único portador — cada severidad lleva su icono y su nombre.
 
 Fuera de `@theme`, en `:root`, viven las superficies y el relieve:
 
 ```css
 :root{
   /* las dos sombras: todo lo demás se arma con éstas */
-  --sh-lo: rgba(170,158,138,.52);   /* el material en sombra */
-  --sh-hi: #fffdf8;                 /* el material iluminado */
+  --sh-lo: rgba(148,144,136,.50);   /* el material en sombra */
+  --sh-hi: #ffffff;                 /* el material iluminado */
 
   /* las superficies */
-  --surf:   #f1ece3;   /* la pieza levantada */
-  --surf-2: #e7e0d5;   /* lo hundido */
-  --kpi-surf:#e8e1d4;  /* base de la tarjeta de indicador */
+  --surf:   #f4f3f0;   /* la pieza levantada */
+  --surf-2: #e9e7e2;   /* lo hundido */
+  --kpi-surf:#eeece8;  /* base de la tarjeta de indicador */
 
   /* levantado, a tres distancias */
   --sh-sm: 4px 4px  9px var(--sh-lo), -4px -4px  9px var(--sh-hi);
@@ -1311,11 +1315,12 @@ Fuera de `@theme`, en `:root`, viven las superficies y el relieve:
   --hundido-sm: inset 3px 3px  7px var(--sh-lo), inset -3px -3px  7px var(--sh-hi);
 
   /* el canto iluminado de una pieza levantada: no es un borde */
-  --glass-in: inset 1px 1px 0 rgba(255,253,248,.75);
+  --glass-in: inset 1px 1px 0 rgba(255,255,255,.80);
   --borde-pieza: transparent;
 
   /* la tarjeta héroe, única superficie maciza */
-  --hero: #1d6b58;  --on-hero: #fffaf6;
+  --hero: #1f2227;  --on-hero: #fbfaf8;
+  --hero-in: inset 1px 1px 0 rgba(255,255,255,.16);
 }
 ```
 
@@ -1340,8 +1345,8 @@ Toda la profundidad de la interfaz sale de dos clases. No se inventan variantes.
 
 | Clase | Uso | Forma | Fondo (claro) |
 |---|---|---|---|
-| `.shell` | Contenedores: topbar, tarjetas, paneles, hojas, navegación | levantado: `--glass-in, --sh-md` | `#f1ece3` |
-| `.cg` | Contenido dentro de un `.shell`: filas, fichas, campos | hundido: `--hundido-sm` | `#e7e0d5` |
+| `.shell` | Contenedores: topbar, tarjetas, paneles, hojas, navegación | levantado: `--glass-in, --sh-md` | `#f4f3f0` |
+| `.cg` | Contenido dentro de un `.shell`: filas, fichas, campos | hundido: `--hundido-sm` | `#e9e7e2` |
 
 Ninguna de las dos lleva borde (`--borde-pieza` es transparente): con relieve, un borde alrededor de la pieza es justo lo que rompe la ilusión de que el material es uno solo. El píxel se conserva para no cambiarle la caja al CSS que ya lo cuenta.
 
@@ -1380,7 +1385,24 @@ Las cifras usan `font-variant-numeric: tabular-nums` siempre, para que no "baile
 
 **La fila de lista no es una pieza.** Sin relieve, sin fondo y sin borde: apoyada sobre el panel, separada de la siguiente por una hairline. Ocho filas hundidas son ocho veces la misma sombra y el relieve deja de significar algo; lo que se hunde es el bloque que las contiene, una sola vez. Su marca (`.row-ico`) sí es un hueco, con el color en el trazo.
 
-**El color de un importe significa dirección.** Jade y scarlet plenos, sin mezclar con la tinta: sobre el material pasan el contraste mínimo y mezclados quedaban dos grises con un tinte. Un importe que no tiene dirección —el total de una categoría, el valor de una posición— va en tinta. En la lista de categorías, lo único en scarlet es la que más gastó.
+**El color de un importe significa dirección.** Verde y naranja plenos, sin mezclar con la tinta: sobre el material pasan el contraste mínimo y mezclados quedaban dos grises con un tinte. Un importe que no tiene dirección —el total de una categoría, el valor de una posición— va en tinta. En la lista de categorías, lo único en el color de la señal es la que más gastó.
+
+### 13.4.2 Las cuatro tarjetas del tablero · F20-T03
+
+**Son las cuatro piezas más distintivas de la pantalla, y es un pedido explícito de Gustavo** (2026-11-28): ingreso total, egreso total, gasto del día y total acumulado son el resumen de todo lo que el tablero muestra, y hasta F20-T02 había que leerlas para saber cuál era cuál. **Cada una tiene su color y los cuatro se escapan de la paleta** —verde, naranja, pizarra, azul—, que es la única excepción de este tipo en el sistema.
+
+Lo que no cambia: siguen siendo material teñido y no cuatro rectángulos de color, así que no le compiten a la tarjeta héroe, que es la única superficie maciza. El color entra en cuatro lugares y en ninguno más:
+
+| Lugar | Cuánto | Por qué |
+|---|---|---|
+| La superficie | 18% sobre `--kpi-surf` | Era 10% (y 5% la de «gasto de hoy») y las cuatro se veían del mismo gris. Con 25% dejan de ser material. |
+| El sello de icono | sólido | Es el único lugar del sistema donde el color de una tarjeta va sólido. Es lo que la hace reconocible sin leerla. |
+| La etiqueta | 85% contra la tinta | Para que 10,5 px no queden al límite del contraste. |
+| La cifra | pleno | Es lo que separa las cuatro de un vistazo. |
+
+**El sello reemplaza al punto de la etiqueta de F20-T01**: dos marcas de color en la misma línea para el mismo dato es una de más. Su icono sale del catálogo de `components/kpi.js` —flecha arriba, flecha abajo, calendario, alcancía— y **no lo elige quien llama**: son cuatro tarjetas fijas, y si el icono fuera un parámetro el mismo dato podría salir con la flecha en una pantalla y con el calendario en otra. Va `aria-hidden`: repite lo que dice la etiqueta de al lado.
+
+**La cifra de las dos tarjetas blandas se gobierna con un número, no con un selector de tema.** «Gasto de hoy» y «Total de ahorros» no son una dirección de la plata sino un saldo. En claro van igual en su color, porque las cuatro tienen que distinguirse; en oscuro vuelven a la tinta, porque allá son pewter sobre pewter teñido (4,3:1). La diferencia la lleva `--card-num-blando` —100% en claro, 0% en oscuro— y así el componente sigue sin conocer el tema.
 
 ### 13.5 Puntos de corte
 

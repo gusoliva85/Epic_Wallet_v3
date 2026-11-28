@@ -221,7 +221,11 @@ describe("tarjetas de indicador", () => {
     // blanco debajo de la barra.
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
-      kpi.tarjetaHeroe({ etiqueta: "Ahorro del mes", cifra: "$1", porcentaje: 61 }),
+      kpi.tarjetaHeroe({
+        etiqueta: "Ahorro del mes",
+        cifra: "$1",
+        porcentaje: 61,
+      }),
     ]);
     const t = rejilla.querySelector(".kpi--hero");
     assert.equal(t.querySelector(".fin-foot"), null);
@@ -262,7 +266,12 @@ describe("tarjetas de indicador", () => {
     // repiten lo mismo tres veces.
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
-      kpi.tarjetaHeroe({ etiqueta: "x", cifra: "$1", porcentaje: 50, anillo: 50 }),
+      kpi.tarjetaHeroe({
+        etiqueta: "x",
+        cifra: "$1",
+        porcentaje: 50,
+        anillo: 50,
+      }),
     ]);
     assert.equal(
       rejilla.querySelector(".kpi-aro").getAttribute("aria-hidden"),
@@ -411,7 +420,11 @@ describe("tarjetas de indicador", () => {
       rejilla.innerHTML = '<div class="kpi-num"></div>';
       const el = rejilla.querySelector(".kpi-num");
 
-      kpi.animarCifra(el, -500, (n) => (n < 0 ? "−" : "") + `$${Math.round(Math.abs(n))}`);
+      kpi.animarCifra(
+        el,
+        -500,
+        (n) => (n < 0 ? "−" : "") + `$${Math.round(Math.abs(n))}`,
+      );
       await esperar(dom, 1000);
       assert.equal(el.textContent, "−$500");
     });
@@ -459,14 +472,20 @@ describe("tarjetas de indicador", () => {
         { valor: 20, formatear: (n) => `$${Math.round(n)}` },
       ]);
       const nums = [...rejilla.querySelectorAll(".kpi-num")];
-      assert.equal(nums[0].textContent, "—", "no tenía que tocar la que es null");
+      assert.equal(
+        nums[0].textContent,
+        "—",
+        "no tenía que tocar la que es null",
+      );
       assert.equal(nums[1].textContent, "$20");
     });
 
     test("sin contenedor o sin elemento, no rompe", async () => {
       const { kpi } = await montar();
       assert.doesNotThrow(() => kpi.animarCifra(null, 10, (n) => `${n}`));
-      assert.doesNotThrow(() => kpi.animarCifras(null, [{ valor: 1, formatear: (n) => `${n}` }]));
+      assert.doesNotThrow(() =>
+        kpi.animarCifras(null, [{ valor: 1, formatear: (n) => `${n}` }]),
+      );
     });
   });
 
@@ -517,7 +536,10 @@ describe("tarjetas de indicador", () => {
         kpi.tarjetaMetrica({ etiqueta: nombre, cifra: "$1", tarjeta: nombre }),
       ]);
       const t = rejilla.querySelector(".kpi");
-      assert.ok(t.classList.contains("kpi-color"), `${nombre}: no es tarjeta teñida`);
+      assert.ok(
+        t.classList.contains("kpi-color"),
+        `${nombre}: no es tarjeta teñida`,
+      );
       assert.match(
         t.getAttribute("style") ?? "",
         /--c-card/,
@@ -537,7 +559,11 @@ describe("tarjetas de indicador", () => {
       ]);
       fondos.push(rejilla.querySelector(".kpi").getAttribute("style"));
     }
-    assert.equal(new Set(fondos).size, kpi.TARJETAS_VALIDAS.length, "hay colores repetidos");
+    assert.equal(
+      new Set(fondos).size,
+      kpi.TARJETAS_VALIDAS.length,
+      "hay colores repetidos",
+    );
   });
 
   test("el fondo sale del catalogo, no de un valor libre", async () => {
@@ -574,11 +600,10 @@ describe("tarjetas de indicador", () => {
     }
   });
 
-  test("la tarjeta teñida no deja nada decorativo en el DOM", async () => {
-    // El punto de la etiqueta lo pone el CSS con un ::before: es
-    // decoración y no tiene que existir como nodo ni leerse en voz
-    // alta. El signo pesos y el símbolo de la esquina, que sí eran
-    // nodos, se fueron en F20-T01.
+  test("la tarjeta teñida no deja restos de la tarjeta solida", async () => {
+    // El signo pesos y el símbolo de la esquina eran nodos y se fueron
+    // en F20-T01. El punto de la etiqueta lo ponía el CSS y se fue en
+    // F20-T03, con el sello de icono que lo reemplaza.
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
       kpi.tarjetaMetrica({ etiqueta: "Ingresos", cifra: "$1", tarjeta: "inc" }),
@@ -586,21 +611,45 @@ describe("tarjetas de indicador", () => {
     const t = rejilla.querySelector(".kpi");
     assert.equal(t.querySelector(".kpi-peso"), null);
     assert.equal(t.querySelector(".kpi-glifo"), null);
-    assert.equal(t.querySelector("[aria-hidden]"), null);
   });
 
-  test("la tarjeta teñida no lleva ademas el cuadradito de icono", async () => {
-    // El tinte y el punto ya identifican la tarjeta.
+  test("la tarjeta teñida lleva su sello, y lo elige el catalogo", async () => {
+    // F20-T03: el sello es lo que distingue las cuatro de un vistazo,
+    // y su icono sale del catálogo. Quien llama dice QUE tarjeta es,
+    // no cómo se dibuja: si pide otro icono, se ignora.
     const { kpi, rejilla } = await montar();
-    kpi.pintarTarjetas(rejilla, [
-      kpi.tarjetaMetrica({
-        etiqueta: "x",
-        cifra: "$1",
-        tarjeta: "inc",
-        icono: "sube",
-      }),
-    ]);
-    assert.equal(rejilla.querySelector(".kpi-ico"), null);
+    const esperados = {
+      inc: "sube",
+      egr: "baja",
+      dia: "calendario",
+      pat: "caja_fuerte",
+    };
+    const { icono } = await import("../../web/src/js/iconos.js");
+
+    for (const [nombre, ico] of Object.entries(esperados)) {
+      kpi.pintarTarjetas(rejilla, [
+        kpi.tarjetaMetrica({
+          etiqueta: "x",
+          cifra: "$1",
+          tarjeta: nombre,
+          icono: "porcentaje", // lo que pida el que llama no manda
+        }),
+      ]);
+      const sello = rejilla.querySelector(".kpi-color .kpi-ico");
+      assert.ok(sello, `${nombre}: sin sello`);
+      assert.equal(
+        sello.getAttribute("aria-hidden"),
+        "true",
+        `${nombre}: el sello repite la etiqueta, va aria-hidden`,
+      );
+      // Se compara el trazo y no el HTML: jsdom reescribe un
+      // `<path/>` como `<path></path>` y los strings no coinciden.
+      const trazo = sello.querySelector("path").getAttribute("d");
+      assert.ok(
+        icono(ico).includes(trazo),
+        `${nombre}: el sello no es el icono del catalogo (${ico})`,
+      );
+    }
   });
 
   test("sin tarjeta sigue siendo la pieza de material de siempre", async () => {

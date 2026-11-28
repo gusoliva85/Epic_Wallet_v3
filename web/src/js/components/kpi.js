@@ -36,19 +36,26 @@ const COLORES = {
 
 export const COLORES_VALIDOS = Object.freeze(Object.keys(COLORES));
 
-/* Las cuatro tarjetas teñidas del tablero. El color entra mezclado en
-   la superficie y vuelve, pleno, en el punto de la etiqueta: se
+/* Las cuatro tarjetas teñidas del tablero. Cada una tiene su color y
+   su icono, y los dos salen de acá: el color entra mezclado en la
+   superficie, sólido en el sello y pleno en la cifra (F20-T03). Se
    reconocen de un vistazo sin leerlas y sin ser cuatro rectángulos de
-   color (F20-T01).
+   color.
 
-   Es una lista cerrada por lo mismo que los colores: el color termina
+   EL ICONO VA EN EL CATALOGO Y NO LO ELIGE QUIEN LLAMA. Son cuatro
+   tarjetas fijas del tablero: si el icono fuera un parámetro, el
+   mismo dato podría salir con la flecha para arriba en una pantalla y
+   con el calendario en otra. El que llama dice qué tarjeta es, no cómo
+   se dibuja.
+
+   Es una lista cerrada por lo mismo que los colores: el valor termina
    dentro de un atributo `style`. Y además porque son cuatro y son
    éstas: no es un parámetro libre, es un catálogo. */
 const TARJETAS = {
-  inc: { fondo: "var(--color-card-inc)" },
-  egr: { fondo: "var(--color-card-egr)" },
-  dia: { fondo: "var(--color-card-dia)" },
-  pat: { fondo: "var(--color-card-pat)" },
+  inc: { fondo: "var(--color-card-inc)", icono: "sube" },
+  egr: { fondo: "var(--color-card-egr)", icono: "baja" },
+  dia: { fondo: "var(--color-card-dia)", icono: "calendario" },
+  pat: { fondo: "var(--color-card-pat)", icono: "caja_fuerte" },
 };
 
 export const TARJETAS_VALIDAS = Object.freeze(Object.keys(TARJETAS));
@@ -61,9 +68,10 @@ function color(nombre) {
  * Tarjeta de métrica: etiqueta, icono, cifra y subtítulo.
  *
  * Con `tarjeta` —uno de `TARJETAS_VALIDAS`— pasa a ser una tarjeta
- * teñida: la superficie lleva mezclado el color del dato y la etiqueta
- * su punto. Sin eso, es la pieza de material de siempre, con el
- * cuadradito de icono.
+ * teñida: la superficie lleva mezclado el color del dato, y el color
+ * vuelve sólido en el sello de icono y pleno en la cifra. El icono lo
+ * decide el catálogo, no quien llama. Sin `tarjeta`, es la pieza de
+ * material de siempre y el icono sale de `icono`.
  *
  * @param {{etiqueta: string, cifra: string, sub?: string,
  *          color?: string, icono?: string, tarjeta?: string}} datos
@@ -79,11 +87,19 @@ export function tarjetaMetrica({
   const t = TARJETAS[tarjeta];
 
   if (t) {
-    // Tarjeta teñida (F20-T01): la pieza de material de siempre, con
-    // un 10% del color mezclado en la superficie y el color pleno
-    // SÓLO en el punto de la etiqueta, que lo pone el CSS. No lleva
-    // el cuadradito de icono: con el tinte y el punto ya se reconoce
-    // sin leerla, y un icono más la sobrecarga.
+    // Tarjeta teñida (F20-T01, redibujada en F20-T03): la pieza de
+    // material de siempre, con un 18% del color mezclado en la
+    // superficie, el sello de icono con el color sólido y la cifra en
+    // el color pleno. Las cuatro del tablero son el resumen de la
+    // pantalla y tienen que distinguirse entre ellas de un vistazo
+    // (pedido de Gustavo, 2026-11-28).
+    //
+    // El sello REEMPLAZA al punto de la etiqueta de F20-T01: dos
+    // marcas de color en la misma línea para el mismo dato es una de
+    // más. El punto lo ponía el CSS y se fue con él.
+    //
+    // Va `aria-hidden`: el icono repite lo que dice la etiqueta de al
+    // lado, y sin ocultarlo el lector de pantalla lo anuncia dos veces.
     //
     // Hasta F20-T01 era una tarjeta de color sólido con texto blanco,
     // el signo pesos grande recortado contra el borde y el símbolo
@@ -94,6 +110,9 @@ export function tarjetaMetrica({
       `<article class="kpi kpi-metric shell kpi-color" style="--c-card:${t.fondo}">` +
       '<div class="kpi-top">' +
       `<div class="kpi-label">${esc(etiqueta)}</div>` +
+      '<span class="kpi-ico" aria-hidden="true">' +
+      `<svg viewBox="0 0 24 24">${icono(t.icono)}</svg>` +
+      "</span>" +
       "</div>" +
       `<div class="kpi-num num">${esc(cifra)}</div>` +
       `<div class="kpi-sub">${esc(sub)}</div>` +
@@ -246,7 +265,10 @@ export function animarCifra(el, destino, formatear, duracion = 900) {
 
   const final = Number(destino) || 0;
 
-  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
     el.textContent = formatear(final);
     return;
   }
