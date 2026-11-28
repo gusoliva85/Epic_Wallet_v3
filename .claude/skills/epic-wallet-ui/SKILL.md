@@ -83,6 +83,9 @@ Van en `web/src/styles/tokens.css` y se registran en Tailwind con `@theme`. **Lo
   --hundido:inset 5px 5px 11px var(--sh-lo),inset -5px -5px 11px var(--sh-hi);
   --hundido-sm:inset 3px 3px 7px var(--sh-lo),inset -3px -3px 7px var(--sh-hi);
 
+  /* el campo de un conmutador: gris PLANO, no un surco (§8) */
+  --switch-bg:#e5e3de; --switch-in:inset 0 0 0 1px rgba(88,92,100,.09);
+
   /* el canto iluminado de una pieza: no es un borde */
   --glass-in:inset 1px 1px 0 rgba(255,253,248,.75);
   --borde-pieza:transparent;
@@ -630,7 +633,7 @@ El estado va en una `.pill` **con su texto** («Faltan 3 días», «Vencido hace
 
 - **`.pill`** en cinco variantes: `ok`, `warn`, `pend`, `crit`, `neutral`.
 - **`.alert`** con `--c` por severidad, borde y sombra teñidos.
-- **`.view-switch`** conmutador de pastillas dentro de un surco hundido. **Su comportamiento es de `components/switch.js` y de nadie más**: la pastilla marcada es UN elemento absoluto (`.vs-ind`) que se desliza hasta la opción elegida, y la clase `activa` la escribe sólo ese módulo (`activar(boton)`, o `sincronizar(grupo)` después de pintar el HTML del grupo). Dos módulos marcando la misma clase es de donde salían los estados raros que se corrigieron el 2026-10-27.
+- **`.view-switch`** conmutador de pastillas sobre un **campo gris plano** (`--switch-*`), no sobre un surco hundido: la pastilla de lo elegido ya es una pieza levantada, y con el campo hundido quedan dos relieves peleándose en 30 px de alto («esas sombras me generan confusión», Gustavo, 2026-11-28 · F20-T07). Todo el relieve es de la pastilla. Vale igual para `.nav-escritorio`, que es el mismo patrón. El token es propio y NO toca `--groove-*`, que lo usan el interruptor y las pistas de las barras, que sí son surcos de verdad. **Su comportamiento es de `components/switch.js` y de nadie más**: la pastilla marcada es UN elemento absoluto (`.vs-ind`) que se desliza hasta la opción elegida, y la clase `activa` la escribe sólo ese módulo (`activar(boton)`, o `sincronizar(grupo)` después de pintar el HTML del grupo). Dos módulos marcando la misma clase es de donde salían los estados raros que se corrigieron el 2026-10-27.
 - **`.sheet`** hoja inferior en móvil; desde 900 px pasa a cajón lateral (`.sheet`) o modal centrado (`.sheet.center`). Cierra con toque afuera, Escape y botón.
 - **`.toast`** con `aria-live="polite"`, cierre automático a 2,6 s.
 - **`.toggle`** interruptor de encendido. Tres cosas lo definen: el pulgar se desliza con una curva con rebote, **se estira mientras se mantiene apretado** (`:active`, como un control físico que cede antes de soltar) y **el color del surco es una capa `::after` con opacidad**, no el `background` del botón — un degradado no se puede interpolar, así que puesto como fondo el color saltaba de golpe mientras el pulgar se deslizaba con todo el cuidado del mundo.
@@ -678,8 +681,10 @@ for(let i=0;i<n;i++){ acc+=inc[i]-exp[i]; sav.push(acc) }
 - `niceMax()` para que los ejes caigan en valores redondos.
 - Mínimo **1,5 px** de alto en las barras, para que un gasto chico se vea.
 - Los `<linearGradient>` llevan **id único** por instancia: si dos gráficos coexisten en el DOM, uno toma el color del otro.
-- En móvil `min-width:520px` con scroll horizontal; desde 720 px se ajusta al ancho.
+- **El gráfico diario se desplaza por fecha y es el único que lo hace** (F20-T07). Son 31 columnas: comprimidas en 390 px quedan 8 px por día y no se distingue nada. Lleva `min-width: 620px` en su `svg` —clase `.chart-wrap--dias`— y desde 720 px se ajusta al ancho. Los demás gráficos tienen pocas columnas, entran enteros y **no** llevan piso: ponérselo los hace desplazarse sin motivo, que es lo que se sacó en F20-T02.
+- **El selector lleva las dos clases** (`.chart-wrap.chart-wrap--dias svg`). Más abajo en la hoja hay un `.chart-wrap svg { min-width: 0 }` con la misma especificidad, y entre iguales gana el último del archivo.
 - **`touch-action` en un contenedor con scroll propio lleva LOS DOS EJES** (`pan-x pan-y`), nunca `pan-x` solo. `.app` pide `pan-y` para los gestos (§7) y el navegador cruza los dos valores: con `pan-x` a secas, el dedo apoyado sobre un gráfico o una tabla los movía de costado pero ya no scrolleaba la página hacia abajo. Vale igual para `.tbl-wrap` y para `.view-switch`.
+- **El margen del bloque va en los cuatro lados, no sólo a los costados** (F20-T07). Desde que el bloque es una pieza levantada su sombra se sale de la caja: pegado arriba se come la leyenda de colores y pegado abajo se toca con el borde de la tarjeta. Son `12px 14px 14px`.
 - **El respiro contra la tarjeta es MARGEN, no relleno.** El relleno es parte de lo que se desplaza: apenas el dedo mueve el gráfico, el dibujo pasa por debajo y toca el borde igual. Con `margin: 0 14px` el que queda adentro de la tarjeta es el contenedor, y el recorte sucede 14 px antes del borde en cualquier posición del scroll.
 - **EL TAMAÑO DEL TEXTO SE COMPENSA POR LA ESCALA DEL GRÁFICO** (F13-T01). Un `font-size` dentro de un `<svg>` está en unidades del `viewBox`, no en píxeles de pantalla: el mismo 10 se ve a 6,8 px en el gráfico de 760 de ancho y a 9,6 px en uno de 540, porque cada uno se escala distinto para entrar en la tarjeta. `etiquetaSvg()` publica `--escala-grafico` (su ancho sobre el ancho de referencia del sistema, **520**) y `.axis-v`/`.axis-t` multiplican su token por esa variable. Consecuencia práctica: **el valor de `--text-axis` y `--text-axis-sm` es el tamaño real en el teléfono**, y es el mismo en los cuatro gráficos. Un `<svg>` armado sin `etiquetaSvg` se queda con la escala 1 y vuelve a depender de su ancho.
 - Un gráfico que **entra** en la tarjeta sin scroll (hasta siete barras, como la comparación por ítem) usa un `viewBox` angosto —400— y pide `min-width: 0`; uno que no entra crece y desplaza, pero **a escala 1**, para que las cifras no se achiquen. Las dos formas conviven porque las dos pasan por la misma compensación.
@@ -724,7 +729,7 @@ Cada vista implementa los cuatro, con `components/estados.js`. **Nunca una panta
 .ghost-note    una regla de negocio que conviene que esté a la vista
 ```
 
-**La tabla es lo ÚNICO con scroll horizontal, y es a propósito.** Seis columnas de números no entran en 390 px, y partirlas en dos líneas hace ilegible la comparación entre meses, que es para lo que está. Lleva `tabindex="0"` y nombre: una región con scroll que no recibe foco no se puede desplazar sin mouse y lo de la derecha queda inalcanzable. En ningún otro lado puede haber `overflow-x` ni un `min-width` grande — es la causa más común de scroll horizontal en el teléfono, y hay una prueba que lo vigila.
+**La tabla y el gráfico diario son lo único con scroll horizontal, y es a propósito.** Seis columnas de números no entran en 390 px, y partirlas en dos líneas hace ilegible la comparación entre meses, que es para lo que está. Lleva `tabindex="0"` y nombre: una región con scroll que no recibe foco no se puede desplazar sin mouse y lo de la derecha queda inalcanzable. El gráfico diario se desplaza por el mismo motivo: un mes son 31 columnas (§9). En ningún otro lado puede haber `overflow-x` ni un `min-width` grande — es la causa más común de scroll horizontal en el teléfono.
 
 **El interruptor de ajustes es un `<button role="switch" aria-checked>`**, no un `div` con clase: un div no se alcanza con teclado ni dice si está activado.
 

@@ -1348,7 +1348,10 @@ Toda la profundidad de la interfaz sale de dos clases. No se inventan variantes.
 |---|---|---|---|
 | `.shell` | Contenedores: topbar, tarjetas, paneles, hojas, navegación | levantado: `--glass-in, --sh-md` | `#f4f3f0` |
 | `.cg` | Contenido dentro de un `.shell`: fichas, ítems de lista, bloques | levantado: `--glass-in, --sh-sm` | `#f4f3f0` |
-| (sin clase propia) | Campos y surcos: `.inp`, `select`, `.view-switch`, `.toggle`, las pistas de barra | hundido: `--hundido-sm` | `#e9e7e2` |
+| (sin clase propia) | Campos y surcos: `.inp`, `select`, `.toggle`, las pistas de barra | hundido: `--hundido-sm` | `#e9e7e2` |
+| `.view-switch` | El conmutador de vistas y `.nav-escritorio` | **campo gris plano**: `--switch-bg`, `--switch-in` | `#e5e3de` |
+
+**El conmutador de vistas no va sobre un surco hundido, y es a propósito** (F20-T07): la pastilla de lo elegido ya es una pieza levantada, y con el campo hundido quedan dos relieves compitiendo en 30 px de alto. Por eso tiene tokens propios y no usa `--groove-*`, que siguen valiendo para el interruptor y para las pistas de las barras de progreso, que sí son surcos.
 
 Ninguna de las dos lleva borde (`--borde-pieza` es transparente): con relieve, un borde alrededor de la pieza es justo lo que rompe la ilusión de que el material es uno solo. El píxel se conserva para no cambiarle la caja al CSS que ya lo cuenta.
 
@@ -1496,7 +1499,8 @@ La evolución patrimonial completa queda para una fase posterior, como indica el
 - Ningún gráfico tiene sentido sin su versión numérica al lado: cada panel lleva un pie con las cifras clave.
 - Escalas con `niceMax()` para que los ejes caigan en valores redondos.
 - Mínimo de 1,5 px de alto en las barras, para que un gasto chico se vea.
-- En móvil el `svg` tiene `min-width: 520px` dentro de un contenedor con scroll horizontal; a partir de 720 px se ajusta al ancho.
+- **El gráfico diario se desplaza por fecha, y es el único.** Un mes son 31 columnas: comprimidas al ancho de un teléfono quedan 8 px por día y el dibujo no se lee. Su `svg` lleva `min-width: 620px` (clase `.chart-wrap--dias`) y desde 720 px se ajusta al ancho. Los demás gráficos entran enteros y no llevan piso — el piso general se sacó en F20-T02 porque los hacía desplazarse sin motivo.
+- **El bloque del gráfico lleva margen en los cuatro lados** (`12px 14px 14px`): su sombra se sale de la caja, y pegado arriba se come la leyenda de colores, pegado abajo se toca con el borde de la tarjeta.
 - Sin librería, sin canvas: SVG en el DOM, accesible e inspeccionable.
 - **El cambio de tema ya redibuja solo, sin JavaScript** (verificado F06-T09): todo color de un gráfico sale de `var(--color-*)` puesto directo en `fill`/`stroke`/`stop-color`, y eso reacciona en vivo al cambiar `data-theme` en `<html>` — funciona igual con `document.startViewTransition()` de por medio (`tema.js`), porque el cambio de atributo sigue siendo síncrono dentro de su callback. Nadie tiene que volver a llamar `dibujar()` cuando cambia el tema. Si algún día un gráfico nuevo mostrara un color sin recolorearse solo, la causa casi segura es un color calculado una vez y guardado como string fijo en vez de dejarlo como referencia `var()` viva.
 

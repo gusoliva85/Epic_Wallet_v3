@@ -357,9 +357,10 @@
   gap: 3px;
   padding: 4px;
   border-radius: 99px;
-  /* Surco hundido: el mismo recurso que el conmutador de vistas. */
-  background: var(--groove-bg);
-  box-shadow: var(--groove-in);
+  /* El mismo campo plano que el conmutador de vistas: también lleva
+     una pastilla encima (F20-T07). */
+  background: var(--switch-bg);
+  box-shadow: var(--switch-in);
 }
 
 .nav-escritorio button {
@@ -2144,8 +2145,10 @@
   gap: 3px;
   padding: 3px;
   border-radius: var(--radius-chip);
-  background: var(--groove-bg);
-  box-shadow: var(--groove-in);
+  /* Campo gris plano, no surco hundido: el relieve de acá adentro es
+     todo de la pastilla (F20-T07, `--switch-*` en tokens.css). */
+  background: var(--switch-bg);
+  box-shadow: var(--switch-in);
   /* En el teléfono, cuatro modos no entran: se desplaza en lugar de
      apilarse, que rompería el alto de la cabecera. */
   max-width: 100%;
@@ -2488,7 +2491,12 @@
      px antes del borde y el dibujo no puede llegar ahí en ninguna
      posición del scroll. Mismo ritmo de 14 px que `.card-head`,
      `.rows` y `.card-body`. */
-  margin: 0 14px;
+  /* ARRIBA Y ABAJO TAMBIEN LLEVA MARGEN, no sólo a los costados
+     (F20-T07). Desde que el bloque es una pieza levantada, su sombra
+     se sale de la caja: pegado a lo de arriba se comía la leyenda de
+     colores, y pegado al borde de la tarjeta se tocaban las dos
+     piezas. Son los mismos 14 px del ritmo de la tarjeta. */
+  margin: 12px 14px 14px;
   padding: 14px 0 6px;
   overflow-x: auto;
   scrollbar-width: thin;
@@ -2515,16 +2523,44 @@
   touch-action: pan-x pan-y;
 }
 
+/* ---- el gráfico que se desplaza por fecha ----
+   El diario tiene 31 columnas y en un teléfono no entra: comprimido al
+   ancho de la pantalla, los días quedan a 8 px y no se distingue nada
+   (Gustavo, 2026-11-28, con la captura). Con un piso de ancho vuelve a
+   leerse y se recorre de costado, que es como se mira un mes.
+
+   El piso se va a los 720 px, donde la tarjeta ya es más ancha que
+   eso y el gráfico entra entero sin desplazarse.
+
+   OJO: esto NO vale para los otros gráficos. Los seis meses, el área
+   de ahorro y la composición tienen pocas columnas y entran enteros;
+   ponerles un piso los haría desplazarse sin necesidad, que es lo que
+   se sacó en F20-T02. */
+/* LOS DOS NOMBRES DE CLASE EN EL SELECTOR, Y HACEN FALTA: más abajo
+   hay un `.chart-wrap svg { min-width: 0 }` con la misma
+   especificidad, y gana el último. Con `.chart-wrap.chart-wrap--dias`
+   esta regla pesa más y no depende del orden del archivo. */
+.chart-wrap.chart-wrap--dias svg {
+  min-width: 620px;
+}
+
+@media (min-width: 720px) {
+  .chart-wrap.chart-wrap--dias svg {
+    min-width: 0;
+  }
+}
+
 .chart-wrap svg {
   display: block;
   /* EL DIBUJO ENTRA EN LA PANTALLA. Hasta F20-T02 tenía un piso de
-     520 px y el contenedor se desplazaba de costado: en un teléfono
-     de 390 px eso dejaba medio mes afuera, con una barra de scroll
-     adentro de la tarjeta y los valores del eje contra el borde. El
-     mockup muestra el mes entero de una. Lo que antes resolvía el
-     scroll —que las etiquetas no se amontonen— lo resuelve ahora el
-     eje salteando días, y el tamaño de la letra lo mantiene
-     `ajustarEscala()` (charts/svg.js). */
+     520 px y el contenedor se desplazaba de costado. El piso general
+     se sacó en F20-T02 porque dejaba medio mes afuera en cualquier
+     gráfico, incluso en los que entran enteros.
+
+     EL DIARIO LO RECUPERO EN F20-T07, y sólo él: 31 columnas en 390 px
+     son 8 px por día y no se distingue nada (Gustavo, 2026-11-28, con
+     la captura). Ese piso vive arriba, en `.chart-wrap--dias`. Los
+     demás gráficos siguen entrando enteros. */
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;

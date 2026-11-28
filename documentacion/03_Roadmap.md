@@ -522,6 +522,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, **en oscuro**: Inicio con Ingresos en pizarra y Egresos en el naranja de la héroe, las dos macizas pero hundiéndose en el fondo y no iluminándolo; Gasto de hoy y Total de ahorros de material. Cartera con Rendimiento macizo e Invertido de material. Y después **pasar a claro**, que tiene que estar igual que ayer.
   **Respaldo:** no toca la base ni los datos — frontend y documentación.
 
+- [~] **F20-T07 · El campo del conmutador y el gráfico diario**
+  **Tipo:** interfaz
+  **Hacer:** tres correcciones de la captura del 2026-11-28. (1) Los conmutadores de vista —«Ambos / Egresos / Ingresos», «Mayor gasto / A–Z» y todos los demás— pasan de surco hundido a **campo gris plano**: la pastilla de lo elegido ya es una pieza levantada y los dos relieves juntos confunden. Token propio `--switch-*`, sin tocar el del interruptor ni el de las barras de progreso. (2) El bloque del gráfico lleva **margen arriba y abajo**: su sombra se comía la leyenda de colores y se tocaba con el borde inferior de la tarjeta. (3) El **gráfico diario vuelve a desplazarse por fecha** (`min-width: 620px`, sólo él): comprimido al ancho del teléfono, 31 días quedan a 8 px y no se distingue nada.
+  **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas. Inicio: los dos conmutadores se leen como un campo gris con la pastilla encima; la leyenda «Ingresos · Egresos · Ahorro acumulado» se ve entera; el gráfico no toca el borde de la tarjeta y **se arrastra de costado** con los días legibles. Y que los demás gráficos —Historial, Cartera, Patrimonio— sigan entrando enteros sin desplazarse.
+  **Respaldo:** no toca la base ni los datos — frontend y documentación.
+
 ---
 
 # Después del traslado

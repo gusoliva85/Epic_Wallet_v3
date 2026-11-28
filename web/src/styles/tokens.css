@@ -399,6 +399,22 @@
   --groove-bg: var(--surf-2);
   --groove-in: var(--hundido-sm);
 
+  /* ---- el campo de un conmutador de vistas ----
+     NO es el surco hundido del resto del sistema, y es a propósito
+     (F20-T07). Un conmutador lleva encima la pastilla de lo elegido,
+     que es una pieza levantada: con el campo hundido quedan dos
+     relieves peleándose en 30 px de alto y no se entiende cuál es cuál
+     ("esas sombras me generan confusión", Gustavo, 2026-11-28). Acá es
+     un campo gris PLANO, un escalón más gris que lo hundido, con una
+     línea de definición y nada más. Todo el relieve queda para la
+     pastilla.
+
+     Es un token aparte y no un cambio de `--groove-*` porque ese lo
+     usan también el interruptor y las pistas de las barras de
+     progreso, que sí son surcos de verdad. */
+  --switch-bg: #e5e3de;
+  --switch-in: inset 0 0 0 1px rgba(88, 92, 100, 0.09);
+
   /* Velo del fondo cuando hay una hoja abierta. El transparente se
      declara con el mismo color que el opaco: animado desde
      `transparent`, Chrome interpola pasando por negro y se ve un
@@ -533,6 +549,11 @@ html[data-theme="dark"] {
   --groove-bg: var(--surf-2);
   --groove-in: var(--hundido-sm);
 
+  /* El campo del conmutador: gris plano, acá un escalón MAS oscuro que
+     el material, que es como se hunde un campo en un tema oscuro. */
+  --switch-bg: #101317;
+  --switch-in: inset 0 0 0 1px rgba(231, 233, 236, 0.06);
+
   --scrim-0: rgba(0, 0, 0, 0);
   --scrim: rgba(0, 0, 0, 0.56);
 }
@@ -659,6 +680,11 @@ html[data-theme="dark"] {
 
     --groove-bg: var(--surf-2);
     --groove-in: var(--hundido-sm);
+
+    /* El campo del conmutador: gris plano, acá un escalón MAS oscuro que
+       el material, que es como se hunde un campo en un tema oscuro. */
+    --switch-bg: #101317;
+    --switch-in: inset 0 0 0 1px rgba(231, 233, 236, 0.06);
 
     --scrim-0: rgba(0, 0, 0, 0);
     --scrim: rgba(0, 0, 0, 0.56);
