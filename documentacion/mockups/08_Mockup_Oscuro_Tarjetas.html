@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="es">
+  <meta charset="utf-8" />
+  <title>Epic Wallet · las tarjetas en oscuro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+  />
+  <style>
+    /* ========================================================================
+     SOLO TEMA OSCURO. El claro quedó aprobado en F20-T05 y no se toca.
+
+     La primera columna es la RECONSTRUCCION EXACTA de cómo estaba el
+     oscuro antes de F20-T05: los valores salen de `git show a50ad9a`, no
+     de memoria. Las otras tres son propuestas para las dos tarjetas que
+     se rompieron, Ingresos y Egresos.
+
+     Los dos temas comparten el marcado pero NO tienen por qué compartir
+     el aspecto: el CSS puede darle a cada uno el suyo con los mismos
+     tokens. Elegir acá no toca el claro.
+     ====================================================================== */
+
+    :root {
+      color-scheme: dark;
+
+      /* --- el oscuro del sistema, tal cual --- */
+      --bg-1: #13151a;
+      --bg-2: #15181c;
+      --surf: #191c21;
+      --surf-2: #14171b;
+      --kpi-surf: #23272d;
+      --sh-lo: rgba(0, 0, 0, 0.7);
+      --sh-hi: rgba(86, 94, 104, 0.3);
+      --ink: #e7e9ec;
+      --ink-2: #b9bfc6;
+      --ink-3: #9aa1a9;
+      --ink-4: #767d85;
+      --acc: #8d949d;
+      --acc-2: #a7aeb6;
+      --on-acc: #14171b;
+      --sig: #ff6a1f;
+      --hero: #c4511a;
+      --on-hero: #fffaf6;
+      --hero-in: inset 1px 1px 0 rgba(255, 255, 255, 0.14);
+      --hero-sh-lo: rgba(0, 0, 0, 0.6);
+      --hero-sh-hi: rgba(255, 150, 86, 0.38);
+      --acc-sh-lo: rgba(0, 0, 0, 0.6);
+      --acc-sh-hi: rgba(203, 209, 215, 0.22);
+      --sig-sh-lo: rgba(0, 0, 0, 0.62);
+      --sig-sh-hi: rgba(255, 176, 122, 0.42);
+      --line: rgba(231, 233, 236, 0.12);
+      --glass-in: inset 1px 1px 0 rgba(203, 209, 215, 0.14);
+      --sh-sm: 4px 4px 9px var(--sh-lo), -4px -4px 9px var(--sh-hi);
+      --sh-md: 6px 6px 14px var(--sh-lo), -6px -6px 14px var(--sh-hi);
+      --hundido-sm:
+        inset 3px 3px 7px var(--sh-lo), inset -3px -3px 7px var(--sh-hi);
+      --mix-ink: #e7e9ec;
+
+      /* los cuatro colores de dato del oscuro: no cambiaron nunca */
+      --c-inc: #8d949d;
+      --c-egr: #ff6a1f;
+      --c-dia: #7d848c;
+      --c-pat: #8d949d;
+
+      --font-d: "Outfit", system-ui, sans-serif;
+      --font-b: "Inter", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: linear-gradient(170deg, var(--bg-1), var(--bg-2) 72%);
+      color: var(--ink);
+      font-family: var(--font-b);
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: clamp(22px, 5vw, 46px) max(16px, env(safe-area-inset-left, 0px));
+    }
+    h1,
+    h2,
+    h3,
+    .num,
+    .cifra {
+      font-family: var(--font-d);
+    }
+    .tnum {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .head h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 4.4vw, 2.3rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+    }
+    .head p {
+      margin: 0 0 6px;
+      max-width: 72ch;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--ink-2);
+    }
+    .head .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sig);
+    }
+    .head {
+      margin-bottom: 30px;
+    }
+
+    .tira {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: clamp(18px, 2.4vw, 28px);
+      align-items: start;
+    }
+    .var {
+      min-width: 0;
+    }
+    .var > header {
+      margin: 0 4px 14px;
+    }
+    .var > header .tag {
+      display: inline-block;
+      margin-bottom: 7px;
+      font-family: var(--font-d);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+    }
+    .var[data-trat="antes"] > header .tag {
+      color: var(--acc-2);
+    }
+    .var > header h2 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .var > header p {
+      margin: 0;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      color: var(--ink-3);
+    }
+
+    /* ---------------- el teléfono ---------------- */
+    .tel {
+      padding: 12px;
+      border-radius: 34px;
+      background: var(--surf);
+      box-shadow:
+        7px 7px 16px var(--sh-lo),
+        -7px -7px 16px var(--sh-hi);
+    }
+    .tel-in {
+      position: relative;
+      overflow: hidden;
+      padding: 14px 11px 16px;
+      border-radius: 24px;
+      background: var(--surf);
+      box-shadow:
+        inset 2px 2px 6px var(--sh-lo),
+        inset -2px -2px 6px var(--sh-hi);
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 13px;
+    }
+    .sello-marca {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: var(--acc);
+      color: var(--on-acc);
+      box-shadow:
+        3px 3px 7px var(--acc-sh-lo),
+        -2px -2px 6px var(--acc-sh-hi);
+    }
+    .sello-marca svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .topbar .marca {
+      font-family: var(--font-d);
+      font-weight: 700;
+      font-size: 0.97rem;
+    }
+    .topbar .sp {
+      margin-left: auto;
+    }
+    .ic {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+    .ic svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: var(--ink-3);
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      display: grid;
+      place-items: center;
+      min-width: 17px;
+      height: 17px;
+      padding: 0 4px;
+      border-radius: 9px;
+      background: var(--sig);
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+    }
+    .monthbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 13px;
+      padding: 7px;
+      border-radius: 17px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+    .mb-t {
+      flex: 1;
+      text-align: center;
+      line-height: 1.25;
+    }
+    .mb-t b {
+      display: block;
+      font-family: var(--font-d);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .mb-t span {
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--acc);
+    }
+    .chip {
+      display: grid;
+      place-items: center;
+      height: 30px;
+      min-width: 30px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+      color: var(--ink-3);
+      font: 600 0.74rem var(--font-b);
+      cursor: pointer;
+    }
+    .chip svg {
+      width: 15px;
+      height: 15px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .hero {
+      margin-bottom: 11px;
+      padding: 17px 18px 15px;
+      border-radius: 20px;
+      background: var(--hero);
+      color: var(--on-hero);
+      box-shadow:
+        var(--hero-in),
+        5px 5px 11px var(--hero-sh-lo),
+        -4px -4px 9px var(--hero-sh-hi);
+    }
+    .hero .lab {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      opacity: 0.78;
+    }
+    .hero .cifra {
+      margin: 5px 0 2px;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1;
+    }
+    .hero .sub {
+      font-size: 0.72rem;
+      line-height: 1.4;
+      opacity: 0.8;
+    }
+    .aro {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-top: 12px;
+    }
+    .aro svg {
+      flex: 0 0 auto;
+      width: 52px;
+      height: 52px;
+    }
+    .aro .g {
+      flex: 1;
+      min-width: 0;
+    }
+    .barra {
+      display: block;
+      height: 9px;
+      overflow: hidden;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.22);
+      box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.33);
+    }
+    .barra i {
+      display: block;
+      height: 100%;
+      border-radius: 5px;
+      background: var(--on-hero);
+      opacity: 0.92;
+    }
+    .aro .g span {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.66rem;
+      opacity: 0.78;
+    }
+
+    /* ======================================================================
+     LAS CUATRO TARJETAS. Marcado idéntico en todas las columnas.
+     ==================================================================== */
+    .kpis {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .kpi {
+      position: relative;
+      min-width: 0;
+      padding: 12px 13px;
+      border-radius: 17px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+    .kpi-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      margin-bottom: 7px;
+      min-height: 27px;
+    }
+    .kpi .lab {
+      flex: 1;
+      min-width: 0;
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.3;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .sello {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      background: var(--c);
+      color: var(--on-acc);
+      box-shadow:
+        2px 2px 5px color-mix(in srgb, var(--c) 55%, var(--sh-lo)),
+        -1px -1px 4px var(--sh-hi);
+    }
+    .sello svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .kpi .num {
+      margin: 0 0 3px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .kpi .sub {
+      font-size: 0.63rem;
+      line-height: 1.35;
+      color: var(--ink-3);
+    }
+
+    .kpi[data-k="inc"] {
+      --c: var(--c-inc);
+    }
+    .kpi[data-k="egr"] {
+      --c: var(--c-egr);
+    }
+    .kpi[data-k="dia"] {
+      --c: var(--c-dia);
+    }
+    .kpi[data-k="pat"] {
+      --c: var(--c-pat);
+    }
+
+    /* ---------- ANTES · la reconstrucción exacta ----------
+     Valores de `git show a50ad9a`: superficie con el 18% del color
+     mezclado contra `--kpi-surf`, etiqueta al 85% contra la tinta, sello
+     sólido con el trazo en el material, cifra en el color para ingresos y
+     egresos y en tinta para las dos blandas, y 17,5 px de cifra con la
+     etiqueta en una sola línea. */
+    [data-trat="antes"] .kpi {
+      background: color-mix(in srgb, var(--kpi-surf) 82%, var(--c));
+      box-shadow:
+        5px 5px 11px var(--sh-lo),
+        -5px -5px 11px var(--sh-hi);
+    }
+    [data-trat="antes"] .kpi-top {
+      align-items: center;
+      min-height: 0;
+    }
+    [data-trat="antes"] .lab {
+      overflow: hidden;
+      letter-spacing: 0.07em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: color-mix(in srgb, var(--c) 85%, var(--mix-ink));
+    }
+    [data-trat="antes"] .num {
+      font-size: 1.09rem;
+    }
+    [data-trat="antes"] .kpi[data-k="inc"] .num,
+    [data-trat="antes"] .kpi[data-k="egr"] .num {
+      color: var(--c);
+    }
+
+    /* ---------- HOY · lo que se publicó y no gustó ---------- */
+    [data-trat="hoy"] .kpi[data-k="inc"],
+    [data-trat="hoy"] .kpi[data-k="egr"] {
+      color: #14171b;
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.18),
+        5px 5px 11px rgba(0, 0, 0, 0.6),
+        -4px -4px 9px rgba(203, 209, 215, 0.3);
+    }
+    [data-trat="hoy"] .kpi[data-k="inc"] {
+      background: var(--c-inc);
+    }
+    [data-trat="hoy"] .kpi[data-k="egr"] {
+      background: var(--c-egr);
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.18),
+        5px 5px 11px var(--sig-sh-lo),
+        -4px -4px 9px var(--sig-sh-hi);
+    }
+    [data-trat="hoy"] .kpi[data-k="inc"] .lab,
+    [data-trat="hoy"] .kpi[data-k="egr"] .lab,
+    [data-trat="hoy"] .kpi[data-k="inc"] .num,
+    [data-trat="hoy"] .kpi[data-k="egr"] .num,
+    [data-trat="hoy"] .kpi[data-k="inc"] .sub,
+    [data-trat="hoy"] .kpi[data-k="egr"] .sub {
+      color: #14171b;
+    }
+    [data-trat="hoy"] .kpi[data-k="inc"] .lab,
+    [data-trat="hoy"] .kpi[data-k="egr"] .lab {
+      opacity: 0.78;
+    }
+    [data-trat="hoy"] .kpi[data-k="inc"] .sub,
+    [data-trat="hoy"] .kpi[data-k="egr"] .sub {
+      opacity: 0.72;
+    }
+    [data-trat="hoy"] .kpi[data-k="inc"] .sello,
+    [data-trat="hoy"] .kpi[data-k="egr"] .sello {
+      background: rgba(0, 0, 0, 0.16);
+      color: #14171b;
+      box-shadow: none;
+    }
+    [data-trat="hoy"] .kpi[data-k="dia"] .sello,
+    [data-trat="hoy"] .kpi[data-k="pat"] .sello {
+      background: var(--acc);
+      color: var(--on-acc);
+      box-shadow:
+        2px 2px 5px var(--acc-sh-lo),
+        -1px -1px 4px var(--acc-sh-hi);
+    }
+
+    /* ---------- A · las macizas, en profundo ----------
+     La misma estructura del claro —dos macizas y dos de material— pero
+     con superficies PROFUNDAS en vez de claras: pizarra para lo que
+     entra, el naranja hondo de la héroe para lo que sale, y el texto en
+     blanco. En un tema oscuro una superficie clara grita; una profunda
+     pesa sin encandilar, que es lo que hace la héroe. */
+    [data-trat="a"] .kpi[data-k="inc"],
+    [data-trat="a"] .kpi[data-k="egr"] {
+      color: #fff;
+    }
+    [data-trat="a"] .kpi[data-k="inc"] {
+      background: #39414a;
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.1),
+        5px 5px 11px rgba(0, 0, 0, 0.55),
+        -4px -4px 9px var(--sh-hi);
+    }
+    [data-trat="a"] .kpi[data-k="egr"] {
+      background: var(--hero);
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.12),
+        5px 5px 11px rgba(0, 0, 0, 0.55),
+        -4px -4px 9px rgba(255, 150, 86, 0.28);
+    }
+    [data-trat="a"] .kpi[data-k="inc"] .lab,
+    [data-trat="a"] .kpi[data-k="egr"] .lab,
+    [data-trat="a"] .kpi[data-k="inc"] .num,
+    [data-trat="a"] .kpi[data-k="egr"] .num,
+    [data-trat="a"] .kpi[data-k="inc"] .sub,
+    [data-trat="a"] .kpi[data-k="egr"] .sub {
+      color: #fff;
+    }
+    [data-trat="a"] .kpi[data-k="inc"] .lab,
+    [data-trat="a"] .kpi[data-k="egr"] .lab {
+      opacity: 0.78;
+    }
+    [data-trat="a"] .kpi[data-k="inc"] .sub,
+    [data-trat="a"] .kpi[data-k="egr"] .sub {
+      opacity: 0.72;
+    }
+    [data-trat="a"] .kpi[data-k="inc"] .sello,
+    [data-trat="a"] .kpi[data-k="egr"] .sello {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      box-shadow: none;
+    }
+    [data-trat="a"] .kpi[data-k="dia"] .sello,
+    [data-trat="a"] .kpi[data-k="pat"] .sello {
+      background: var(--acc);
+      color: var(--on-acc);
+      box-shadow:
+        2px 2px 5px var(--acc-sh-lo),
+        -1px -1px 4px var(--acc-sh-hi);
+    }
+
+    /* ---------- B · el canto de color ----------
+     Las cuatro vuelven a ser material limpio, sin tinte ni superficie de
+     color: el color se mete en un filo de 3 px sobre el borde izquierdo y
+     en la cifra. Es la variante más silenciosa de las tres y la que menos
+     se aleja del oscuro que ya te gustaba. */
+    [data-trat="b"] .kpi {
+      overflow: hidden;
+    }
+    [data-trat="b"] .kpi::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--c);
+    }
+    [data-trat="b"] .kpi[data-k="inc"] .num,
+    [data-trat="b"] .kpi[data-k="egr"] .num {
+      color: var(--c);
+    }
+    [data-trat="b"] .sello {
+      background: color-mix(in srgb, var(--c) 18%, var(--surf));
+      color: var(--c);
+      box-shadow: var(--glass-in), var(--sh-sm);
+    }
+
+    /* ---------- C · sólo el egreso macizo ----------
+     El naranja es la señal del sistema: el 10% de la paleta, lo que
+     avisa. Que sea LA UNICA superficie sólida de la fila es lo más fiel a
+     esa idea. Ingresos vuelve al material teñido de antes, y las dos
+     blandas quedan como estaban. */
+    [data-trat="c"] .kpi[data-k="inc"] {
+      background: color-mix(in srgb, var(--kpi-surf) 82%, var(--c));
+    }
+    [data-trat="c"] .kpi[data-k="inc"] .lab {
+      color: color-mix(in srgb, var(--c) 85%, var(--mix-ink));
+    }
+    [data-trat="c"] .kpi[data-k="inc"] .num {
+      color: var(--c);
+    }
+    [data-trat="c"] .kpi[data-k="egr"] {
+      background: var(--sig);
+      color: #14171b;
+      box-shadow:
+        inset 1px 1px 0 rgba(255, 255, 255, 0.18),
+        5px 5px 11px var(--sig-sh-lo),
+        -4px -4px 9px var(--sig-sh-hi);
+    }
+    [data-trat="c"] .kpi[data-k="egr"] .lab,
+    [data-trat="c"] .kpi[data-k="egr"] .num,
+    [data-trat="c"] .kpi[data-k="egr"] .sub {
+      color: #14171b;
+    }
+    [data-trat="c"] .kpi[data-k="egr"] .lab {
+      opacity: 0.78;
+    }
+    [data-trat="c"] .kpi[data-k="egr"] .sub {
+      opacity: 0.72;
+    }
+    [data-trat="c"] .kpi[data-k="egr"] .sello {
+      background: rgba(0, 0, 0, 0.16);
+      color: #14171b;
+      box-shadow: none;
+    }
+    [data-trat="c"] .kpi[data-k="dia"] .sello,
+    [data-trat="c"] .kpi[data-k="pat"] .sello {
+      background: var(--acc);
+      color: var(--on-acc);
+      box-shadow:
+        2px 2px 5px var(--acc-sh-lo),
+        -1px -1px 4px var(--acc-sh-hi);
+    }
+
+    /* ---------------- contexto ---------------- */
+    .card {
+      margin-bottom: 11px;
+      padding: 13px 0;
+      border-radius: 19px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-md);
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 14px 11px;
+    }
+    .card-head h4 {
+      margin: 0;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      margin-left: auto;
+      padding: 4px 9px;
+      border-radius: 9px;
+      background: color-mix(in srgb, var(--acc) 14%, transparent);
+      color: var(--acc-2);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .chart-wrap {
+      margin: 0 14px;
+      padding: 12px 0 6px;
+      border-radius: 14px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-md);
+    }
+    .chart-wrap svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .rows {
+      margin: 0 14px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 9px 0;
+    }
+    .row + .row {
+      border-top: 1px solid var(--line);
+    }
+    .row-ico {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-sm);
+      color: var(--acc);
+      font: 700 0.63rem var(--font-d);
+    }
+    .row-ico.sig {
+      color: var(--sig);
+    }
+    .row-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .row-main b {
+      display: block;
+      overflow: hidden;
+      font-size: 0.81rem;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .row-main > span {
+      font-size: 0.67rem;
+      color: var(--ink-3);
+    }
+    .row .amt {
+      font-family: var(--font-d);
+      font-size: 0.86rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .cerca {
+      margin-top: 36px;
+      padding: 22px;
+      border-radius: 26px;
+      background: var(--surf);
+      box-shadow: var(--glass-in), var(--sh-md);
+    }
+    .cerca > h2 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .cerca > p {
+      margin: 0 0 20px;
+      font-size: 0.8rem;
+      color: var(--ink-3);
+    }
+    .cerca-tira {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 20px;
+    }
+    .cerca-tira > div {
+      min-width: 0;
+    }
+    .cerca-tira h5 {
+      margin: 0 0 10px;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+    }
+    .cerca-tira .kpis {
+      margin-bottom: 0;
+    }
+
+    .foot {
+      margin-top: 26px;
+      font-size: 0.73rem;
+      line-height: 1.6;
+      text-align: center;
+      color: var(--ink-4);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sólo tema oscuro · el claro no se toca</span>
+      <h1>Ingresos y Egresos, en oscuro</h1>
+      <p>
+        <b>La primera columna es cómo estaba antes del último cambio</b>, y es
+        una reconstrucción exacta: los valores salen del historial de Git, no de
+        memoria. La segunda es lo que está publicado ahora. Las tres últimas son
+        propuestas.
+      </p>
+      <p>
+        Lo que se rompió es puntual: en un tema oscuro una superficie clara
+        grita. El carbón y el naranja funcionan en el claro porque ahí lo sólido
+        es más oscuro que el fondo; invertido, las dos tarjetas se volvieron los
+        dos bloques más brillantes de la pantalla y le ganaron a la tarjeta
+        héroe.
+      </p>
+      <p>
+        <b>Elegir acá no toca el tema claro.</b> Los dos temas comparten el
+        marcado pero no tienen por qué compartir el aspecto: el CSS le puede dar
+        a cada uno el suyo con los mismos tokens.
+      </p>
+    </div>
+
+    <div class="tira" id="tira"></div>
+
+    <section class="cerca">
+      <h2>Las cuatro, de cerca</h2>
+      <p>Lo mismo sin el teléfono alrededor.</p>
+      <div class="cerca-tira" id="cerca"></div>
+    </section>
+
+    <p class="foot">
+      Mockup de exploración de <b>F20-T06</b>. Cifras de ejemplo de octubre
+      2026.
+    </p>
+  </div>
+
+  <script>
+    const I = {
+      billetera:
+        '<path d="M3 8.5A2.5 2.5 0 015.5 6H19a2 2 0 012 2v9a2 2 0 01-2 2H5.5A2.5 2.5 0 013 16.5v-8z"/><path d="M3 9.5h13.5a1.5 1.5 0 011.5 1.5v3a1.5 1.5 0 01-1.5 1.5H3"/><circle cx="7" cy="12.5" r="1.1"/>',
+      campana:
+        '<path d="M6 8a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 004 0"/>',
+      sube: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+      baja: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+      calendario:
+        '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+      cajaFuerte:
+        '<rect x="3.5" y="5" width="17" height="14" rx="3"/><circle cx="12" cy="12" r="3.2"/><path d="M12 6.2v1.6M12 16.2v1.6"/>',
+    };
+    const svg = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+
+    const TARJETAS = [
+      ["inc", "Ingresos", "$2.510.000", "+3,1% vs. septiembre", I.sube],
+      ["egr", "Egresos", "$1.897.520", "+8,7% vs. septiembre", I.baja],
+      ["dia", "Gasto de hoy", "$43.900", "5 movimientos de hoy", I.calendario],
+      [
+        "pat",
+        "Total de ahorros",
+        "$5.184.300",
+        "Acumulado de 6 meses",
+        I.cajaFuerte,
+      ],
+    ];
+
+    const tarjetas = () =>
+      '<div class="kpis">' +
+      TARJETAS.map(
+        ([k, lab, num, sub, ico]) =>
+          `<article class="kpi" data-k="${k}">` +
+          `<div class="kpi-top"><span class="lab">${lab}</span>` +
+          `<span class="sello">${svg(ico)}</span></div>` +
+          `<div class="num tnum">${num}</div>` +
+          `<div class="sub">${sub}</div></article>`,
+      ).join("") +
+      "</div>";
+
+    const EG = [
+      18400, 0, 42100, 9800, 26500, 71200, 15300, 0, 33800, 12900, 58400, 21700,
+      8600, 44200, 0, 19500, 97300, 27800, 11400, 35600, 0, 23100, 48700, 16200,
+      62800, 9300, 84200, 29400, 15500, 0, 0,
+    ];
+    function grafico() {
+      const W = 300,
+        H = 108,
+        L = 6,
+        R = 6,
+        T = 10,
+        B = 20;
+      const max = Math.max(...EG);
+      const paso = (W - L - R) / EG.length;
+      const ancho = Math.max(3.4, paso * 0.56);
+      const esc = (v) => ((H - T - B) * v) / max;
+      let s = "";
+      for (let i = 1; i <= 3; i++) {
+        const y = T + ((H - T - B) * i) / 4;
+        s += `<line x1="${L}" y1="${y}" x2="${W - R}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+      }
+      const top = EG.indexOf(max);
+      EG.forEach((v, i) => {
+        if (!v) return;
+        const x = L + paso * i + (paso - ancho) / 2;
+        const h = esc(v);
+        s += `<rect x="${x}" y="${H - B - h}" width="${ancho}" height="${Math.max(h, 1.6)}" rx="1.6" fill="${i === top ? "var(--sig)" : "var(--acc)"}"/>`;
+      });
+      s += `<line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--line)" stroke-width="1"/>`;
+      [1, 8, 15, 22, 31].forEach((d) => {
+        const x = L + paso * (d - 1) + paso / 2;
+        s += `<text x="${x}" y="${H - 7}" text-anchor="middle" font-family="Inter,sans-serif" font-size="7.5" fill="var(--ink-4)">${d}</text>`;
+      });
+      return s;
+    }
+
+    const pantalla = () =>
+      '<div class="tel"><div class="tel-in">' +
+      '<div class="topbar">' +
+      `<span class="sello-marca">${svg(I.billetera)}</span>` +
+      '<span class="marca">Epic Wallet</span>' +
+      `<span class="sp"><span class="ic">${svg(I.campana)}<span class="badge">2</span></span></span>` +
+      "</div>" +
+      '<div class="monthbar">' +
+      '<button class="chip" type="button" aria-label="Mes anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>' +
+      '<span class="mb-t"><b>Octubre 2026</b><span>Mes abierto</span></span>' +
+      '<button class="chip" type="button">Hoy</button>' +
+      '<button class="chip" type="button" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>' +
+      "</div>" +
+      '<div class="hero"><div class="lab">Ahorro del mes</div>' +
+      '<div class="cifra tnum">$612.480</div>' +
+      '<div class="sub">Ingresos menos egresos</div>' +
+      '<div class="aro">' +
+      '<svg viewBox="0 0 40 40" role="img" aria-label="Tasa de ahorro 24 por ciento">' +
+      '<circle cx="20" cy="20" r="15.9" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="5"/>' +
+      '<circle cx="20" cy="20" r="15.9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" pathLength="100" stroke-dasharray="24.4 75.6" transform="rotate(-90 20 20)"/>' +
+      '<text x="20" y="23.4" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" font-weight="800" fill="currentColor">24%</text>' +
+      "</svg>" +
+      '<span class="g"><span class="barra"><i style="width:24.4%"></i></span>' +
+      "<span>Tasa de ahorro 24,4%</span></span>" +
+      "</div></div>" +
+      tarjetas() +
+      '<div class="card">' +
+      '<div class="card-head"><h4>Día por día</h4><span class="pill">Octubre</span></div>' +
+      `<div class="chart-wrap"><svg viewBox="0 0 300 108" role="img" aria-label="Gasto de cada día">${grafico()}</svg></div>` +
+      "</div>" +
+      '<div class="card">' +
+      '<div class="card-head"><h4>Gastos por categoría</h4></div>' +
+      '<div class="rows">' +
+      '<div class="row"><span class="row-ico sig">SU</span><span class="row-main"><b>Supermercado</b><span>28,4% del gasto</span></span><span class="amt tnum">$412.300</span></div>' +
+      '<div class="row"><span class="row-ico">VI</span><span class="row-main"><b>Vivienda</b><span>26,2% del gasto</span></span><span class="amt tnum">$380.000</span></div>' +
+      "</div></div>" +
+      "</div></div>";
+
+    const VARIANTES = [
+      {
+        id: "antes",
+        tag: "Como estaba antes",
+        titulo: "Material teñido · la referencia",
+        texto:
+          "Reconstrucción exacta del oscuro anterior al último cambio, tomada del historial de Git: 18% del color en la superficie, etiqueta al 85%, sello sólido, cifra en color sólo en Ingresos y Egresos y cifra de 17,5 px. Si ninguna propuesta te convence, volvemos a esto tal cual.",
+      },
+      {
+        id: "hoy",
+        tag: "Hoy, publicado",
+        titulo: "Las dos macizas claras",
+        texto:
+          "Lo que rompió el oscuro. El carbón del claro se volvió pewter y el naranja quedó pleno: en un fondo casi negro, las dos superficies claras son lo más brillante de la pantalla y le ganan a la tarjeta héroe.",
+      },
+      {
+        id: "a",
+        tag: "Propuesta A",
+        titulo: "Las macizas, en profundo",
+        texto:
+          "Mantiene la estructura del claro —dos macizas y dos de material— pero da vuelta el valor: pizarra para lo que entra y el naranja hondo de la héroe para lo que sale, los dos con el texto en blanco. Pesan sin encandilar, que es lo que ya hace la héroe. Es la que deja los dos temas más parecidos.",
+      },
+      {
+        id: "b",
+        tag: "Propuesta B",
+        titulo: "El canto de color",
+        texto:
+          "Las cuatro vuelven a ser material limpio, sin superficie de color: el color se mete en un filo de 3 px en el borde izquierdo y en la cifra. Es la más silenciosa y la que menos se aleja del oscuro que ya te gustaba, pero con la jerarquía nueva.",
+      },
+      {
+        id: "c",
+        tag: "Propuesta C",
+        titulo: "Sólo el egreso macizo",
+        texto:
+          "El naranja es la señal del sistema, el 10% de la paleta: que sea la única superficie sólida de la fila es lo más fiel a esa idea. Ingresos vuelve al material teñido de antes y las dos blandas quedan igual. Una sola tarjeta grita, y es la que avisa.",
+      },
+    ];
+
+    document.getElementById("tira").innerHTML = VARIANTES.map(
+      (v) =>
+        `<section class="var" data-trat="${v.id}">` +
+        `<header><span class="tag">${v.tag}</span>` +
+        `<h2>${v.titulo}</h2><p>${v.texto}</p></header>` +
+        pantalla() +
+        "</section>",
+    ).join("");
+
+    document.getElementById("cerca").innerHTML = VARIANTES.map(
+      (v) => `<div data-trat="${v.id}"><h5>${v.tag}</h5>${tarjetas()}</div>`,
+    ).join("");
+  </script>
+</html>
