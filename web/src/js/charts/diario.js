@@ -62,12 +62,12 @@ import {
 } from "./svg.js";
 
 const ANCHO = 760;
-const ALTO = 262;
-const PL = 52; // margen izquierdo: el eje de valores diarios
-const PR_CON_LINEA = 58; // margen derecho: el eje del ahorro acumulado
-const PR_SIN_LINEA = 16; // sin ese eje, alcanza con un respiro chico
-const PT = 18;
-const PB = 28;
+const ALTO = 300;
+const PL = 96; // margen izquierdo: el eje de valores diarios
+const PR_CON_LINEA = 96; // margen derecho: el eje del ahorro acumulado
+const PR_SIN_LINEA = 28; // sin ese eje, alcanza con un respiro chico
+const PT = 22;
+const PB = 36;
 
 export const MODOS = Object.freeze(["ambos", "egresos", "ingresos"]);
 
@@ -100,7 +100,10 @@ function lineaDeAhorro(serie, iw, ih) {
     const v = eje.ymin + (eje.rango * i) / 4;
     ejeDerecho += `<text class="axis-v" x="${(PL + iw + 9).toFixed(1)}" y="${(y(v) + 3.4).toFixed(1)}" fill="var(--color-sav)" opacity=".8">${fmtK(v)}</text>`;
   }
-  ejeDerecho += `<text class="axis-t" x="${(PL + iw + 9).toFixed(1)}" y="${PT - 6}" fill="var(--color-sav)" opacity=".9" font-weight="700">AHORRO</text>`;
+  // Sin rótulo "AHORRO" arriba del eje derecho: la leyenda de la
+  // tarjeta ya nombra la serie con su trazo al lado, y acá, con el
+  // dibujo entrando entero en la pantalla, la palabra no tiene dónde
+  // caer — salía cortada contra el borde (F20-T02).
 
   const idArea = idUnico("da");
 
@@ -223,7 +226,19 @@ export function dibujar(daily, modo = "ambos") {
     linea +
     // `todas: true` (Gustavo, F06-T02): quiere ver cada día del mes
     // en el eje, nunca uno de cada dos.
-    ejeDeCategorias(dias, { x: PL, ancho: iw, y: PT + ih + 18, centradoEnSlot: true, todas: true }) +
+    // `todas` hasta 16 días y salteado de ahí en adelante. Gustavo
+    // pidió en F06-T02 ver cada día, y mientras el dibujo se
+    // desplazaba de costado cabían los 31. Sin ese scroll (F20-T02)
+    // un mes entero son 7 px por día: los números se pisan unos con
+    // otros y no se lee ninguno. Hasta la mitad del mes siguen
+    // estando todos.
+    ejeDeCategorias(dias, {
+      x: PL,
+      ancho: iw,
+      y: PT + ih + 18,
+      centradoEnSlot: true,
+      todas: dias.length <= 16,
+    }) +
     "</svg>"
   );
 }

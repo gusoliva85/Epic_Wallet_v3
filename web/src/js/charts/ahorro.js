@@ -26,14 +26,14 @@
 
 import { toNum, fmtK } from "../format.js";
 import { ejeConCero, etiquetaSvg, grilla, ejeDeCategorias, idUnico } from "./svg.js";
-import { etiquetaDeMes } from "./seis.js";
+import { etiquetaCortaDeMes } from "./seis.js";
 
 const ANCHO = 760;
-const ALTO = 262;
-const PL = 52;
-const PR = 16;
-const PT = 18;
-const PB = 28;
+const ALTO = 300;
+const PL = 96;
+const PR = 28;
+const PT = 22;
+const PB = 36;
 
 const MESES_DE_REFERENCIA = 6;
 
@@ -96,7 +96,7 @@ export function dibujar(serie) {
     });
   }
 
-  salida += ejeDeCategorias(serie.map(etiquetaDeMes), {
+  salida += ejeDeCategorias(serie.map(etiquetaCortaDeMes), {
     x: inicioX,
     ancho: slot * n,
     y: PT + ih + 18,

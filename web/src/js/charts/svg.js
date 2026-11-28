@@ -134,16 +134,80 @@ export function trazoBarraRedondeada(x, yTope, ancho, alto, radio) {
   );
 }
 
-/* El ancho de referencia del sistema de gráficos: el piso que
-   `.chart-wrap svg` le pone al dibujo en el teléfono
-   (`min-width: 520px`). Todo gráfico se escala por `anchoViewBox / 520`
-   y es lo que hace que la letra de los ejes se vea DEL MISMO TAMAÑO en
-   los cuatro gráficos, aunque cada uno tenga su propio `viewBox`
-   (F13-T01). Sin esto, el de 760 de ancho mostraba la letra un 30 %
-   más chica que uno de 540, y los dos bastante más chicas de lo que
-   dicen los tokens: un valor de 10 px en un `viewBox` de 760
-   renderizado a 520 se ve a 6,8 px. */
+/* El ancho de referencia del sistema de gráficos.
+
+   Es el valor con el que NACE `--escala-grafico` en el atributo
+   `style` del `<svg>`: una estimación, para que el primer cuadro no
+   se dibuje con la letra en cualquier tamaño. El valor de verdad lo
+   pone `ajustarEscala()` en cuanto el navegador midió el dibujo, y
+   ahí deja de ser una estimación.
+
+   Por qué hace falta la variable: un `font-size` dentro del `<svg>`
+   está en unidades del `viewBox`, no en píxeles. El mismo 10 se ve a
+   6,8 px en un gráfico de 760 de ancho renderizado a 520, y a 4,7 px
+   renderizado a 358 —el ancho real de un teléfono—, que es lo que
+   Gustavo vio el 2026-11-28: "no se distinguen las letras de los
+   costados". Multiplicando el token por `viewBox / ancho real`, el
+   número que dice el token es el que se ve en pantalla, en cualquier
+   ancho y en los cuatro gráficos. */
 export const ANCHO_DE_REFERENCIA = 520;
+
+/**
+ * Pone `--escala-grafico` con el ancho REAL de cada dibujo.
+ *
+ * Se llama sola: `conectarEscala()` observa los contenedores de
+ * gráfico y la dispara cuando cambia el contenido o el tamaño. No
+ * hace falta acordarse de llamarla después de pintar.
+ *
+ * Sin ancho medido no toca nada (jsdom, o un gráfico todavía
+ * escondido): deja la estimación del atributo, que es lo que había
+ * antes de esta función.
+ *
+ * @param {ParentNode} raiz
+ */
+export function ajustarEscala(raiz = document) {
+  for (const svg of raiz.querySelectorAll(".chart-wrap svg[viewBox]")) {
+    const caja = svg.viewBox?.baseVal?.width ?? 0;
+    const real = svg.getBoundingClientRect?.().width ?? 0;
+    if (!caja || !real) continue;
+    svg.style.setProperty("--escala-grafico", (caja / real).toFixed(4));
+  }
+}
+
+/** Observa los contenedores de gráfico: cada vez que se pinta uno
+ * nuevo o cambia el ancho de la pantalla, se recalcula la escala.
+ *
+ * Los `.chart-wrap` son fijos en el HTML —lo que cambia es su
+ * contenido—, así que alcanza con observarlos una vez. */
+function conectarEscala() {
+  const cajas = document.querySelectorAll(".chart-wrap");
+  if (!cajas.length) return;
+
+  const redimensiona =
+    typeof ResizeObserver === "function"
+      ? new ResizeObserver(() => ajustarEscala())
+      : null;
+
+  cajas.forEach((caja) => {
+    redimensiona?.observe(caja);
+    if (typeof MutationObserver === "function") {
+      new MutationObserver(() => ajustarEscala(caja)).observe(caja, {
+        childList: true,
+        subtree: true,
+      });
+    }
+  });
+
+  ajustarEscala();
+}
+
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", conectarEscala);
+  } else {
+    conectarEscala();
+  }
+}
 
 /**
  * La etiqueta de apertura del `<svg>`. El `viewBox` es lo que permite

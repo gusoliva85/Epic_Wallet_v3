@@ -1562,9 +1562,14 @@ Cabeceras que se aplican:
 | todo | `Permissions-Policy` | cámara, micrófono y ubicación denegados: no se usan |
 | todo | `Strict-Transport-Security` | HTTPS obligatorio por un año |
 | `/api/*` | `Cache-Control: no-store` | los datos financieros no se cachean nunca |
-| `/public/*` | `Cache-Control: immutable, 1 año` | el CSS compilado lleva hash |
+| `/public/*` | `Cache-Control: public, max-age=0, must-revalidate` | el CSS se reescribe con el mismo nombre en cada publicación |
+| `/`, `/index.html`, `/src/*` | `Cache-Control: no-cache` | **lo mismo, y no es opcional** (abajo) |
 | `/icons/*` | `Cache-Control: 1 semana` | |
 | `/service-worker.js` | `Cache-Control: no-cache` | que una versión nueva se tome enseguida |
+
+> **Por qué el HTML y los módulos llevan `no-cache`.** Se publican siempre con el mismo nombre y sin huella en la URL. Hasta el 2026-11-28 salían **sin ninguna cabecera de caché**, y entonces Chrome aplica su *caching* heurístico y se queda con el archivo viejo el tiempo que quiere. El CSS, que sí tenía la suya, se actualizaba; el JavaScript, no. Resultado en el teléfono de Gustavo después de publicar F20-T01: la hoja de estilos nueva pintando el HTML de la versión anterior — tarjetas con dos bloques negros, la tarjeta héroe sin su anillo y los textos viejos. `no-cache` no quiere decir "no guardar": guarda y revalida contra el `Etag`, que es exactamente lo que corresponde para un archivo de nombre fijo.
+>
+> El `service-worker.js` colabora desde el otro lado: su único manejador de `fetch` pide el HTML y `/src/*` con `cache: "reload"`. La cabecera arregla a los clientes nuevos; eso rescata a los que ya tienen una versión vieja guardada.
 
 La CSP se simplificó al mudarse: antes tenía que permitir el dominio del proveedor de autenticación en `connect-src`. Ahora el navegador sólo habla con su propio origen.
 

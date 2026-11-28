@@ -1317,6 +1317,20 @@
   background: color-mix(in srgb, var(--kpi-surf) 90%, var(--c-card));
 }
 
+/* RESTOS DE LA TARJETA DE COLOR SOLIDA, ESCONDIDOS A PROPOSITO.
+
+   El signo pesos de fondo y el simbolo de la esquina se fueron con
+   Vidrio Grafito, y con ellos las reglas que los pintaban. Pero un
+   telefono con el JavaScript viejo en la cache y el CSS nuevo igual
+   los escribe en el DOM, y sin sus reglas salen como dos bloques
+   NEGROS enormes adentro de la tarjeta: es lo que le paso a Gustavo
+   el 2026-11-28. La cabecera de cache del borde es el arreglo de
+   verdad; esto es el cinturon, y cuesta dos lineas. */
+.kpi-peso,
+.kpi-glifo {
+  display: none;
+}
+
 /* La etiqueta lleva el color del dato, apenas oscurecido con la tinta
    para que una etiqueta de 10,5 px no quede al límite del contraste. */
 .kpi-color .kpi-label {
@@ -2417,12 +2431,17 @@
 
 .chart-wrap svg {
   display: block;
-  /* Puede encogerse hasta su `min-width`: en pantallas anchas se
-     ajusta al contenedor, y en el teléfono gana el piso de 520 px y
-     el contenedor desplaza, que es lo que se busca. */
+  /* EL DIBUJO ENTRA EN LA PANTALLA. Hasta F20-T02 tenía un piso de
+     520 px y el contenedor se desplazaba de costado: en un teléfono
+     de 390 px eso dejaba medio mes afuera, con una barra de scroll
+     adentro de la tarjeta y los valores del eje contra el borde. El
+     mockup muestra el mes entero de una. Lo que antes resolvía el
+     scroll —que las etiquetas no se amontonen— lo resuelve ahora el
+     eje salteando días, y el tamaño de la letra lo mantiene
+     `ajustarEscala()` (charts/svg.js). */
   flex: 1 1 auto;
   width: 100%;
-  min-width: 520px;
+  min-width: 0;
   height: auto;
 }
 

@@ -349,7 +349,7 @@ describe("la geometría del gráfico", () => {
     const g = geometria(3);
     const sobra = g.interior - g.slot * 3;
     // El grupo arranca a la mitad de lo que sobra, no pegado al eje.
-    assert.ok(Math.abs(g.inicioX - (50 + sobra / 2)) < 0.01);
+    assert.ok(Math.abs(g.inicioX - (96 + sobra / 2)) < 0.01);
   });
 
   test("hasta siete meses entra en la pantalla; con más, crece", () => {

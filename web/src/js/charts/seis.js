@@ -40,11 +40,11 @@ import {
 } from "./svg.js";
 
 const ANCHO = 760;
-const ALTO = 262;
-const PL = 52;
-const PR = 16; // ningún modo acá necesita un eje derecho
-const PT = 18;
-const PB = 28;
+const ALTO = 300;
+const PL = 96;
+const PR = 28; // ningún modo acá necesita un eje derecho
+const PT = 22;
+const PB = 36;
 
 const MESES_LARGOS = new Intl.DateTimeFormat("es-AR", {
   month: "long",
@@ -60,6 +60,20 @@ export function etiquetaDeMes({ year, month }) {
   const texto = MESES_LARGOS.format(new Date(Date.UTC(year, month - 1, 1, 12)));
   const letra = texto.charAt(0).toUpperCase() + texto.slice(1);
   return `${letra} ${String(year).slice(2)}`;
+}
+
+/** "Oct 26" — la del EJE de un gráfico, nada más.
+ *
+ * El nombre completo sigue siendo el de F06-T05 y es el que se ve en
+ * el pie de cifras, donde hay lugar. En el eje no lo hay: desde que el
+ * dibujo entra en la pantalla sin desplazarse (F20-T02), cada mes
+ * tiene unos 36 px, y "Septiembre 26" ocupa el doble — los seis
+ * nombres se montaban unos sobre otros y no se leía ninguno. Tres
+ * letras y el año es lo que muestra el mockup aprobado. */
+export function etiquetaCortaDeMes(mes) {
+  const completa = etiquetaDeMes(mes);
+  const [nombre, anio] = completa.split(" ");
+  return `${nombre.slice(0, 3)} ${anio}`;
 }
 
 const MESES_EN_COMPARATIVA = 6;
@@ -115,7 +129,7 @@ function barras(meses, iw, ih) {
 export function dibujar(ultimosSeisMeses) {
   const iw = ANCHO - PL - PR;
   const ih = ALTO - PT - PB;
-  const etiquetas = ultimosSeisMeses.map(etiquetaDeMes);
+  const etiquetas = ultimosSeisMeses.map(etiquetaCortaDeMes);
   const cuerpo = barras(ultimosSeisMeses, iw, ih);
 
   return (

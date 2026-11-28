@@ -31,11 +31,11 @@
 import { toNum, fmtK } from "../format.js";
 import { escalaRedonda, etiquetaSvg, grilla, idUnico } from "./svg.js";
 
-const ALTO = 238;
-const PL = 50;
-const PR = 12;
-const PT = 26;
-const PB = 28;
+const ALTO = 280;
+const PL = 96;
+const PR = 28;
+const PT = 28;
+const PB = 36;
 
 /** Hasta acá el gráfico entra en la pantalla sin scroll lateral. */
 const MESES_QUE_ENTRAN = 7;

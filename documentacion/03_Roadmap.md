@@ -496,6 +496,7 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Arreglado de paso:** `.kpi[style*="--c"]` le pegaba a la héroe y a las cuatro tarjetas teñidas y les ganaba por especificidad — por eso la cifra blanca de la héroe y el jade del ingreso salían casi negros.
   **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas, mockup al lado: Inicio (héroe con anillo, cuatro tarjetas, gráfico, categorías), Movimientos, Historial, Cartera, Vencimientos y Ajustes.
   **Respaldo:** no toca la base ni los datos — frontend, pruebas y documentación.
+  **Segunda vuelta (2026-11-28, con capturas del celular):** el teléfono mostraba el CSS nuevo sobre el HTML viejo —el borde servía `/src/*` sin cabecera de caché y Chrome se quedaba con el JavaScript anterior—. Se agregó `Cache-Control: no-cache` para el HTML y los módulos, y el service worker los pide con `cache: "reload"` para rescatar al que ya tenía la versión vieja guardada. Y los gráficos: entran enteros en la pantalla (se fue el piso de 520 px que los hacía desplazarse de costado), el tamaño de la letra de los ejes se calcula contra el ancho real del dibujo, los márgenes dan lugar a los valores y los meses del eje van abreviados.
 
 ---
 

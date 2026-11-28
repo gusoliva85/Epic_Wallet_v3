@@ -83,9 +83,12 @@ describe("el saldo puede cruzar a negativo", () => {
 });
 
 describe("las etiquetas del eje", () => {
-  test("mes completo y año, igual que el gráfico de los últimos seis meses", () => {
+  test("mes abreviado y año, igual que el gráfico de los últimos seis meses", () => {
+    // "Oct 26" y no "Octubre 26": desde F20-T02 el dibujo entra en la
+    // pantalla sin desplazarse, y en el eje cada mes tiene unos 36 px.
+    // El nombre completo sigue en el pie de cifras.
     const svg = dibujar([punto({ year: 2026, month: 10 })]);
-    assert.match(svg, />Octubre 26</);
+    assert.match(svg, />Oct 26</);
   });
 });
 

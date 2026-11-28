@@ -95,13 +95,16 @@ describe("alineación a la derecha (pedido de Gustavo, 2026-10-17)", () => {
 });
 
 describe("las etiquetas del eje", () => {
-  test("mes completo y año, todas visibles (hasta seis, nunca se amontonan)", () => {
-    // "Octubre 26", no "Oct '26": Gustavo lo pidió completo, F06-T05
-    // corrección.
+  test("mes abreviado y año, todas visibles (hasta seis, nunca se amontonan)", () => {
+    // "Oct 26", no "Octubre 26". Gustavo lo había pedido completo
+    // (F06-T05) cuando el gráfico se desplazaba de costado y cada mes
+    // tenía lugar de sobra. Desde F20-T02 entra entero en la pantalla:
+    // seis nombres completos en 215 px se montan unos sobre otros. El
+    // nombre completo sigue estando en el pie de cifras.
     const meses = [8, 9, 10].map((month) => mes({ month, year: 2026 }));
     const svg = dibujar(meses);
     const etiquetas = [...svg.matchAll(/class="axis-t"[^>]*>([^<]+)</g)].map((m) => m[1]);
     assert.equal(etiquetas.length, 3);
-    assert.deepEqual(etiquetas, ["Agosto 26", "Septiembre 26", "Octubre 26"]);
+    assert.deepEqual(etiquetas, ["Ago 26", "Sep 26", "Oct 26"]);
   });
 });

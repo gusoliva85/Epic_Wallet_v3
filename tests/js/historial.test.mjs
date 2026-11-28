@@ -315,7 +315,7 @@ describe("al entrar a Historial, el gráfico", () => {
     const grafico = $(dom, "grafico-ahorro");
     assert.ok(llamadas.apiGet.some((a) => a[0] === "/months/savings-evolution"));
     assert.match(grafico.innerHTML, /<svg/);
-    assert.match(grafico.innerHTML, /Octubre 26/);
+    assert.match(grafico.innerHTML, /Oct 26/);
   });
 
   test("el pie muestra el saldo actual y la cantidad de meses", async () => {
@@ -396,6 +396,8 @@ describe("al entrar a Historial, los últimos seis meses", () => {
 
     const pie = $(dom, "pie-seis");
     assert.equal(pie.querySelectorAll(".mini").length, 2);
+    // En el pie el nombre va COMPLETO: lo que se abrevió en F20-T02
+    // es el eje del gráfico, donde cada mes tiene 36 px.
     assert.match(pie.textContent, /Septiembre 26/);
     assert.match(pie.textContent, /Octubre 26/);
   });
