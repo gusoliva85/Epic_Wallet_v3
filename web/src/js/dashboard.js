@@ -45,7 +45,7 @@ import { esc, fmt, fmtS, fmtK, pct, pctPlano } from "./format.js";
 import { tarjetaHeroe, tarjetaMetrica, pintarTarjetas, animarCifras } from "./components/kpi.js";
 import { filaCategoria, pintarFilas } from "./components/rows.js";
 import { bloqueCargando, error as estadoError, vacio, consolidado } from "./components/estados.js";
-import { EVENTO_CAMBIO } from "./barra-mes.js";
+import { EVENTO_CAMBIO, mesVigente } from "./barra-mes.js";
 
 /* Las alertas de vencimiento viajan DENTRO del dashboard (F13-T03): el
    tablero es una sola llamada, así que no se piden aparte. Este módulo
@@ -352,6 +352,12 @@ export async function arrancar() {
   document.addEventListener(EVENTO_CAMBIO, (ev) => {
     cargar(/** @type {CustomEvent} */ (ev).detail);
   });
+
+  // Si la barra de mes ya anunció su mes antes de que este módulo
+  // llegara a suscribirse, el evento ya pasó y no vuelve: se lee el
+  // valor vigente y se carga igual (F20-T08).
+  const yaHayMes = mesVigente();
+  if (yaHayMes) cargar(yaHayMes);
 }
 
 if (document.readyState === "loading") {

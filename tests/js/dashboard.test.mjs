@@ -72,8 +72,11 @@ async function cargarConDobles() {
       `import { bloqueCargando, error as estadoError, vacio, consolidado } from "${rutaAbsoluta("components", "estados.js")}";`,
     )
     .replace(
-      'import { EVENTO_CAMBIO } from "./barra-mes.js";',
-      'const EVENTO_CAMBIO = "mes:cambiado";',
+      'import { EVENTO_CAMBIO, mesVigente } from "./barra-mes.js";',
+      // `mesVigente()` es el mes que la barra ya anunció antes de que
+      // este módulo se suscribiera (F20-T08). Devuelve null salvo que
+      // la prueba lo defina en `__espia`: las demás emiten el evento.
+      'const EVENTO_CAMBIO = "mes:cambiado"; const mesVigente = () => globalThis.__espia?.mesVigente?.() ?? null;',
     )
     .replace(
       'import {\n  dibujar as dibujarGraficoDiario,\n  MODOS as MODOS_DIARIO,\n  conectarLectura,\n} from "./charts/diario.js";',
@@ -222,7 +225,7 @@ const HTML_INICIO = `<!doctype html><html><body>
   <div class="rows" id="categorias-inicio"></div>
 </body></html>`;
 
-async function montar({ apiGet } = {}) {
+async function montar({ apiGet, mesVigente = null } = {}) {
   const dom = new JSDOM(HTML_INICIO, {
     url: "https://epic-wallet.test/#/inicio",
     pretendToBeVisual: true,
@@ -245,6 +248,9 @@ async function montar({ apiGet } = {}) {
       llamadas.apiGet.push(a);
       return (apiGet ?? (async () => respuestaBase()))(...a);
     },
+    // El mes que la barra ya anunció ANTES de que el tablero se
+    // suscribiera. Null salvo que la prueba simule esa carrera.
+    mesVigente: () => mesVigente,
   };
 
   const mod = await cargarConDobles();
@@ -316,6 +322,31 @@ describe("al cambiar de mes", () => {
     assert.ok(pedido, "tiene que haber pedido /dashboard");
     assert.match(pedido[0], /year=2026/);
     assert.match(pedido[0], /month=10/);
+  });
+
+  /* LA CARRERA DE ARRANQUE QUE DEJABA EL TABLERO VACIO · F20-T08
+
+     Los módulos son diferidos: se ejecutan en orden, pero cada uno
+     arranca apenas está bajado el suyo. `barra-mes.js` está arriba de
+     la lista y pide los meses ni bien corre; `dashboard.js` está veinte
+     archivos más abajo. Con la red del teléfono lenta, la respuesta de
+     la API llegaba ANTES de que el tablero se suscribiera: el evento se
+     emitía, no lo escuchaba nadie, y la pantalla quedaba vacía hasta
+     moverse de mes y volver. Le pasó a Gustavo varias veces abriendo la
+     aplicación desde cero.
+
+     Acá se simula lo que el evento no puede simular: que la barra YA
+     tenga mes cuando el tablero se conecta. Sin la lectura de
+     `mesVigente()` esta prueba no pide nada. */
+  test("si el mes ya se anuncio antes de arrancar, igual carga", async () => {
+    const { llamadas, caja } = await montar({ mesVigente: MES_ACTUAL });
+    await esperar();
+
+    const pedido = llamadas.apiGet.find((a) => a[0].startsWith("/dashboard?"));
+    assert.ok(pedido, "el tablero tiene que cargar sin esperar otro evento");
+    assert.match(pedido[0], /year=2026/);
+    assert.match(pedido[0], /month=10/);
+    assert.ok(caja.querySelector(".kpi"), "y tiene que haber pintado las tarjetas");
   });
 
   test("moverse a otro mes vuelve a pedir", async () => {

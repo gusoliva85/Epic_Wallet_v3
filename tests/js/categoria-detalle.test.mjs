@@ -78,8 +78,11 @@ async function cargarConDobles() {
       `import { crearHoja } from "${rutaAbsoluta("components", "sheet.js")}?t=${Math.random()}";`,
     )
     .replace(
-      'import { EVENTO_CAMBIO } from "./barra-mes.js";',
-      'const EVENTO_CAMBIO = "mes:cambiado";',
+      'import { EVENTO_CAMBIO, mesVigente } from "./barra-mes.js";',
+      // `mesVigente()` es el mes que la barra ya anunció antes de que
+      // este módulo se suscribiera (F20-T08). Devuelve null salvo que
+      // la prueba lo defina en `__espia`: las demás emiten el evento.
+      'const EVENTO_CAMBIO = "mes:cambiado"; const mesVigente = () => globalThis.__espia?.mesVigente?.() ?? null;',
     )
     .replace(
       'import { abrirEdicion } from "./alta-movimiento.js";',

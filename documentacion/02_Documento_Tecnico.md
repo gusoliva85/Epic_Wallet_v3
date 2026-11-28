@@ -1142,6 +1142,14 @@ export function invalidateFrom(year, month) {
 }
 ```
 
+#### El mes vigente se escucha Y se consulta · F20-T08
+
+La barra de mes anuncia el mes con el evento `mes:cambiado`, y de ahí cuelgan el tablero, la lista de movimientos y el detalle de categoría. **El evento solo no alcanza para arrancar.**
+
+Los módulos son `<script type="module">`, o sea diferidos: se ejecutan en orden, pero cada uno arranca apenas está bajado el suyo. `barra-mes.js` está arriba de la lista y pide `/api/months` ni bien corre; `dashboard.js` está veinte archivos más abajo. Con la red del teléfono lenta —y más desde que el service worker pide cada módulo con `cache: "reload"`— la respuesta de la API llega **antes** de que el tablero se suscriba: el evento se emite, no lo escucha nadie, y la pantalla queda vacía hasta que algo lo vuelva a emitir. Se manifestaba abriendo la aplicación desde cero: no cargaba nada hasta moverse un mes y volver.
+
+Por eso `barra-mes.js` guarda el último mes anunciado y lo expone con `mesVigente()`. **Cada pantalla, al conectarse, pregunta si ya hay mes y se pinta sola si lo hay**, en vez de esperar un evento que ya pasó. Vale para cualquier evento de arranque que se agregue: si algo tiene que pasar una sola vez y temprano, el que llega tarde tiene que poder consultarlo.
+
 ### 12.3 Cliente de API
 
 Un solo punto de salida: agrega el token, maneja el 401 renovando la sesión y reintentando una vez, y traduce los errores al formato de toast.

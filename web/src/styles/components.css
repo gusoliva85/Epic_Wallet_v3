@@ -2143,7 +2143,12 @@
   position: relative;
   display: flex;
   gap: 3px;
-  padding: 3px;
+  /* 5 px y no 3: con 3 la pastilla queda casi tocando el borde del
+     campo y deja de leerse como un botón apoyado encima (Gustavo,
+     2026-11-28). El `overflow` del campo recorta la sombra de la
+     pastilla, así que ese margen es además lo que deja ver su
+     relieve. `.vs-ind` usa el mismo número. */
+  padding: 5px;
   border-radius: var(--radius-chip);
   /* Campo gris plano, no surco hundido: el relieve de acá adentro es
      todo de la pastilla (F20-T07, `--switch-*` en tokens.css). */
@@ -2214,9 +2219,9 @@
    quedaba al ras del surco y no se distinguía (mockup F20-T02). */
 .vs-ind {
   position: absolute;
-  top: 3px;
+  top: 5px;
   left: 0;
-  height: calc(100% - 6px);
+  height: calc(100% - 10px);
   border-radius: 8px;
   background: var(--surf);
   box-shadow:

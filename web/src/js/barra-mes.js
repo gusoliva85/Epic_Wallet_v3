@@ -34,6 +34,32 @@ import { meses, EVENTO_INVALIDADO } from "./cache-meses.js";
  * `cache-meses.js`. */
 export const EVENTO_CAMBIO = "mes:cambiado";
 
+/* El último mes que se anunció, para quien llegue tarde al evento.
+
+   EL EVENTO SOLO NO ALCANZA, Y ES UNA CARRERA REAL QUE PASO EN EL
+   TELEFONO (F20-T08). Los módulos son `<script type="module">`, o sea
+   diferidos: se ejecutan en orden, pero cada uno arranca apenas está
+   bajado el suyo. `barra-mes.js` está arriba de la lista y pide
+   `/api/months` ni bien se ejecuta; `dashboard.js` está veinte
+   archivos más abajo. Con la red del teléfono lenta —y más desde que
+   el service worker pide cada módulo con `cache: "reload"`— la
+   respuesta de la API llega ANTES de que el tablero se haya suscrito.
+   El evento se emite, no lo escucha nadie, y la pantalla se queda
+   vacía hasta que algo vuelva a emitirlo: por eso se arreglaba
+   moviéndose un mes y volviendo.
+
+   Guardar el último valor convierte el evento en algo que también se
+   puede CONSULTAR. Cada pantalla, al conectarse, pregunta si ya hay
+   mes y se pinta sola si lo hay. */
+let vigente = null;
+
+/** El mes que la barra está mostrando, o `null` si todavía no llegó
+ * la lista. Para que una pantalla que se conecta tarde no tenga que
+ * esperar al próximo evento. */
+export function mesVigente() {
+  return vigente;
+}
+
 /* Sólo el mes. Pidiendo mes y año juntos, `es-AR` devuelve «octubre de
    2026», y la barra muestra «Octubre 2026»: el «de» ocupa lugar en una
    pantalla angosta y no agrega nada. El año se pega aparte. */
@@ -82,6 +108,9 @@ function pintar(refs) {
   // El último índice es el mes más viejo que la API mandó.
   refs.anterior.disabled = indice >= lista.length - 1;
 
+  // Se guarda ANTES de emitir: si un oyente pregunta por el mes
+  // vigente mientras atiende el evento, tiene que ver éste.
+  vigente = mes;
   document.dispatchEvent(new CustomEvent(EVENTO_CAMBIO, { detail: mes }));
 }
 

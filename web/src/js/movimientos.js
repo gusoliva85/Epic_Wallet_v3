@@ -23,7 +23,7 @@ import { api } from "./api.js";
 import { esc } from "./format.js";
 import { filaMovimiento, separadorDia, pintarFilas, destacarFilaNueva } from "./components/rows.js";
 import { bloqueCargando, error as estadoError, vacio, consolidado } from "./components/estados.js";
-import { EVENTO_CAMBIO } from "./barra-mes.js";
+import { EVENTO_CAMBIO, mesVigente } from "./barra-mes.js";
 import { categorias as categoriasCacheadas } from "./cache-categorias.js";
 import { abrirEdicion, EVENTO_CREADO } from "./alta-movimiento.js";
 
@@ -302,6 +302,15 @@ export async function arrancar() {
 
   await pedirCategorias();
   pintarFiltroCategoria();
+
+  // Mismo caso que el tablero: si el mes ya se anunció antes de que
+  // este módulo se suscribiera, se arranca con el valor vigente en
+  // lugar de esperar un evento que ya pasó (F20-T08).
+  const yaHayMes = mesVigente();
+  if (yaHayMes && !periodo) {
+    periodo = yaHayMes;
+    cargar();
+  }
 }
 
 if (document.readyState === "loading") {

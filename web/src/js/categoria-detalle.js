@@ -29,7 +29,7 @@ import { esc, fmt } from "./format.js";
 import { filaMovimiento, pintarFilas } from "./components/rows.js";
 import { bloqueCargando, error as estadoError, vacio, consolidado } from "./components/estados.js";
 import { crearHoja } from "./components/sheet.js";
-import { EVENTO_CAMBIO } from "./barra-mes.js";
+import { EVENTO_CAMBIO, mesVigente } from "./barra-mes.js";
 import { abrirEdicion } from "./alta-movimiento.js";
 
 const $ = (id) => document.getElementById(id);
@@ -176,6 +176,9 @@ export function arrancar() {
   document.addEventListener(EVENTO_CAMBIO, (ev) => {
     periodoActual = /** @type {CustomEvent} */ (ev).detail;
   });
+
+  // El evento pudo haber pasado antes de esta suscripción (F20-T08).
+  periodoActual = periodoActual ?? mesVigente();
 }
 
 if (document.readyState === "loading") {

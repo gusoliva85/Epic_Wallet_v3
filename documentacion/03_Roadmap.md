@@ -528,6 +528,12 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
   **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas. Inicio: los dos conmutadores se leen como un campo gris con la pastilla encima; la leyenda «Ingresos · Egresos · Ahorro acumulado» se ve entera; el gráfico no toca el borde de la tarjeta y **se arrastra de costado** con los días legibles. Y que los demás gráficos —Historial, Cartera, Patrimonio— sigan entrando enteros sin desplazarse.
   **Respaldo:** no toca la base ni los datos — frontend y documentación.
 
+- [~] **F20-T08 · El tablero vacío al abrir la aplicación**
+  **Tipo:** corrección
+  **Hacer:** arreglar que, abriendo la aplicación desde cero, a veces no cargara nada hasta moverse un mes y volver. La barra de mes anuncia el mes con un evento y el tablero lo escucha; pero los módulos son diferidos y cada uno arranca apenas está bajado el suyo: `barra-mes.js` está arriba de la lista y `dashboard.js` veinte archivos más abajo, así que con la red lenta la respuesta de la API llegaba antes de que el tablero se suscribiera. El evento se emitía y no lo escuchaba nadie. Ahora la barra guarda el último mes anunciado (`mesVigente()`) y las tres pantallas que dependen de él —tablero, movimientos y detalle de categoría— lo consultan al conectarse. **De paso:** el campo del conmutador de vistas pasa de 3 a 5 px de relleno, para que la pastilla no quede pegada al borde.
+  **Cómo se verifica:** cerrar la aplicación del todo en el celular y abrirla de cero varias veces, con datos en el mes actual: el tablero tiene que aparecer completo sin tocar nada. Y los conmutadores, con su pastilla despegada del borde gris.
+  **Respaldo:** no toca la base ni los datos — frontend, pruebas y documentación.
+
 ---
 
 # Después del traslado
