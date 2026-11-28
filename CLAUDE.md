@@ -22,7 +22,7 @@ La 3.0 es la misma aplicación, **corriendo en un servidor propio**. Se mueve pa
 | `documentacion/02_Documento_Tecnico.md` | **Cómo**. Stack, modelo de datos, API, estilo |
 | `documentacion/03_Roadmap.md` | **Qué sigue.** Única fuente de tareas. Ninguna tarea se ejecuta fuera de acá |
 | `documentacion/04_Migracion_a_Contabo.md` | El traslado: servidor, decisiones y fases. Se borra cuando termine |
-| `.claude/skills/epic-wallet-ui/SKILL.md` | Sistema de diseño «Vidrio Grafito». **Cargarlo antes de tocar cualquier HTML, CSS o JS de interfaz** |
+| `.claude/skills/epic-wallet-ui/SKILL.md` | Sistema de diseño «Neumorfismo». **Cargarlo antes de tocar cualquier HTML, CSS o JS de interfaz** |
 
 ## Forma de trabajar
 

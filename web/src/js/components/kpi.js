@@ -36,17 +36,19 @@ const COLORES = {
 
 export const COLORES_VALIDOS = Object.freeze(Object.keys(COLORES));
 
-/* Las cuatro tarjetas de color del tablero. Fondo sólido y texto
-   blanco, para reconocerlas de un vistazo sin leer la etiqueta.
+/* Las cuatro tarjetas teñidas del tablero. El color entra mezclado en
+   la superficie y vuelve, pleno, en el punto de la etiqueta: se
+   reconocen de un vistazo sin leerlas y sin ser cuatro rectángulos de
+   color (F20-T01).
 
-   Es una lista cerrada por lo mismo que los colores: el fondo termina
+   Es una lista cerrada por lo mismo que los colores: el color termina
    dentro de un atributo `style`. Y además porque son cuatro y son
    éstas: no es un parámetro libre, es un catálogo. */
 const TARJETAS = {
-  inc: { fondo: "var(--color-card-inc)", glifo: "sube" },
-  egr: { fondo: "var(--color-card-egr)", glifo: "baja" },
-  dia: { fondo: "var(--color-card-dia)", glifo: "calendario" },
-  pat: { fondo: "var(--color-card-pat)", glifo: "libro" },
+  inc: { fondo: "var(--color-card-inc)" },
+  egr: { fondo: "var(--color-card-egr)" },
+  dia: { fondo: "var(--color-card-dia)" },
+  pat: { fondo: "var(--color-card-pat)" },
 };
 
 export const TARJETAS_VALIDAS = Object.freeze(Object.keys(TARJETAS));
@@ -58,9 +60,10 @@ function color(nombre) {
 /**
  * Tarjeta de métrica: etiqueta, icono, cifra y subtítulo.
  *
- * Con `tarjeta` —uno de `TARJETAS_VALIDAS`— pasa a ser una tarjeta de
- * color: fondo sólido, texto blanco y la composición de fondo que la
- * identifica. Sin eso, es la tarjeta de vidrio de siempre.
+ * Con `tarjeta` —uno de `TARJETAS_VALIDAS`— pasa a ser una tarjeta
+ * teñida: la superficie lleva mezclado el color del dato y la etiqueta
+ * su punto. Sin eso, es la pieza de material de siempre, con el
+ * cuadradito de icono.
  *
  * @param {{etiqueta: string, cifra: string, sub?: string,
  *          color?: string, icono?: string, tarjeta?: string}} datos
@@ -76,16 +79,19 @@ export function tarjetaMetrica({
   const t = TARJETAS[tarjeta];
 
   if (t) {
-    // Tarjeta de color: fondo sólido, texto blanco, el signo pesos
-    // grande de fondo y el símbolo que la identifica arriba a la
-    // derecha. No lleva el cuadradito de icono: la composición del
-    // fondo ya cumple esa función y las dos cosas juntas sobrecargan.
+    // Tarjeta teñida (F20-T01): la pieza de material de siempre, con
+    // un 10% del color mezclado en la superficie y el color pleno
+    // SÓLO en el punto de la etiqueta, que lo pone el CSS. No lleva
+    // el cuadradito de icono: con el tinte y el punto ya se reconoce
+    // sin leerla, y un icono más la sobrecarga.
+    //
+    // Hasta F20-T01 era una tarjeta de color sólido con texto blanco,
+    // el signo pesos grande recortado contra el borde y el símbolo
+    // arriba a la derecha. Eso se fue con Vidrio Grafito: cuatro
+    // rectángulos de color le competían a la tarjeta héroe, que en el
+    // sistema nuevo es la única superficie maciza.
     return (
       `<article class="kpi kpi-metric shell kpi-color" style="--c-card:${t.fondo}">` +
-      // El signo va como texto y no como trazo: así es el mismo glifo
-      // de la tipografía de las cifras, no un dibujo que se le parece.
-      '<span class="kpi-peso" aria-hidden="true">$</span>' +
-      `<svg class="kpi-glifo" viewBox="0 0 24 24" aria-hidden="true">${icono(t.glifo)}</svg>` +
       '<div class="kpi-top">' +
       `<div class="kpi-label">${esc(etiqueta)}</div>` +
       "</div>" +

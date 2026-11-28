@@ -7,14 +7,23 @@
    filas, hojas, píldoras) se agrega en F01-T09 a F01-T12.
    ============================================================ */
 
-/* Contenedor: topbar, tarjetas de KPI, paneles, hojas, navegación. */
+/* Contenedor: topbar, tarjetas de KPI, paneles, hojas, navegación.
+   La pieza LEVANTADA del sistema: material sólido y las dos sombras.
+
+   No lleva `backdrop-filter`, y eso no es un olvido: el sistema no
+   tiene desenfoque en ninguna parte. Dejarlo en `blur(0)` habría sido
+   peor que sacarlo — el navegador crea igual la capa de respaldo y
+   paga el costo de GPU para no desenfocar nada.
+
+   Tampoco lleva borde: con relieve, un borde alrededor de la pieza es
+   justo lo que rompe la ilusión de que el material es uno solo. El
+   `--borde-pieza` transparente se queda para no cambiarle la caja a
+   4.700 líneas de CSS que ya cuentan ese píxel. */
 .shell {
   position: relative;
   overflow: hidden;
   background: var(--glass-shell-bg);
-  backdrop-filter: blur(var(--glass-shell-blur)) saturate(1.15);
-  -webkit-backdrop-filter: blur(var(--glass-shell-blur)) saturate(1.15);
-  border: 1px solid var(--line);
+  border: 1px solid var(--borde-pieza);
   box-shadow: var(--glass-in), var(--sh-md);
 }
 
@@ -39,27 +48,29 @@
   z-index: 1;
 }
 
-/* Contener el repintado: `backdrop-filter` es caro y el dashboard
-   llega a tener una decena de superficies a la vez. Con esto el
-   navegador no recalcula el desenfoque de una tarjeta cuando cambia
+/* Contener el repintado. Ya no hay desenfoque que recalcular, pero el
+   dashboard sigue teniendo una decena de superficies con sombra: con
+   esto el navegador no vuelve a pintar una tarjeta cuando cambia
    otra. */
 .shell,
 .cg {
   contain: paint;
 }
 
-/* Contenido dentro de un .shell: filas, fichas, campos. */
+/* Contenido dentro de un .shell: el bloque de un gráfico, una lista,
+   un campo. La pieza HUNDIDA del sistema. Es lo que hace que el
+   contenido se lea como excavado en el mismo material y no como una
+   tarjeta apoyada sobre otra tarjeta. */
 .cg {
   background: var(--glass-content-bg);
-  backdrop-filter: blur(var(--glass-content-blur));
-  -webkit-backdrop-filter: blur(var(--glass-content-blur));
-  border: 1px solid var(--line-2);
-  box-shadow: var(--glass-in);
+  border: 1px solid var(--borde-pieza);
+  box-shadow: var(--hundido-sm);
 }
 
-/* DEGRADACIÓN OBLIGATORIA.
-   Sin esto, donde no hay soporte de backdrop-filter el texto queda
-   sobre un fondo semitransparente sin desenfocar: ilegible. */
+/* El respaldo sin `backdrop-filter` se queda, y no hace nada: los dos
+   tokens de respaldo valen el mismo color sólido que la superficie.
+   Vale como red para cualquier componente viejo que todavía pida
+   desenfoque. */
 @supports not (
   (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
 ) {
@@ -146,7 +157,8 @@
   );
   box-shadow:
     var(--glass-in),
-    0 6px 16px -4px rgba(var(--shadow-rgb), 0.35);
+    4px 4px 10px var(--acc-sh-lo),
+    -3px -3px 8px var(--acc-sh-hi);
 }
 
 .marca-sello::after {
@@ -248,7 +260,7 @@
   width: 37px;
   height: 37px;
   border-radius: var(--radius-btn);
-  border: 1px solid var(--line);
+  border: 1px solid var(--borde-pieza);
   background: var(--glass-content-bg);
   box-shadow: var(--glass-in);
   color: var(--color-ink-2);
@@ -594,21 +606,18 @@
   inset: 0;
   z-index: 48;
   background: var(--scrim-0);
-  backdrop-filter: blur(0);
-  -webkit-backdrop-filter: blur(0);
   /* Cerrado no intercepta toques: sin esto, una capa invisible a
      pantalla completa dejaría la aplicación entera sin reaccionar. */
   pointer-events: none;
-  transition:
-    background 0.34s ease,
-    backdrop-filter 0.34s ease;
+  transition: background 0.34s ease;
 }
 
+/* El velo oscurece y nada más. Hasta F20-T01 además desenfocaba el
+   fondo 3 px: era lenguaje de vidrio, y el sistema neumórfico no
+   desenfoca en ninguna parte. */
 .fondo-hoja.abierto {
   pointer-events: auto;
   background: var(--scrim);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
 }
 
 .hoja {
@@ -622,7 +631,7 @@
   /* Que el gesto de scroll dentro de la hoja no arrastre la página de
      atrás al llegar al final. */
   overscroll-behavior: contain;
-  border: 1px solid var(--line);
+  border: 1px solid var(--borde-pieza);
   border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
   /* El mismo vidrio casi opaco de las dos barras, no el de una
      tarjeta. Una hoja se abre ENCIMA de la aplicación y lleva texto:
@@ -630,8 +639,6 @@
      de adelante y las dos cosas se leen peor. Es el mismo motivo por
      el que la barra superior y la inferior tienen su propio vidrio. */
   background: var(--glass-bar-bg);
-  backdrop-filter: blur(var(--glass-bar-blur)) saturate(1.05);
-  -webkit-backdrop-filter: blur(var(--glass-bar-blur)) saturate(1.05);
   box-shadow: var(--glass-in), var(--sh-lg);
   transform: translateY(105%);
   transition: transform 0.38s var(--ease);
@@ -765,7 +772,7 @@
   flex: none;
   width: 31px;
   height: 31px;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--borde-pieza);
   border-radius: var(--radius-sm);
   background: var(--glass-content-bg);
   color: var(--color-ink-2);
@@ -879,8 +886,6 @@
 .topbar,
 .botnav {
   background: var(--glass-bar-bg);
-  backdrop-filter: blur(var(--glass-bar-blur)) saturate(1.05);
-  -webkit-backdrop-filter: blur(var(--glass-bar-blur)) saturate(1.05);
 }
 
 /* El brillo diagonal de `.shell::before`, fuera: sobre una etiqueta de
@@ -965,10 +970,12 @@
   display: inline-grid;
   place-items: center;
   padding: 7px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--borde-pieza);
   border-radius: 99px;
-  background: var(--glass-content-bg);
-  box-shadow: var(--glass-in);
+  /* Levantada: una píldora de acción se toca. La hundida es la que
+     está elegida, y ésa la maneja el conmutador de vistas. */
+  background: var(--surf);
+  box-shadow: var(--glass-in), var(--sh-sm);
   color: var(--color-ink-2);
   font-size: var(--text-chip);
   font-weight: 600;
@@ -1039,6 +1046,15 @@
     var(--color-accent-2)
   );
   color: var(--color-on-accent);
+  box-shadow:
+    var(--glass-in),
+    3px 3px 8px var(--acc-sh-lo),
+    -2px -2px 6px var(--acc-sh-hi);
+}
+
+/* Apretada se hunde, como el resto de los controles. */
+.chip:active:not(:disabled) {
+  box-shadow: var(--hundido-sm);
 }
 
 /* ============================================================
@@ -1146,9 +1162,48 @@
   box-shadow: var(--glass-in), var(--sh-lg);
 }
 
+/* ---- la tarjeta héroe ----
+   La ÚNICA superficie maciza de la aplicación: el ahorro del mes y el
+   patrimonio neto. Jade en claro, Molten Orange profundo en oscuro,
+   el texto en blanco y su propia sombra teñida — una pieza del mismo
+   material pero de otro color, no una tarjeta de acento.
+
+   Es la contracara de la tarjeta teñida de más abajo: en Vidrio
+   Grafito la héroe era de vidrio y las cuatro métricas eran sólidas;
+   en el sistema neumórfico es al revés (F20-T01, decisión de Gustavo
+   sobre el mockup). El peso visual queda donde está la cifra que
+   importa. */
 .kpi--hero {
   grid-column: span 2;
   padding: 17px;
+  background: var(--hero);
+  color: var(--on-hero);
+  box-shadow:
+    var(--glass-in),
+    6px 6px 14px var(--hero-sh-lo),
+    -5px -5px 12px var(--hero-sh-hi);
+}
+
+.kpi--hero:hover {
+  box-shadow:
+    var(--glass-in),
+    9px 9px 20px var(--hero-sh-lo),
+    -8px -8px 18px var(--hero-sh-hi);
+}
+
+/* El brillo diagonal, fuera: sobre una superficie de color es un velo
+   blanco que ensucia el tono en lugar de dar profundidad. */
+.kpi--hero::before {
+  content: none;
+}
+
+/* Todo el texto de la héroe en blanco, la cifra incluida. `.kpi--hero`
+   solo no le gana a `.kpi[style*="--c"] .kpi-num`, que tiene un
+   selector de atributo de más: por eso la clase va repetida. */
+.kpi--hero .kpi-label,
+.kpi--hero .kpi-sub,
+.kpi.kpi--hero .kpi-num {
+  color: var(--on-hero);
 }
 
 @media (min-width: 1024px) {
@@ -1238,107 +1293,64 @@
   stroke-linejoin: round;
 }
 
-/* ---- tarjeta de color ----
-   Diseño de Gustavo (documentacion/mockups/tarjetas.png): fondo sólido,
-   el signo pesos grande recortado contra el borde y el símbolo que
-   identifica la tarjeta arriba a la derecha.
+/* ---- la tarjeta teñida · F20-T01 ----
+   Las cuatro del tablero: ingresos, egresos, gasto de hoy y total de
+   ahorros. Siguen siendo la misma pieza de material levantada que
+   todo lo demás; lo único que las distingue es el color del dato,
+   puesto en dos lugares y en ninguno más:
 
-   Dos cosas se apartan del diseño original, las dos por legibilidad:
+   1. UN 10% MEZCLADO EN LA SUPERFICIE. Diez por ciento y no más: con
+      el color al 25% dejan de ser material y pasan a ser cuatro
+      rectángulos de color, que es exactamente lo que se quiso sacar.
+      Se mezcla contra `--kpi-surf`, un escalón del material, no
+      contra la pieza: la tarjeta tiene que leerse como una pieza
+      aparte dentro del tablero.
 
-   1. El signo pesos va MÁS OSCURO que la tarjeta, no más claro. Con un
-      pesos claro, la cifra blanca que le cae encima baja de 5:1 a
-      3,3:1 y queda por debajo del mínimo del sistema; no alcanza con
-      bajarle la opacidad, porque ni al 10% llega. Oscuro sube a 6,8:1:
-      es decoración que además ayuda a leer.
+   2. EL PUNTO DE LA ETIQUETA, con el color pleno. Es la referencia de
+      un gráfico: dice de qué se trata la cifra sin pintar nada grande.
 
-   2. El texto es blanco pleno, sin opacidades intermedias. Al 92% ya
-      queda en 4,52:1, demasiado al límite. La jerarquía la hacen el
-      tamaño y el peso, que es como tiene que hacerse.
+   Ningún texto cae encima del color, así que —al contrario de la
+   tarjeta de color sólido de Vidrio Grafito, que vivía acá hasta el
+   2026-11-27— estos cuatro colores no necesitan contraste con blanco
+   y son los de la paleta sin retoques. El signo pesos de fondo y el
+   símbolo de la esquina se fueron con ella.
    ============================================================ */
 
 .kpi-color {
-  background: var(--c-card);
-  border-color: transparent;
-  color: var(--color-on-solid);
+  background: color-mix(in srgb, var(--kpi-surf) 90%, var(--c-card));
 }
 
-/* El texto, todo del mismo blanco. Los cuatro fondos están elegidos
-   para que el blanco encima dé 5:1 o más — `--color-on-solid`, fijo
-   en los dos temas, porque la tarjeta tampoco cambia de uno a otro. */
-.kpi-color .kpi-label,
-.kpi-color .kpi-num,
-.kpi-color .kpi-sub {
-  color: var(--color-on-solid);
-}
-
-/* El brillo diagonal del vidrio, fuera: sobre un fondo sólido es un
-   velo blanco que ensucia el color en lugar de dar profundidad. La
-   línea clara de arriba de `--glass-in` sí se queda, que es la que da
-   el borde iluminado. */
-.kpi-color::before {
-  content: none;
-}
-
-/* ---- el signo pesos de fondo ----
-   Va como texto y no como trazo: así es el mismo glifo de la
-   tipografía con la que se escriben las cifras, no un dibujo que se le
-   parece. Se recorta contra el borde de la tarjeta, que ya tiene
-   `overflow: hidden`. */
-.kpi-peso {
-  position: absolute;
-  right: -4px;
-  bottom: -34px;
-  font-family: var(--font-display);
-  font-size: var(--text-peso);
-  font-weight: 700;
-  line-height: 1;
-  color: var(--peso-sombra);
-  pointer-events: none;
-  /* Que no se pueda seleccionar ni copiar: es decoración, y de otro
-     modo aparece en medio del texto al copiar la tarjeta. */
-  user-select: none;
-}
-
-/* El símbolo que identifica la tarjeta. Arriba a la derecha, donde no
-   pasa ninguna cifra por encima: por eso este sí puede ir claro. */
-.kpi-glifo {
-  position: absolute;
-  top: 13px;
-  right: 13px;
-  width: 24px;
-  height: 24px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  color: var(--color-on-solid);
-  opacity: var(--glifo-op);
-  pointer-events: none;
-}
-
-/* En la rejilla de 4 y 6 columnas la tarjeta es más angosta: el signo
-   achica para no comerse el ancho de la cifra. */
-@media (min-width: 640px) {
-  .kpi-peso {
-    font-size: var(--text-peso-sm);
-    bottom: -30px;
-  }
-}
-
-/* La cifra y el subtítulo se pintan por encima del signo. `.shell > *`
-   ya los sube, pero el signo es hermano de ellos y va primero en el
-   DOM, así que conviene dejarlo dicho. */
-.kpi-color .kpi-top,
-.kpi-color .kpi-num,
-.kpi-color .kpi-sub {
-  position: relative;
-  z-index: 1;
-}
-
-/* La etiqueta no se mete debajo del símbolo de la esquina. */
+/* La etiqueta lleva el color del dato, oscurecido con la tinta para
+   que una etiqueta de 10,5 px no quede al límite del contraste. */
 .kpi-color .kpi-label {
-  padding-right: 30px;
+  color: color-mix(in srgb, var(--c-card) 70%, var(--mix-ink));
+}
+
+/* El punto. Va en la etiqueta y no como un nodo aparte: es decoración
+   y no tiene que existir en el DOM ni leerse en voz alta. */
+.kpi-color .kpi-label::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-card);
+}
+
+/* La cifra toma algo del color sin perderlo de vista: el color puro a
+   27 px pesa más que el número. */
+.kpi-color .kpi-num {
+  color: color-mix(in srgb, var(--c-card) 30%, var(--color-ink));
+}
+
+.kpi-color .kpi-sub {
+  color: var(--color-ink-3);
+}
+
+/* "Gasto de hoy" es el dato más blando de los cuatro: su tinte va a la
+   mitad, así la fila no tiene cuatro colores con el mismo peso. */
+.kpi-color[style*="--color-card-dia"] {
+  background: color-mix(in srgb, var(--kpi-surf) 95%, var(--c-card));
 }
 
 /* ---- la barra de progreso de la tarjeta héroe ---- */
@@ -1374,6 +1386,26 @@
   margin-top: 9px;
   font-size: var(--text-chip);
   color: var(--color-ink-3);
+}
+
+/* ---- la barra, dentro de la héroe maciza ----
+   La héroe es la única superficie de color de la aplicación, así que
+   su barra no puede usar el surco del material: sobre jade o naranja,
+   un surco claro desaparece. El canal se hunde con negro y la barra se
+   llena con el mismo blanco del texto. */
+.kpi--hero .fin-track {
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.kpi--hero .fin-fill {
+  background: var(--on-hero);
+  opacity: 0.92;
+}
+
+.kpi--hero .fin-foot {
+  color: var(--on-hero);
+  opacity: 0.8;
 }
 
 /* ============================================================
@@ -1450,7 +1482,7 @@
   gap: 11px;
   width: 100%;
   padding: 11px 12px;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--borde-pieza);
   border-radius: var(--radius-row);
   color: inherit;
   text-align: left;
@@ -1743,11 +1775,9 @@
   gap: 9px;
   padding: 11px 15px;
   max-width: calc(100vw - 32px);
-  border: 1px solid var(--line);
+  border: 1px solid var(--borde-pieza);
   border-radius: var(--radius-toast);
   background: var(--glass-bar-bg);
-  backdrop-filter: blur(var(--glass-bar-blur)) saturate(1.05);
-  -webkit-backdrop-filter: blur(var(--glass-bar-blur)) saturate(1.05);
   box-shadow: var(--glass-in), var(--sh-lg);
   font-size: var(--text-row);
   font-weight: 600;
@@ -2151,10 +2181,13 @@
 .inp {
   width: 100%;
   padding: 11px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--borde-pieza);
   border-radius: var(--radius-sm);
-  background: var(--glass-content-bg);
-  box-shadow: var(--glass-in);
+  /* Hundido: un campo es donde se escribe, no una pieza que se
+     levanta. Es la forma más clara de distinguirlo de un botón ahora
+     que los dos son del mismo material. */
+  background: var(--surf-2);
+  box-shadow: var(--hundido-sm);
   color: var(--color-ink);
   font-size: var(--text-row);
   /* 16 px mínimo en móvil, o iOS hace zoom al enfocar el campo y la
@@ -2243,6 +2276,13 @@
   padding: 14px 0 6px;
   overflow-x: auto;
   scrollbar-width: thin;
+  /* El gráfico vive en un hueco excavado en la tarjeta (F20-T01): es
+     la profundidad `--hundido`, la más honda del sistema, porque es un
+     bloque y no un control. La sombra queda en el contenedor y no se
+     desplaza con el dibujo. */
+  border-radius: var(--radius-sm);
+  background: var(--surf-2);
+  box-shadow: var(--hundido);
   /* Los DOS ejes: `.app` pide `pan-y` para la navegación por gestos
      (F12-T04) y acá hace falta devolverle el horizontal al gráfico.
      Con `pan-x` a secas, la intersección con el ancestro dejaba el
@@ -2654,8 +2694,13 @@
   fill: none;
 }
 
+/* `--color-line-2` no existe y nunca existió: el token se llama
+   `--line-2`. Un `var()` sin definir no avisa — el navegador descarta
+   la declaración entera en silencio (skill §3.2) — así que este hover
+   estuvo sin fondo desde que se escribió. Encontrado en F20-T01
+   revisando los tokens uno por uno. */
 .hist-linea-quitar:hover {
-  background: var(--color-line-2);
+  background: var(--line-2);
   color: var(--color-egr);
 }
 
@@ -2678,7 +2723,7 @@
   flex: none;
   width: 44px;
   height: 26px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--borde-pieza);
   border-radius: 99px;
   background: var(--groove-bg);
   box-shadow: var(--groove-in);
@@ -3211,9 +3256,13 @@
   width: 100%;
   min-height: 46px;
   padding: 12px 16px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--borde-pieza);
   border-radius: var(--radius-sm);
-  background: var(--glass-content-bg);
+  /* Un botón es una pieza LEVANTADA: en este sistema es lo que dice
+     "esto se toca". Hasta F20-T01 el secundario era una superficie de
+     contenido, que ahora significa lo contrario (hundido = elegido). */
+  background: var(--surf);
+  box-shadow: var(--glass-in), var(--sh-sm);
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: var(--text-button);
@@ -3221,6 +3270,7 @@
   cursor: pointer;
   transition:
     transform 0.18s var(--ease),
+    box-shadow 0.18s var(--ease),
     filter 0.18s var(--ease);
 }
 
@@ -3234,26 +3284,46 @@
   color: var(--color-on-accent);
   box-shadow:
     var(--glass-in),
-    var(--sh-sm);
+    4px 4px 10px var(--acc-sh-lo),
+    -3px -3px 8px var(--acc-sh-hi);
 }
 
 /* ---- botón destructivo (F04-T12: borrar un movimiento, R11) ----
-   Tinte de `--color-crit`, la misma variable que ya usan las
-   severidades de alerta: borrar no es una acción más, pide la misma
-   alarma visual que un aviso crítico. */
+   `--color-crit`, la misma variable que ya usan las severidades de
+   alerta: borrar no es una acción más, pide la misma alarma visual que
+   un aviso crítico.
+
+   MACIZO, no tintado (F20-T01, pedido de Gustavo sobre el mockup: "el
+   botón borrar lo veo muy simple, no se parece al resto"). Un fondo
+   lavado con texto de color no se leía como botón al lado de
+   "Guardar": con relieve, la jerarquía la da el material, así que los
+   dos tienen que ser piezas macizas y lo que cambia es el color. */
 .btn--peligro {
   margin-top: 10px;
-  border: 1px solid color-mix(in srgb, var(--color-crit) 38%, var(--line));
-  background: color-mix(in srgb, var(--color-crit) 12%, var(--glass-content-bg));
-  color: color-mix(in srgb, var(--color-crit) 75%, var(--color-ink));
+  border: 0;
+  background: var(--color-crit);
+  color: var(--color-on-solid);
+  box-shadow:
+    var(--glass-in),
+    4px 4px 10px var(--sig-sh-lo),
+    -3px -3px 8px var(--sig-sh-hi);
 }
 
 .btn:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
+/* Apretado se HUNDE, como un control físico. Es la misma gramática que
+   el resto del sistema: lo que está presionado o elegido va con las
+   dos sombras hacia adentro. */
 .btn:active:not(:disabled) {
-  transform: scale(0.985);
+  transform: none;
+  box-shadow: var(--hundido-sm);
+}
+
+.btn--principal:active:not(:disabled),
+.btn--peligro:active:not(:disabled) {
+  box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .btn:disabled {

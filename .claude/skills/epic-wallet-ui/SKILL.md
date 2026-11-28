@@ -1,16 +1,17 @@
 ---
 name: epic-wallet-ui
-description: Sistema de diseño "Vidrio Grafito" de Epic Wallet 2.0 — tokens, las dos capas de vidrio, escala tipográfica, componentes y gráficos SVG. Cargar SIEMPRE antes de escribir o modificar cualquier HTML, CSS o JavaScript de interfaz del proyecto, antes de crear un componente o una pantalla nueva, y antes de tocar un gráfico. Es la referencia normativa del frontend aprobado.
+description: Sistema de diseño "Neumorfismo" de Epic Wallet 3.0 — paletas y tokens, las dos capas del material (levantado y hundido), escala tipográfica, componentes y gráficos SVG. Cargar SIEMPRE antes de escribir o modificar cualquier HTML, CSS o JavaScript de interfaz del proyecto, antes de crear un componente o una pantalla nueva, y antes de tocar un gráfico. Es la referencia normativa del frontend aprobado.
 ---
 
-# Epic Wallet 2.0 · Sistema de diseño "Vidrio Grafito"
+# Epic Wallet 3.0 · Sistema de diseño "Neumorfismo"
 
-**Referencia viva:** `documentacion/mockups/01_Mockup_V1_Grafito_Clasico.html` — mockup aprobado y funcional. Ante cualquier duda, ese archivo manda.
+**Aprobado por Gustavo el 2026-11-27 (F20-T01)** sobre un mockup de prueba de cuatro pantallas. Reemplaza al sistema **"Vidrio Grafito"**, que rigió desde la Fase 1; su versión de esta skill y su mockup están en el historial de Git.
+**Referencia viva:** `documentacion/mockups/05_Mockup_Neumorfismo.html` — el mockup aprobado, con las cuatro pantallas y las piezas en los dos temas. Ante cualquier duda, ese archivo manda.
 **Documento normativo:** `documentacion/02_Documento_Tecnico.md` §13 y §14.
 
 ## Reglas que no se negocian
 
-1. **Ningún valor de color, sombra o radio se escribe fuera de los tokens.** Si hace falta uno nuevo, se agrega al bloque `:root` y a `html[data-theme="dark"]`, nunca suelto en un componente.
+1. **Ningún valor de color, sombra o radio se escribe fuera de los tokens.** Si hace falta uno nuevo, se agrega al bloque `:root` de `tokens.css` **y a los dos bloques oscuros**, nunca suelto en un componente.
 2. **Mobile-first de verdad.** Se escribe el CSS de teléfono (390 px) y se agrega lo demás con `min-width`. Nunca al revés.
 3. **Sin neón, sin saturaciones altas.** El color significa (ingreso, egreso, ahorro, severidad), no decora.
 4. **El gráfico nunca reemplaza los números.** Todo panel con gráfico lleva su pie de cifras.
@@ -18,164 +19,152 @@ description: Sistema de diseño "Vidrio Grafito" de Epic Wallet 2.0 — tokens, 
 6. **`prefers-reduced-motion` anula todas las animaciones.** Obligatorio.
 7. **Sin framework de UI** y sin librería de gráficos: HTML, CSS (Tailwind + tokens) y JavaScript nativo.
 8. Los textos de interfaz van en **español rioplatense** ("cargá", "tocá", "seguís").
-9. **La aplicación es multiusuario.** Nunca se escribe un nombre de usuario en el código ni en una plantilla: siempre sale del perfil de la sesión. El saludo del dashboard usa el nombre visible de la cuenta.
+9. **La aplicación es multiusuario.** Nunca se escribe un nombre de usuario en el código ni en una plantilla: siempre sale del perfil de la sesión.
+10. **Levantado se toca, hundido está elegido.** Es la gramática del sistema y vale para cada pieza nueva (§3).
 
 ## Identidad
 
-Vidrio sobre grafito. Superficies translúcidas con desenfoque y un brillo diagonal, sobre un fondo de lavados radiales fríos y cálidos, con una capa de ruido muy sutil que evita el aspecto plástico.
+Una sola pieza de material. El relieve no es un borde ni una capa encima: son **dos sombras del mismo material** —una abajo-derecha oscura y una arriba-izquierda clara— sobre una superficie que es casi el mismo color que el fondo. Si la pieza contrasta con el fondo, deja de leerse como relieve y vuelve a ser una tarjeta pegada encima: ahí está todo el truco.
+
+**El fondo no tiene dibujo propio.** Nada de lavados de color ni de capa de ruido: cualquier textura detrás de las dos sombras se lee como suciedad alrededor del borde.
+
+**Las dos paletas, con su reparto:**
+
+| Tema | 60% material | 30% dato y acción | 10% señal |
+|---|---|---|---|
+| claro | Ivory Porcelain `#f1ece3` | Jade Lacquer `#1d6b58` | Scarlet Signal `#c62b36` |
+| oscuro | Raven Black `#191c21` | Pewter Grey `#8d949d` | Molten Orange `#ff6a1f` |
+
+Dónde va cada uno: el material es todo lo que no es dato (fondos, piezas, relieve). El acento es la tarjeta héroe, el ingreso, la acción principal y las marcas de los gráficos. La señal es el egreso, la alerta, el vencimiento y borrar — y nada más, o deja de ser señal.
 
 ## 1 · Tokens
 
-Van en `web/src/styles/tokens.css` y se registran en Tailwind con `@theme`.
+Van en `web/src/styles/tokens.css` y se registran en Tailwind con `@theme`. **Los nombres vienen de Vidrio Grafito y se conservaron a propósito**: `--glass-shell-bg` ahora vale un color sólido y `--sh-md` ahora son dos sombras. Renombrar 4.700 líneas de CSS para cambiar de estilo es de donde salen los `var()` sin definir, que no avisan (§3.2).
 
 ```css
 :root{
-  /* fondo y lavados */
-  --bg-1:#eff2f5; --bg-2:#e6ecef; --wash-a:#c3dcec; --wash-b:#f3e4c9;
+  /* material */
+  --color-bg-1:#ebe5db; --color-bg-2:#e7e0d5;
+  --surf:#f1ece3;       /* la pieza levantada */
+  --surf-2:#e7e0d5;     /* lo hundido */
+  --kpi-surf:#e8e1d4;   /* base de la tarjeta de indicador */
 
-  /* tinta: 4 niveles de jerarquía */
-  --ink:#1c2024;    /* títulos y cifras */
-  --ink-2:#4b5157;  /* texto normal */
-  --ink-3:#70757c;  /* secundario y etiquetas */
-  --ink-4:#8f9398;  /* deshabilitado y ejes */
+  /* las dos sombras: todo lo demás se arma con éstas */
+  --sh-lo:rgba(170,158,138,.52); --sh-hi:#fffdf8;
 
-  /* líneas */
-  --line:rgba(28,32,36,.10); --line-2:rgba(28,32,36,.07); --line-strong:rgba(28,32,36,.16);
+  /* tinta, calibrada sobre la pieza: 12,8 · 7,4 · 4,9 · 3,1 :1 */
+  --color-ink:#2a2620; --color-ink-2:#544d44;
+  --color-ink-3:#6d665b; --color-ink-4:#8c8373;
 
-  /* vidrio */
-  --glass-shell-bg:rgba(255,255,255,.52); --glass-shell-blur:22px;
-  --glass-shell-fallback:rgba(255,255,255,.92);
-  --glass-content-bg:rgba(255,255,255,.68); --glass-content-blur:7px;
-  --glass-content-fallback:rgba(255,255,255,.94);
-  --glass-in:inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 1px rgba(255,255,255,.45);
-  --glass-sheen:linear-gradient(120deg,rgba(255,255,255,.55),transparent 45%);
+  /* acento y señal */
+  --color-accent:#1d6b58; --color-accent-2:#14503f; --color-on-accent:#f3efe6;
+  --color-inc:#1d6b58; --color-egr:#c62b36; --color-sav:#1d6b58;
+  --color-card-inc:#1d6b58; --color-card-egr:#c62b36;
+  --color-card-dia:#5f7d72; --color-card-pat:#1d6b58;
+  --color-ok:#1d6b58; --color-warn:#9c7400; --color-pend:#b35a16; --color-crit:#c62b36;
 
-  /* acento: azul grafito */
-  --navy:#11181f;
-  --accent:#2f7cb4; --accent-2:#1d5f8e; --accent-soft:#d8ecf8; --accent-ring:rgba(47,124,180,.3);
+  /* levantado, a tres distancias */
+  --sh-sm:4px 4px 9px var(--sh-lo),-4px -4px 9px var(--sh-hi);
+  --sh-md:6px 6px 14px var(--sh-lo),-6px -6px 14px var(--sh-hi);
+  --sh-lg:9px 9px 20px var(--sh-lo),-8px -8px 18px var(--sh-hi);
 
-  /* avatar de la cuenta: grafito neutro, lo único de la barra que no es acento */
-  --avatar-1:#5c6469; --avatar-2:#33383c;
+  /* hundido, a dos profundidades */
+  --hundido:inset 5px 5px 11px var(--sh-lo),inset -5px -5px 11px var(--sh-hi);
+  --hundido-sm:inset 3px 3px 7px var(--sh-lo),inset -3px -3px 7px var(--sh-hi);
 
-  /* surco hundido: conmutador de pestañas y de vistas */
-  --groove-bg:rgba(20,22,25,.06); --groove-in:inset 0 1px 3px rgba(0,0,0,.08);
+  /* el canto iluminado de una pieza: no es un borde */
+  --glass-in:inset 1px 1px 0 rgba(255,253,248,.75);
+  --borde-pieza:transparent;
 
-  /* velo del fondo con una hoja abierta. El transparente NUNCA es transparent:
-     Chrome lo interpola pasando por negro y parpadea al abrir */
-  --scrim-0:rgba(10,12,14,0); --scrim:rgba(10,12,14,.34);
-
-  /* semántica financiera */
-  --inc:#08916a;  /* ingresos */
-  --egr:#d4202f;  /* egresos  */
-  --sav:#2a73ad;  /* ahorro   */
-
-  /* severidad de alertas */
-  --ok:#08916a; --warn:#c99100; --pend:#d4701a; --crit:#d4202f;
-
-  /* mezclas y sombras */
-  --mix-tint:#fff; --mix-ink:#1c2024;
-  --shadow-rgb:20,22,25;
-  --sh-sm:0 1px 2px rgba(var(--shadow-rgb),.06),0 4px 12px -4px rgba(var(--shadow-rgb),.12);
-  --sh-md:0 2px 6px rgba(var(--shadow-rgb),.07),0 16px 34px -16px rgba(var(--shadow-rgb),.22);
-  --sh-lg:0 4px 16px rgba(var(--shadow-rgb),.09),0 34px 70px -26px rgba(var(--shadow-rgb),.32);
-
-  /* radios y curva */
-  --r-btn:13px;   /* botones de icono, avatar, sello de la marca */
-  --r-nav:14px; --r-fab:19px; --r-bar:22px; --r-sheet:26px;
-  --r-sm:12px; --r-card:20px; --r-lg:24px;
-  --ease:cubic-bezier(.32,.72,0,1);
+  /* la tarjeta héroe, única superficie maciza */
+  --hero:#1d6b58; --on-hero:#fffaf6;
+  --hero-sh-lo:rgba(10,55,44,.55); --hero-sh-hi:rgba(118,187,168,.45);
+  /* pieza CHICA de acento: tiñe el lado oscuro, no el claro */
+  --acc-sh-lo:rgba(12,58,46,.42); --acc-sh-hi:var(--sh-hi);
 }
 html[data-theme="dark"]{
-  --bg-1:#0a0d10; --bg-2:#0c1014; --wash-a:#15323f; --wash-b:#322815;
-  --ink:#eef0f1; --ink-2:#bcc0c4; --ink-3:#868b91; --ink-4:#5c6166;
-  --line:rgba(238,240,241,.10); --line-2:rgba(238,240,241,.06); --line-strong:rgba(238,240,241,.16);
-  --glass-shell-bg:rgba(22,25,28,.5); --glass-shell-fallback:rgba(13,15,17,.94);
-  --glass-content-bg:rgba(22,25,28,.72); --glass-content-fallback:rgba(13,15,17,.96);
-  --glass-in:inset 0 1px 0 rgba(255,255,255,.07),inset 0 0 0 1px rgba(255,255,255,.05);
-  --glass-sheen:linear-gradient(120deg,rgba(255,255,255,.07),transparent 45%);
-  --navy:#040608;
-  --accent:#58b4ea; --accent-2:#8ed0f7; --accent-soft:#0e2531; --accent-ring:rgba(88,180,234,.34);
-  --avatar-1:#474f54; --avatar-2:#2a2e32;
-  --groove-bg:rgba(0,0,0,.26); --groove-in:inset 0 1px 3px rgba(0,0,0,.45);
-  --scrim-0:rgba(0,0,0,0); --scrim:rgba(0,0,0,.52);
-  --inc:#2fd09a; --egr:#f4677a; --sav:#58b4ea;
-  --ok:#2fd09a; --warn:#edbb3e; --pend:#f0914f; --crit:#f4677a;
-  --mix-tint:#181b1e; --mix-ink:#f2f4f5;
-  --shadow-rgb:0,0,0;
-  --sh-sm:0 1px 2px rgba(0,0,0,.4),0 4px 14px -4px rgba(0,0,0,.5);
-  --sh-md:0 2px 8px rgba(0,0,0,.35),0 18px 38px -16px rgba(0,0,0,.55);
-  --sh-lg:0 4px 18px rgba(0,0,0,.4),0 40px 80px -28px rgba(0,0,0,.65);
+  --color-bg-1:#13151a; --surf:#191c21; --surf-2:#14171b; --kpi-surf:#23272d;
+  --sh-lo:rgba(0,0,0,.70); --sh-hi:rgba(86,94,104,.30);
+  --color-ink:#e7e9ec; --color-ink-2:#b9bfc6; --color-ink-3:#9aa1a9; --color-ink-4:#767d85;
+  --color-accent:#8d949d; --color-accent-2:#a7aeb6; --color-on-accent:#14171b;
+  --color-inc:#a7aeb6; --color-egr:#ff6a1f; --color-sav:#ff8a4c;
+  --color-card-inc:#8d949d; --color-card-egr:#ff6a1f;
+  --color-card-dia:#7d848c; --color-card-pat:#8d949d;
+  --color-ok:#a7aeb6; --color-warn:#e8b454; --color-pend:#ff8a4c; --color-crit:#ff6a1f;
+  --hero:#c4511a; --on-hero:#fffaf6;     /* naranja profundo: el texto va en blanco */
+  --glass-in:inset 1px 1px 0 rgba(203,209,215,.14);
+  --acc-sh-lo:rgba(0,0,0,.6); --acc-sh-hi:rgba(203,209,215,.22);
 }
 ```
 
-**El tema oscuro redefine las mismas variables.** Ningún componente conoce el tema; sólo usa tokens. Cambiar de tema no toca una línea de componente.
+**El tema oscuro redefine las mismas variables**, en `html[data-theme="dark"]` y en `@media (prefers-color-scheme: dark)`. Ningún componente conoce el tema; sólo usa tokens.
 
-`color-mix` con `--mix-tint` y `--mix-ink` es el truco que hace que píldoras, iconos y marcas funcionen en ambos temas con una sola regla:
+**Dos pares de sombras de color, no uno.** `--hero-sh-*` tiñe los dos lados y es sólo para la tarjeta héroe. `--acc-sh-*` tiñe el oscuro y deja el claro en la luz del material, y es para toda pieza chica de acento: el sello de la marca, el botón principal, la píldora sólida. En una pieza de 46 px el halo de color se ve como un aura verde —naranja en oscuro— alrededor del botón.
+
+**La severidad dobla la paleta a propósito.** Con tres colores no se pueden representar cuatro severidades: `warn` y `pend` son un ámbar y un naranja quemado dentro de la temperatura cálida del material. Sigue valiendo la regla que importa: el color nunca es el único portador (§8).
+
+`color-mix` con `--mix-tint` (el material, no blanco) y `--mix-ink` es lo que hace que píldoras, iconos y marcas funcionen en ambos temas con una sola regla:
 
 ```css
 background:color-mix(in srgb,var(--c) 15%,var(--mix-tint));
 color:color-mix(in srgb,var(--c) 80%,var(--mix-ink));
 ```
 
-## 2 · Fondo y ruido
+## 2 · El fondo
+
+Material plano y nada más. Va en una capa fija propia, no en `background-attachment: fixed` (Safari en iOS lo trata como `scroll`).
 
 ```css
-body{
-  background:
-    radial-gradient(ellipse 52% 34% at 10% -6%,var(--wash-a),transparent 62%),
-    radial-gradient(ellipse 42% 28% at 106% 6%,var(--wash-b),transparent 58%),
-    radial-gradient(ellipse 38% 26% at 50% 104%,var(--wash-a),transparent 66%),
-    linear-gradient(180deg,var(--bg-1),var(--bg-2));
-  background-attachment:fixed;
-}
-/* capa de ruido: una sola, en SVG embebido, nunca una imagen */
-body::before{
-  content:"";position:fixed;inset:0;z-index:999;pointer-events:none;
-  opacity:.035;mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+--ambiente: linear-gradient(170deg,var(--color-bg-1),var(--color-bg-2) 72%);
+
+body::after{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:var(--ambiente);
 }
 ```
 
-## 3 · Las dos capas de vidrio
+Acá vivían tres lavados radiales de color y, encima de toda la aplicación, una capa de ruido en SVG que evitaba que el vidrio se viera plástico. **Las dos se fueron con el vidrio y no vuelven**: el relieve necesita exactamente lo contrario.
+
+## 3 · Las dos capas del material
 
 Toda la profundidad sale de dos clases. **No se inventan variantes.**
 
-| Clase | Uso | Desenfoque |
+| Clase | Forma | Uso |
 |---|---|---|
-| `.shell` | Contenedores: topbar, tarjetas de KPI, paneles, hojas, navegación | 22 px + saturación 1,15 |
-| `.cg` | Contenido dentro de un `.shell`: filas, fichas, campos | 7 px |
+| `.shell` | **levantado** · `--glass-in, --sh-md` | contenedores: topbar, tarjetas, paneles, hojas, navegación |
+| `.cg` | **hundido** · `--hundido-sm` | contenido dentro de un `.shell`: filas, fichas, campos |
 
 ```css
 .shell{position:relative;overflow:hidden;background:var(--glass-shell-bg);
-  backdrop-filter:blur(var(--glass-shell-blur)) saturate(1.15);
-  -webkit-backdrop-filter:blur(var(--glass-shell-blur)) saturate(1.15);
-  border:1px solid var(--line);box-shadow:var(--glass-in),var(--sh-md)}
+  border:1px solid var(--borde-pieza);box-shadow:var(--glass-in),var(--sh-md)}
 .shell::before{content:"";position:absolute;inset:0;background:var(--glass-sheen);pointer-events:none}
 
 .cg{background:var(--glass-content-bg);
-  backdrop-filter:blur(var(--glass-content-blur));-webkit-backdrop-filter:blur(var(--glass-content-blur));
-  border:1px solid var(--line-2);box-shadow:var(--glass-in)}
-
-/* DEGRADACIÓN OBLIGATORIA: sin esto el texto queda ilegible */
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .shell{background:var(--glass-shell-fallback)}
-  .cg{background:var(--glass-content-fallback)!important}
-}
+  border:1px solid var(--borde-pieza);box-shadow:var(--hundido-sm)}
 ```
 
-## 3.1 · Las dos barras de navegación: vidrio al mínimo
+Y la gramática, que vale para cada pieza nueva:
 
-`.topbar` y `.botnav` son `.shell`, **pero no llevan el vidrio de una tarjeta.** Tienen texto chico y pasan por delante de todo el contenido al hacer scroll: con 52% de opacidad y 22 px de desenfoque, las letras se mezclan con lo que pasa por detrás y dejan de leerse.
+| Forma | Qué significa | Ejemplos |
+|---|---|---|
+| **Levantado** | esto se toca | botón, píldora, tarjeta, barra, hoja |
+| **Hundido** | está elegido, o contiene contenido | surco del conmutador, campo, bloque de gráfico (`--hundido`, la más honda), fila, **botón apretado** |
 
-```css
---glass-bar-bg: rgba(255,255,255,.94);   /* casi opaco */
---glass-bar-blur: 10px;                   /* el mínimo que da profundidad */
---glass-bar-fallback: rgba(255,255,255,.985);
-```
+Tres consecuencias que se verifican mirando:
 
-Y **se anula el brillo diagonal** (`.topbar::before { content: none }`): es un degradado blanco encima del contenido, y sobre una etiqueta de 9,5 px es la diferencia entre leerla y no.
+- **Ninguna pieza lleva borde.** `--borde-pieza` es transparente; el píxel se conserva para no cambiarle la caja a lo que ya lo cuenta. Un borde alrededor de una pieza con relieve es justo lo que rompe la ilusión.
+- **Ninguna pieza lleva `backdrop-filter`.** El sistema no desenfoca en ninguna parte: ni tarjetas, ni barras, ni el velo de una hoja. Dejarlo en `blur(0)` es peor que sacarlo — el navegador crea igual la capa y paga el costo para no hacer nada.
+- **El radio no es decorativo.** Una esquina casi recta con dos sombras se ve como un error de render: la sombra necesita esquina redonda para girar alrededor de la pieza. Por eso los radios de este sistema son más generosos que los de Vidrio Grafito.
 
-Esto no es opcional ni estético: con el vidrio de tarjeta, el contraste de la etiqueta de la barra inferior no llega al mínimo del sistema. `tests/unit/test_barras_vidrio.py` lo calcula.
+## 3.1 · Las dos barras de navegación
+
+`.topbar` y `.botnav` son `.shell` y nada más: la misma pieza levantada que el resto.
+
+En Vidrio Grafito eran un caso especial y el comentario merece quedar, porque explica un problema que este sistema no tiene: con el vidrio de una tarjeta (52% de opacidad y 22 px de desenfoque), las letras de 9,5 px de la barra inferior se mezclaban con el contenido que pasaba por detrás al hacer scroll y no llegaban al contraste mínimo. Hubo que darles su propio vidrio casi opaco y anularles el brillo diagonal.
+
+**Con material sólido eso no puede pasar**: nada de lo que pasa por detrás se ve a través de una barra. Los tokens `--glass-bar-*` siguen existiendo y valen el mismo color de pieza que `--glass-shell-bg`.
+
+Lo que **sí** se conserva de aquella decisión: la barra necesita separarse del contenido que le pasa por debajo. Eso lo hace su sombra (`--sh-lg`), no la opacidad.
 
 ## 3.2 · Un `var()` sin definir no avisa
 
@@ -183,7 +172,9 @@ Si un `var(--x)` no existe, el navegador **descarta la declaración entera en si
 
 Pasó en este proyecto: ocho tokens que se creían agregados nunca entraron a `tokens.css`, y la barra inferior, el botón flotante y la hoja estuvieron en producción con las esquinas cuadradas desde F01-T06. Las pruebas no lo vieron porque comprobaban que el CSS *usara* `var(--radius-*)`, nunca que el token existiera.
 
-**Al agregar un token: comprobar que quedó en el archivo, no que el reemplazo «se ejecutó».** `test_todo_var_usado_existe_de_verdad` lo cubre de acá en adelante.
+**Al agregar un token: comprobar que quedó en el archivo, no que el reemplazo «se ejecutó».** La prueba que cubría esto vivía en `tests/unit/` y se fue con las pruebas de interfaz; la comprobación se hace a mano, recorriendo cada `var()` de los tres CSS y de los `style` en línea del JavaScript contra los tokens definidos.
+
+Así se encontró, en F20-T01, un `var(--color-line-2)` —el token se llama `--line-2`— que dejaba sin fondo el hover de quitar una línea del historial, probablemente desde que se escribió.
 
 ## 4 · Tipografía
 
@@ -235,7 +226,7 @@ Pasó en este proyecto: ocho tokens que se creían agregados nunca entraron a `t
 | Conteo de cifras | 900 ms | cúbica de salida |
 | Cambio de tema | View Transitions API si existe | — |
 
-**Toda view transition apaga el `backdrop-filter` mientras dura** (`[data-transicion-tema]` para el círculo del tema, `[data-transicion-vista]` para el deslizo entre vistas), con el mismo respaldo sólido del bloque `@supports not` de §3. Una view transition saca dos fotos de la pantalla entera: con una pantalla llena de vidrio, el GPU recalcula todos los desenfoques en el primer cuadro y la animación arranca trabada. Las dos barras quedan afuera: su vidrio ya es opaco (§3.1).
+Las dos view transitions —el círculo del cambio de tema y el deslizo entre vistas— **arrancan lisas por construcción**. Hasta F20-T01 había que apagarles el `backdrop-filter` a todas las tarjetas mientras duraban: una view transition saca dos fotos de la pantalla entera, y con una pantalla llena de vidrio el GPU del teléfono recalculaba todos los desenfoques en el primer cuadro y la animación arrancaba trabada. Sin desenfoque en el sistema, esas dos reglas se fueron y no hay nada que apagar.
 
 ```css
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -314,7 +305,7 @@ Rejilla de `34px 1fr auto`: marca, contenido, valor. **La fila es un `<button>`*
 
 **Ingreso: `+`, verde y flecha hacia arriba. Egreso: `−`, rojo y flecha hacia abajo.** Los tres a la vez, porque el color no puede ser el único portador. El menos es **U+2212**, no el guión del teclado: el guión es más corto y a otra altura, y al lado de un `+` en una columna de cifras se nota.
 
-Los importes mezclan su color con la tinta (`color-mix` contra `--mix-ink`) y no lo usan puro: el verde y el rojo puros sobre vidrio quedan por debajo del contraste mínimo.
+Los importes mezclan su color con la tinta (`color-mix` contra `--mix-ink`) y no lo usan puro: el jade y el scarlet puros sobre el material quedan al límite del contraste mínimo.
 
 La flecha y las iniciales van `aria-hidden`: la flecha repite el signo y las iniciales repiten el nombre de al lado — sin ocultarlas, el lector dice «AL Alquiler». La barra de participación también: el porcentaje ya está en el detalle.
 
@@ -324,7 +315,7 @@ La flecha y las iniciales van `aria-hidden`: la flecha repite el signo y las ini
 
 #### El foco tiene que ganarle al hover
 
-`:focus-visible` de `base.css` pone el halo con un selector de **menor especificidad** que `.row:hover`, que reemplaza `box-shadow` entero. Al pasar el dedo por una fila enfocada, el halo desaparecía. Por eso `.row:focus-visible` se declara aparte, con el halo **primero** dentro de su propia `box-shadow` — dibujado después de la sombra del vidrio, queda por debajo.
+`:focus-visible` de `base.css` pone el halo con un selector de **menor especificidad** que `.row:hover`, que reemplaza `box-shadow` entero. Al pasar el dedo por una fila enfocada, el halo desaparecía. Por eso `.row:focus-visible` se declara aparte, con el halo **primero** dentro de su propia `box-shadow` — dibujado después del relieve, queda por debajo.
 
 Esto vale para **cualquier componente que redefina `box-shadow` en `:hover`**: hay que repetir el halo en su propio `:focus-visible`.
 
@@ -334,7 +325,7 @@ Esto vale para **cualquier componente que redefina `box-shadow` en `:hover`**: h
 
 ### Pantallas de cuenta
 
-Cuatro pantallas sin sesión, todas con la misma tarjeta de vidrio centrada (`.lock-card.shell`, máximo 372 px) sobre el fondo de lavados:
+Cuatro pantallas sin sesión, todas con la misma pieza levantada centrada (`.lock-card.shell`, máximo 372 px) sobre el material del fondo:
 
 | Ruta | Pantalla | Campos |
 |---|---|---|
@@ -366,7 +357,7 @@ Reglas de los campos de contraseña:
 
 ### Barra superior
 
-`.topbar` es un `.shell` **pegajoso a 8 px del borde**, no a 0: el hueco deja ver el fondo por encima del vidrio y es lo que la hace leer como pieza flotante. Lleva `z-index` o el contenido le pasa por arriba al hacer scroll.
+`.topbar` es un `.shell` **pegajoso a 8 px del borde**, no a 0: el hueco deja ver el material por encima de la barra, y con relieve es además lo que deja lugar a su sombra de arriba — pegada al borde, la pieza pierde la mitad del relieve. Lleva `z-index` o el contenido le pasa por arriba al hacer scroll.
 
 ```text
 .marca-app      sello + nombre · min-width:0 y ellipsis, o desborda en 320 px
@@ -471,39 +462,46 @@ pintarTarjetas(contenedor, [ ...tarjetas ])   // escribe y arranca las barras
 
 **La barra nace en 0 en el CSS y recibe su ancho en `requestAnimationFrame`.** Puesta directo, la transición no tiene de dónde partir y aparece ya llena. Y tiene que ser `requestAnimationFrame`: una microtarea corre antes del pintado, así que el ancho se junta con el primer render y tampoco se ve crecer. Ojo: **esa diferencia no se puede probar en jsdom**, los dos se ven iguales; por eso `tests/unit/test_kpi.py` la verifica leyendo el código y lo dice.
 
-#### Tarjeta de color
+#### Tarjeta teñida
 
-Las cuatro métricas del tablero son **tarjetas de color sólido con texto blanco**, para reconocerlas sin leer la etiqueta. Diseño de Gustavo: `documentacion/mockups/tarjetas.png` (en Smart_Building_ver_4).
+Las cuatro métricas del tablero son **piezas de material teñidas por el color de su dato** (F20-T01).
 
 ```javascript
 tarjetaMetrica({ etiqueta, cifra, sub, tarjeta: "inc" | "egr" | "dia" | "pat" })
 ```
 
 ```text
-inc  verde            #0f7a5c · flecha arriba
-egr  rojo ladrillo    #bd3444 · flecha abajo
-dia  violeta          #8549a8 · calendario
-pat  azul             #1c6ea3 · libro mayor
+inc  jade      (pewter en oscuro)     ingresos
+egr  scarlet   (molten orange)        egresos
+dia  jade apagado (pewter apagado)    gasto de hoy
+pat  jade      (pewter)               total de ahorros
 ```
 
-**Los cuatro fondos NO son los colores semánticos**, y se apartan por dos medidas:
+El color entra en dos lugares y en ninguno más:
 
-- **Contraste parejo de 5,3 a 6,0:1 con blanco en las cuatro.** Que den un número parecido es lo que hace que la fila se lea como un conjunto y no como cuatro oscuridades distintas. Es la medida que decide el tono: la saturación se subió hasta donde el contraste lo permitió (pedido de Gustavo, 2026-10-27: los colores estaban apagados), no más allá.
-- **Siguen sin ser los colores semánticos.** Son su propia superficie, los mismos en los dos temas.
+1. **Un 10% mezclado en la superficie**, contra `--kpi-surf` (un escalón del material, no la pieza). Diez por ciento y no más: con el color al 25% dejan de ser material y pasan a ser cuatro rectángulos de color.
+2. **El punto de la etiqueta**, con el color pleno, como la referencia de un gráfico. Lo pone el CSS con un `::before`: es decoración y no tiene que existir en el DOM ni leerse en voz alta.
 
-Son los mismos en los dos temas: una tarjeta de color es su propia superficie, no vidrio que se tiñe.
+La cifra toma un 30% del color mezclado con la tinta, y la etiqueta un 70%: el color puro a 27 px pesa más que el número, y una etiqueta de 10,5 px en color pleno queda al límite del contraste.
 
-**El signo pesos de fondo va MÁS OSCURO que la tarjeta, no más claro.** Es la decisión central y es contraintuitiva:
+**Ningún texto cae encima del color**, así que los cuatro valores no necesitan contraste con blanco: son los de la paleta sin retoques.
 
-> Con un signo claro, la cifra blanca que le cae encima baja de 5:1 a **3,3:1** y deja de cumplir el mínimo. Y no se arregla bajándole la opacidad: **ni al 10% llega a 4,5:1**. Oscureciéndolo sube a **6,8:1** — decoración que además ayuda a leer.
+> **Qué había antes y por qué se fue.** Hasta el 2026-11-27 eran cuatro tarjetas de **color sólido con texto blanco**, con el signo pesos grande recortado contra el borde y el símbolo arriba a la derecha (diseño de Gustavo, `mockups/tarjetas.png`). Los cuatro fondos estaban calibrados a 5,3–6,0:1 con blanco, y el signo pesos iba más oscuro que la tarjeta porque aclarándolo la cifra blanca caía a 3,3:1. Todo eso se fue con Vidrio Grafito: en el sistema nuevo **la única superficie maciza es la tarjeta héroe**, y cuatro rectángulos de color al lado le competían. Se invirtieron entre sí.
 
-El signo va como **texto**, no como trazo dibujado: así es el mismo glifo de la tipografía con la que se escriben los importes. Lleva `user-select: none` —si no, aparece en medio del texto al copiar la tarjeta— y se recorta contra el borde, que es de donde sale el efecto de que sea más grande que la tarjeta.
+#### La tarjeta héroe
 
-El símbolo chico sí va claro: vive arriba a la derecha, **donde no pasa ninguna cifra por encima**.
+La única superficie maciza de la aplicación: el ahorro del mes y el patrimonio neto.
 
-**El texto es blanco pleno, sin opacidades intermedias.** Al 92% ya da 4,52:1, demasiado al límite. La jerarquía la hacen el tamaño y el peso.
+```text
+fondo      --hero      jade en claro · molten orange PROFUNDO en oscuro
+texto      --on-hero   blanco, también la cifra y el pie
+sombra     --hero-sh-* teñida de los dos lados (es grande: acá el halo
+                       de color se lee como el canto de la pieza)
+barra      canal negro al 22%, relleno en --on-hero
+brillo     .kpi--hero::before { content: none }
+```
 
-Una tarjeta de color **no lleva además el cuadradito de icono**: la composición del fondo ya cumple esa función. Y la héroe **no** es de color: el contraste entre ella, de vidrio, y las cuatro sólidas es parte del diseño.
+El naranja del héroe en oscuro es **un paso más profundo que `--color-egr`**, y es a propósito: su texto va en blanco, y sobre el naranja pleno el blanco queda al límite de lo legible. El naranja pleno sigue intacto en todo lo demás.
 
 ### Rejilla y entrada escalonada
 
@@ -698,7 +696,10 @@ Y la pantalla **dice que son de muestra**: una cifra creíble sin aclaración se
 
 - No agregar librerías de UI ni de gráficos.
 - No escribir colores, sombras ni radios fuera de los tokens.
-- No usar `backdrop-filter` sin su bloque `@supports not`.
+- **No usar `backdrop-filter`.** El sistema no desenfoca en ninguna parte.
+- **No poner borde a una pieza con relieve.** Es lo que rompe la ilusión.
+- **No levantar lo que está elegido ni hundir lo que se toca.** La gramática de §3 es lo que hace que la interfaz se entienda sin explicarla.
+- **No teñir el lado claro de la sombra en una pieza chica de acento.** Queda un aura de color alrededor del botón: para eso están `--acc-sh-*`.
 - No usar `innerHTML` con datos del servidor sin `esc()`.
 - No hacer aritmética con dinero en el frontend.
 - No inventar movimientos para un mes consolidado.

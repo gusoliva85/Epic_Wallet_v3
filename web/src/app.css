@@ -5,7 +5,7 @@
 
    Orden de capas, de abajo hacia arriba:
      1. tailwindcss   preflight y utilidades
-     2. tokens.css    las variables del sistema Vidrio Grafito
+     2. tokens.css    las variables del sistema Neumorfismo
      3. base.css      fondo, ruido y escala tipográfica
      4. components.css  vidrio, tarjetas, filas, hojas, gráficos
 

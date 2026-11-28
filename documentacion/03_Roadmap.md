@@ -480,8 +480,15 @@ Ninguna bloquea el traslado. Se retoman cuando la 3.0 esté en pie.
 | F12-T05 | Cuatro correcciones de uso: scroll, color, orden y conmutadores |
 | F12-T06 | Dos animaciones: el interruptor y la fila que entra |
 
-- [ ] **F20-T00 · Sin tareas nuevas todavía**
+- [x] **F20-T00 · Sin tareas nuevas todavía**
   Se abren a pedido de Gustavo, de a una.
+  *Cerrada el 2026-11-27 al abrirse F20-T01.*
+
+- [~] **F20-T01 · Neumorfismo: el sistema de diseño nuevo**
+  **Tipo:** interfaz
+  **Hacer:** reemplazar «Vidrio Grafito» por el estilo neumórfico aprobado por Gustavo el 2026-11-27 (mockup de prueba, cuatro pantallas y las piezas). Paleta clara **Ivory Porcelain 60 / Jade Lacquer 30 / Scarlet Signal 10**; paleta oscura **Raven Black 60 / Pewter Grey 30 / Molten Orange 10**. El relieve sale de dos sombras —una abajo-derecha oscura, una arriba-izquierda clara— sobre el mismo material: `.shell` levantado, `.cg` hundido, sin vidrio, sin desenfoque, sin lavados ni ruido. La tarjeta héroe pasa a ser maciza (jade en claro, naranja profundo en oscuro, texto blanco) y las cuatro tarjetas de indicador pasan de color sólido a material teñido con el punto de color en la etiqueta: se invierten entre sí.
+  **Cómo se verifica:** `https://13-140-36-93.sslip.io` desde el celular, en los dos temas: las seis vistas, la tarjeta héroe, las cuatro tarjetas, el gráfico diario, los seis meses con la barra de egreso maciza, la lista de movimientos, las hojas, el interruptor y el botón de borrar.
+  **Respaldo:** no toca la base ni los datos — frontend y documentación.
 
 ---
 

@@ -480,37 +480,42 @@ describe("tarjetas de indicador", () => {
     return b;
   }
 
-  // ------------------------------- las cinco tarjetas de color del catálogo
+  // ------------------------------- las cuatro tarjetas teñidas del catálogo
+  //
+  // F20-T01: eran tarjetas de color sólido con el signo pesos de fondo
+  // y el símbolo de la esquina. Pasaron a ser material teñido: el color
+  // entra por `--c-card` y el CSS lo usa en la superficie y en el punto
+  // de la etiqueta. Las pruebas del signo y del símbolo se fueron con
+  // ellos — fijaban un diseño que ya no es el del sistema.
 
-  test("las tarjetas de color del catalogo son identificables", async () => {
+  test("las tarjetas teñidas del catalogo son identificables", async () => {
     const { kpi, rejilla } = await montar();
     for (const nombre of kpi.TARJETAS_VALIDAS) {
       kpi.pintarTarjetas(rejilla, [
         kpi.tarjetaMetrica({ etiqueta: nombre, cifra: "$1", tarjeta: nombre }),
       ]);
       const t = rejilla.querySelector(".kpi");
-      assert.ok(t.classList.contains("kpi-color"), `${nombre}: no es tarjeta de color`);
-      assert.ok(t.querySelector(".kpi-peso"), `${nombre}: falta el signo pesos de fondo`);
-      assert.ok(t.querySelector("svg.kpi-glifo path"), `${nombre}: falta el símbolo`);
+      assert.ok(t.classList.contains("kpi-color"), `${nombre}: no es tarjeta teñida`);
+      assert.match(
+        t.getAttribute("style") ?? "",
+        /--c-card/,
+        `${nombre}: falta el color del dato`,
+      );
     }
   });
 
-  test("ninguna tarjeta del catalogo repite fondo ni simbolo", async () => {
-    // Con el mismo fondo o el mismo símbolo dejarían de identificar
-    // nada, que es para lo que están.
+  test("ninguna tarjeta del catalogo repite el color del dato", async () => {
+    // Con el mismo color dejarían de identificar nada, que es para lo
+    // que están. Cada una nombra su propio token.
     const { kpi, rejilla } = await montar();
     const fondos = [];
-    const simbolos = [];
     for (const nombre of kpi.TARJETAS_VALIDAS) {
       kpi.pintarTarjetas(rejilla, [
         kpi.tarjetaMetrica({ etiqueta: nombre, cifra: "$1", tarjeta: nombre }),
       ]);
-      const t = rejilla.querySelector(".kpi");
-      fondos.push(t.getAttribute("style"));
-      simbolos.push(t.querySelector(".kpi-glifo").innerHTML);
+      fondos.push(rejilla.querySelector(".kpi").getAttribute("style"));
     }
-    assert.equal(new Set(fondos).size, kpi.TARJETAS_VALIDAS.length, "hay fondos repetidos");
-    assert.equal(new Set(simbolos).size, kpi.TARJETAS_VALIDAS.length, "hay símbolos repetidos");
+    assert.equal(new Set(fondos).size, kpi.TARJETAS_VALIDAS.length, "hay colores repetidos");
   });
 
   test("el fondo sale del catalogo, no de un valor libre", async () => {
@@ -547,32 +552,23 @@ describe("tarjetas de indicador", () => {
     }
   });
 
-  test("el signo pesos se pinta antes que el texto", async () => {
-    // Va primero en el DOM; pintado después, taparía la cifra.
-    const { kpi, rejilla } = await montar();
-    kpi.pintarTarjetas(rejilla, [
-      kpi.tarjetaMetrica({ etiqueta: "x", cifra: "$1", tarjeta: "inc" }),
-    ]);
-    const hijos = [...rejilla.querySelector(".kpi").children];
-    assert.ok(hijos[0].classList.contains("kpi-peso"));
-  });
-
-  test("ni el signo ni el simbolo los lee el lector", async () => {
+  test("la tarjeta teñida no deja nada decorativo en el DOM", async () => {
+    // El punto de la etiqueta lo pone el CSS con un ::before: es
+    // decoración y no tiene que existir como nodo ni leerse en voz
+    // alta. El signo pesos y el símbolo de la esquina, que sí eran
+    // nodos, se fueron en F20-T01.
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
       kpi.tarjetaMetrica({ etiqueta: "Ingresos", cifra: "$1", tarjeta: "inc" }),
     ]);
-    for (const sel of [".kpi-peso", ".kpi-glifo"]) {
-      assert.equal(
-        rejilla.querySelector(sel).getAttribute("aria-hidden"),
-        "true",
-        `${sel} tiene que estar oculto al lector`,
-      );
-    }
+    const t = rejilla.querySelector(".kpi");
+    assert.equal(t.querySelector(".kpi-peso"), null);
+    assert.equal(t.querySelector(".kpi-glifo"), null);
+    assert.equal(t.querySelector("[aria-hidden]"), null);
   });
 
-  test("la tarjeta de color no lleva ademas el cuadradito de icono", async () => {
-    // La composición del fondo ya identifica la tarjeta.
+  test("la tarjeta teñida no lleva ademas el cuadradito de icono", async () => {
+    // El tinte y el punto ya identifican la tarjeta.
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
       kpi.tarjetaMetrica({
@@ -585,7 +581,7 @@ describe("tarjetas de indicador", () => {
     assert.equal(rejilla.querySelector(".kpi-ico"), null);
   });
 
-  test("sin tarjeta sigue siendo la de vidrio de siempre", async () => {
+  test("sin tarjeta sigue siendo la pieza de material de siempre", async () => {
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
       kpi.tarjetaMetrica({
@@ -597,24 +593,24 @@ describe("tarjetas de indicador", () => {
     ]);
     const t = rejilla.querySelector(".kpi");
     assert.ok(!t.classList.contains("kpi-color"));
-    assert.equal(t.querySelector(".kpi-peso"), null);
     assert.ok(
       t.querySelector(".kpi-ico"),
-      "la de vidrio sí lleva el cuadradito",
+      "la pieza sin teñir sí lleva el cuadradito",
     );
   });
 
-  test("la heroe no se vuelve tarjeta de color", async () => {
-    // Es la cifra principal y es de vidrio a propósito: el contraste
-    // entre ella y las de color es parte del diseño. `tarjetaHeroe` no
-    // tiene parámetro `tarjeta`; esto es una guarda de regresión por si
-    // alguna vez lo gana.
+  test("la heroe no se vuelve tarjeta teñida", async () => {
+    // La héroe es la única superficie MACIZA del sistema (F20-T01) y
+    // las cuatro métricas son material teñido: el contraste entre ellas
+    // es parte del diseño, así que la héroe no puede entrar en el
+    // catálogo. `tarjetaHeroe` no tiene parámetro `tarjeta`; esto es
+    // una guarda de regresión por si alguna vez lo gana.
     const { kpi, rejilla } = await montar();
     kpi.pintarTarjetas(rejilla, [
       kpi.tarjetaHeroe({ etiqueta: "Ahorro del mes", cifra: "$1" }),
     ]);
     const heroe = rejilla.querySelector(".kpi--hero");
     assert.ok(!heroe.classList.contains("kpi-color"));
-    assert.equal(heroe.querySelector(".kpi-peso"), null);
+    assert.equal(heroe.getAttribute("style")?.includes("--c-card"), false);
   });
 });

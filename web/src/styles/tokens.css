@@ -1,11 +1,36 @@
 /* ============================================================
-   TOKENS · sistema Vidrio Grafito
+   TOKENS · sistema Neumorfismo
    Referencia normativa: .claude/skills/epic-wallet-ui/SKILL.md §1
-   Referencia viva: documentacion/mockups/01_Mockup_V1_Grafito_Clasico.html
+   Aprobado por Gustavo el 2026-11-27 (F20-T01). Reemplaza al sistema
+   «Vidrio Grafito», que vivió hasta esa fecha y está en el historial
+   de Git.
 
    REGLA: ningún valor de color, sombra o radio se escribe fuera de
-   este archivo. Si hace falta uno nuevo, se agrega acá Y en el bloque
-   oscuro de abajo, nunca suelto en un componente.
+   este archivo. Si hace falta uno nuevo, se agrega acá Y en los dos
+   bloques oscuros de abajo, nunca suelto en un componente.
+
+   LA IDEA DEL SISTEMA, EN UNA LÍNEA: una sola pieza de material. El
+   relieve no es un borde ni una capa encima: son DOS sombras del mismo
+   color del material —una abajo-derecha oscura y una arriba-izquierda
+   clara— sobre una superficie que es casi el mismo color que el fondo.
+   Levantado = se puede tocar. Hundido = está elegido, o es un
+   contenedor de contenido.
+
+   LAS DOS PALETAS, con su reparto:
+
+     claro   Ivory Porcelain  60%   material: fondo, piezas, relieve
+             Jade Lacquer     30%   héroe, ingreso, acción, dato
+             Scarlet Signal   10%   egreso, alerta, borrar
+
+     oscuro  Raven Black      60%   material: fondo, piezas, relieve
+             Pewter Grey      30%   ingreso, acción, dato
+             Molten Orange    10%   héroe, egreso, alerta, borrar
+
+   Los nombres de token NO cambiaron con el sistema: `--glass-shell-bg`
+   sigue llamándose así y ahora vale un color sólido, `--sh-md` sigue
+   siendo «la sombra de una pieza» y ahora son dos. Se conservaron a
+   propósito: renombrar 4.700 líneas de CSS para cambiar de estilo es
+   de donde salen los `var()` sin definir, que no avisan (skill §3.2).
 
    El bloque @theme registra los tokens en Tailwind, así quedan
    disponibles como utilidad (text-ink-3) y como variable
@@ -13,110 +38,115 @@
    ============================================================ */
 
 @theme {
-  /* ---- fondo y lavados ---- */
-  --color-bg-1: #eff2f5;
-  --color-bg-2: #e6ecef;
-  --color-wash-a: #c3dcec;
-  --color-wash-b: #f3e4c9;
+  /* ---- el material ----
+     `bg-1`/`bg-2` son la mesa y `--glass-shell-bg` (más abajo) es la
+     pieza: casi el mismo color, apenas un escalón de diferencia. Ahí
+     está todo el truco del sistema — si la pieza contrasta con el
+     fondo, deja de leerse como relieve y vuelve a ser una tarjeta
+     pegada encima. Los lavados `wash-a`/`wash-b` del sistema anterior
+     siguen existiendo como token pero valen el mismo material: el
+     ambiente ya no tiene color propio. */
+  --color-bg-1: #ebe5db;
+  --color-bg-2: #e7e0d5;
+  --color-wash-a: #ebe5db;
+  --color-wash-b: #e7e0d5;
 
-  /* ---- tinta: 4 niveles de jerarquía ---- */
-  /* Los cuatro niveles están calibrados para dar 4,5:1 (de ink a ink-3)
-     y 3:1 (ink-4, que sólo se usa en ejes y deshabilitados) SOBRE EL
-     FONDO OPACO DE RESPALDO DEL VIDRIO, que es el peor caso. Si se
-     tocan, tests/unit/test_contraste.py lo detecta. */
-  --color-ink: #1c2024; /* títulos y cifras */
-  --color-ink-2: #4b5157; /* texto normal */
-  --color-ink-3: #70757c; /* secundario y etiquetas */
-  --color-ink-4: #8f9398; /* deshabilitado y ejes */
+  /* ---- tinta: 4 niveles de jerarquía ----
+     Calibrados sobre la pieza (#f1ece3), que es donde cae casi todo el
+     texto: ink 12,8:1 · ink-2 7,4:1 · ink-3 4,9:1 · ink-4 3,1:1
+     (ink-4 sólo en ejes y deshabilitados, donde el mínimo es 3:1).
+     Marrón apenas, no gris neutro: sobre un material cálido un gris
+     puro se ve sucio. */
+  --color-ink: #2a2620; /* títulos y cifras */
+  --color-ink-2: #544d44; /* texto normal */
+  --color-ink-3: #6d665b; /* secundario y etiquetas */
+  --color-ink-4: #8c8373; /* deshabilitado y ejes */
 
-  /* ---- acento: azul grafito ---- */
-  --color-navy: #11181f;
-  --color-accent: #2f7cb4;
-  --color-accent-2: #1d5f8e;
-  --color-accent-soft: #d8ecf8;
+  /* ---- acento: Jade Lacquer ---- */
+  --color-navy: #11201b;
+  --color-accent: #1d6b58;
+  --color-accent-2: #14503f; /* enlaces y estados más oscuros */
+  --color-accent-soft: #dce8e3;
   /* Contenido sobre una superficie de acento (botones, el sello de la
-     marca, el `chip` sólido). Blanco acá; se redefine oscuro en modo
-     oscuro, porque ahí el acento se aclara (línea ~272) y el blanco
-     dejaría de alcanzar el contraste mínimo. */
-  --color-on-accent: #ffffff;
-  /* Contenido sobre una superficie de color FIJA: las tarjetas de
-     indicador (inc/egr/dia/pat), el avatar de la cuenta y el globo de
-     alertas. Esas superficies no cambian de claro a oscuro (son su
-     propio color, no el acento — skill §8, "tarjeta de color"), así
-     que su texto tampoco: siempre blanco, nunca se redefine. Usar
-     `--color-on-accent` ahí por error es justo el bug que se corrigió
-     después de cerrar la Fase 4: en modo oscuro esas tarjetas se
-     quedaban con letra negra sobre su propio color. */
+     marca, el `chip` sólido). Se redefine en oscuro: allá el acento es
+     Pewter Grey, que es claro, y el texto pasa a ser el material. */
+  --color-on-accent: #f3efe6;
+  /* Contenido sobre una superficie de color FIJA en los dos temas: el
+     globo de alertas, el avatar, el botón de borrar. Siempre blanco. */
   --color-on-solid: #ffffff;
 
+  /* ---- tarjetas de indicador ----
+     En Vidrio Grafito eran cuatro superficies de color sólido con
+     texto blanco. Acá NO: son material teñido. El color entra como un
+     10% mezclado en la superficie y vuelve a aparecer, pleno, en el
+     punto de la etiqueta — nada más. Eso las hace familia sin que
+     cuatro rectángulos de color le compitan a la tarjeta héroe, que
+     es la que sí es maciza.
+
+     Por eso estos cuatro valores ya NO necesitan contraste con blanco:
+     ningún texto cae encima del color. Son colores de la paleta y
+     nada más. */
+  --color-card-inc: #1d6b58; /* ingresos        jade */
+  --color-card-egr: #c62b36; /* egresos         scarlet */
+  --color-card-dia: #5f7d72; /* gasto de hoy    jade apagado: es el
+                                 dato más blando de los cuatro */
+  --color-card-pat: #1d6b58; /* total de ahorros jade */
+
   /* ---- avatar de la cuenta ----
-     Grafito neutro a propósito: es lo único de la barra que no es
-     acento, así se distingue del resto de los botones. */
-  /* ---- tarjetas de indicador de color ----
-     Fondo sólido, texto blanco. Son los mismos en los dos temas: una
-     tarjeta de color es su propia superficie, no cambia con el tema.
+     Material oscuro, no acento: es lo único de la barra que no es
+     jade, así se distingue del resto de los botones. */
+  --color-avatar-1: #8a8275;
+  --color-avatar-2: #6d665b;
 
-     Dos cosas los definen y las dos están medidas:
+  /* ---- semántica financiera ----
+     Ingreso jade, egreso scarlet, ahorro jade. En oscuro: ingreso
+     pewter, egreso naranja, ahorro naranja. */
+  --color-inc: #1d6b58;
+  --color-egr: #c62b36;
+  --color-sav: #1d6b58;
 
-     SATURACIÓN al 38%, que es la de --color-accent. Una tarjeta de
-     color sólido es una superficie grande, no un acento chico: con la
-     saturación de los colores semánticos (56% a 76%) se sale del tono
-     grafito del resto de la aplicación y pesa más que la información
-     que lleva encima.
+  /* ---- severidad de alertas ----
+     Acá la paleta se dobla a propósito y vale la pena decirlo: con
+     tres colores no se pueden representar cuatro severidades. `ok` y
+     `crit` son jade y scarlet de la paleta; `warn` y `pend` son un
+     ámbar y un naranja quemado, los dos dentro de la temperatura
+     cálida del material. Siguen cumpliendo la regla que importa: el
+     color NUNCA es el único portador — cada severidad lleva su icono y
+     su nombre (skill §8). */
+  --color-ok: #1d6b58;
+  --color-warn: #9c7400;
+  --color-pend: #b35a16;
+  --color-crit: #c62b36;
 
-     CONTRASTE parejo de 5,4 a 5,6:1 con blanco en las cuatro. No son
-     los colores semánticos sin más; están bajados (o en el caso de
-     "gasto de hoy", elegidos directamente en violeta, F05-T07) hasta
-     llegar ahí. Que las cuatro den un número parecido es lo que hace
-     que la fila se lea como un conjunto y no como cuatro oscuridades
-     distintas. */
-  --color-card-inc: #0f7a5c; /* ingresos      5,30:1 con blanco */
-  --color-card-egr: #bd3444; /* egresos       5,62:1 */
-  --color-card-dia: #8549a8; /* gasto de hoy  5,97:1 — violeta, para no
-                                 confundirse con ingresos (verde) ni
-                                 patrimonio (el otro azul) */
-  --color-card-pat: #1c6ea3; /* patrimonio    5,51:1 */
-
-  --color-avatar-1: #5c6469;
-  --color-avatar-2: #33383c;
-
-  /* ---- semántica financiera ---- */
-  --color-inc: #08916a; /* ingresos */
-  --color-egr: #d4202f; /* egresos  */
-  --color-sav: #2a73ad; /* ahorro   */
-
-  /* ---- severidad de alertas ---- */
-  --color-ok: #08916a;
-  --color-warn: #c99100;
-  --color-pend: #d4701a;
-  --color-crit: #d4202f;
-
-  /* ---- radios ---- */
+  /* ---- radios ----
+     Más generosos que en Vidrio Grafito: el relieve necesita esquina
+     redonda para que la sombra gire alrededor de la pieza. Una esquina
+     casi recta con dos sombras se ve como un error de render. */
   --radius-linea: 2px; /* el trazo de línea de una leyenda */
   --radius-enlace: 8px; /* foco de un botón de enlace */
-  --radius-tilde: 7px; /* icono dentro de la notificación breve */
-  --radius-ico: 9px; /* cuadradito de icono dentro de una tarjeta */
-  --radius-aviso: 10px; /* icono de un aviso */
-  --radius-toast: 16px; /* la notificación breve */
-  --radius-sm: 12px;
+  --radius-tilde: 8px; /* icono dentro de la notificación breve */
+  --radius-ico: 11px; /* cuadradito de icono dentro de una tarjeta */
+  --radius-aviso: 12px; /* icono de un aviso */
+  --radius-toast: 17px; /* la notificación breve */
+  --radius-sm: 13px;
   --radius-btn: 13px; /* botones de icono, avatar, sello de la marca */
   --radius-nav: 14px; /* posición de la barra inferior */
-  --radius-row: 15px; /* fila de lista */
+  --radius-row: 16px; /* fila de lista */
   --radius-fab: 19px; /* botón flotante */
-  --radius-card: 20px;
+  --radius-card: 21px;
   --radius-bar: 22px; /* la barra inferior */
   --radius-lg: 24px;
-  --radius-sheet: 26px; /* las dos esquinas de arriba de una hoja */
+  --radius-sheet: 27px; /* las dos esquinas de arriba de una hoja */
 
-  /* ---- tipografía ---- */
+  /* ---- tipografía ----
+     Sin cambios: Outfit para cifras y títulos, Inter para el resto.
+     El estilo cambió, la voz de la aplicación no. */
   --font-display: Outfit, sans-serif;
   --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
 
   /* ---- escala tipográfica ----
-     Un tamaño por ROL, no por medida: así un componente pide
-     "cifra de KPI" y no "27,5 px", y la escala se puede ajustar
-     en un solo lugar. Los valores salen de la tabla de la skill §4,
-     que a su vez sale del mockup aprobado. */
+     Un tamaño por ROL, no por medida. Los valores salen de la tabla de
+     la skill §4. */
   --text-hero: 35px; /* ahorro del mes, patrimonio */
   --text-amount: 33px; /* el importe en el formulario de alta */
   --text-kpi: 27.5px; /* cifra de indicador */
@@ -140,8 +170,12 @@
   /* 16 px es el mínimo que iOS acepta sin hacer zoom al enfocar un
      campo. Con menos, la pantalla se corre al tocar el buscador. */
   --text-campo-movil: 16px;
-  --text-peso: 104px; /* signo pesos de fondo, teléfono */
-  --text-peso-sm: 92px; /* el mismo, con la rejilla de 4 y 6 columnas */
+  /* El signo pesos de fondo de la tarjeta de color salió con Vidrio
+     Grafito (ver `--color-card-*`): la tarjeta teñida no lo lleva.
+     Los dos tokens se conservan definidos porque `components.css`
+     todavía nombra la clase. */
+  --text-peso: 104px;
+  --text-peso-sm: 92px;
   --text-label: 10.5px; /* etiqueta de indicador, separador de día */
   /* Texto de los gráficos. Es el tamaño REAL en pantalla en el
      teléfono: `.axis-v`/`.axis-t` lo multiplican por la escala del
@@ -161,109 +195,162 @@
 
 /* ============================================================
    Lo que no entra en @theme porque Tailwind no lo necesita como
-   utilidad: líneas translúcidas, capas de vidrio y sombras
-   compuestas. Se usan siempre como var().
+   utilidad: superficies, relieve y sombras compuestas. Se usan
+   siempre como var().
    ============================================================ */
 :root {
-  --line: rgba(28, 32, 36, 0.1);
-  --line-2: rgba(28, 32, 36, 0.07);
-  --line-strong: rgba(28, 32, 36, 0.16);
+  /* ---- las dos sombras del relieve ----
+     Todo lo demás de este bloque se arma con estas dos. La oscura es
+     el material en sombra (no negro: negro sobre un material cálido se
+     ve gris sucio); la clara es el material iluminado. */
+  --sh-lo: rgba(170, 158, 138, 0.52);
+  --sh-hi: #fffdf8;
 
-  --glass-shell-bg: rgba(255, 255, 255, 0.52);
-  --glass-shell-blur: 22px;
-  --glass-shell-fallback: rgba(255, 255, 255, 0.92);
+  /* ---- las superficies ----
+     `surf` es la pieza levantada, `surf-2` lo hundido, `kpi-surf` la
+     base de la tarjeta de indicador antes de teñirse. */
+  --surf: #f1ece3;
+  --surf-2: #e7e0d5;
+  --kpi-surf: #e8e1d4;
 
-  /* Todo lo que queda flotando por encima del contenido —las dos
-     barras, las hojas, el toast— va con fondo sólido, sin vidrio: a
-     pedido de Gustavo, después de cerrar la Fase 4. El resto de la
-     interfaz (tarjetas, paneles, filas) sigue usando `--glass-shell-*`
-     y `--glass-content-*`, que no cambian. */
-  --glass-bar-bg: rgb(255, 255, 255);
+  /* ---- la tarjeta héroe ----
+     Es la única superficie maciza de la aplicación: el ahorro del mes
+     y el patrimonio neto. Jade en claro. En oscuro es Molten Orange
+     un paso más profundo que el de los acentos, porque su texto va en
+     blanco y sobre el naranja pleno el blanco queda al límite de lo
+     legible. */
+  --hero: #1d6b58;
+  --on-hero: #fffaf6;
+  --hero-sh-lo: rgba(10, 55, 44, 0.55);
+  --hero-sh-hi: rgba(118, 187, 168, 0.45);
+
+  /* Sombra de una pieza CHICA de acento: el sello de la marca, el
+     botón principal, la píldora sólida. El lado oscuro se tiñe con el
+     acento; el claro NO, usa la luz del material.
+
+     La héroe sí tiñe los dos lados, y es por el tamaño: en una tarjeta
+     de 17 px de alto de texto el halo de color se lee como el canto
+     iluminado de la pieza, pero en un botón de 46 px queda un aura
+     verde (naranja en oscuro) alrededor. Se vio en la primera
+     captura de F20-T01 y por eso son dos pares de tokens y no uno. */
+  --acc-sh-lo: rgba(12, 58, 46, 0.42);
+  --acc-sh-hi: var(--sh-hi);
+
+  /* Sombra de una pieza de color señal (el botón flotante, borrar). */
+  --sig-sh-lo: rgba(92, 16, 21, 0.48);
+  --sig-sh-hi: rgba(231, 145, 150, 0.42);
+
+  /* ---- líneas ----
+     Un separador entre filas sigue haciendo falta; un BORDE alrededor de
+     una pieza, no: con relieve, el borde es justo lo que arruina la
+     ilusión. Por eso `--borde-pieza` es transparente y `.shell`/`.cg`
+     lo usan en lugar de `--line`. */
+  --line: rgba(90, 78, 60, 0.16);
+  --line-2: rgba(90, 78, 60, 0.1);
+  --line-strong: rgba(90, 78, 60, 0.26);
+  --borde-pieza: transparent;
+
+  /* ---- la pieza levantada ----
+     Los nombres vienen de Vidrio Grafito. `blur` queda en 0: no hay
+     desenfoque en ninguna parte del sistema, y los bloques
+     `@supports not (backdrop-filter)` de `components.css` siguen
+     sirviendo sin hacer nada porque el respaldo es el mismo color. */
+  --glass-shell-bg: var(--surf);
+  --glass-shell-blur: 0px;
+  --glass-shell-fallback: var(--surf);
+
+  /* Las dos barras y el toast: la misma pieza levantada que el resto.
+     En Vidrio Grafito eran un caso especial (§3.1: vidrio casi opaco
+     para que la letra chica se leyera sobre el contenido que pasaba
+     por detrás). Con material sólido ese problema no existe. */
+  --glass-bar-bg: var(--surf);
   --glass-bar-blur: 0px;
+  --glass-bar-fallback: var(--surf);
 
-  /* El signo pesos de fondo de una tarjeta de color va OSCURO, no
-     claro como se ve en muchos diseños. Aclarando el fondo, la cifra
-     blanca que le cae encima baja de 5:1 a 3,3:1 y deja de cumplir el
-     mínimo; oscureciéndolo, sube a 6,8:1. Es decoración que además
-     ayuda a leer. */
-  --peso-sombra: rgba(0, 0, 0, 0.18);
-  /* El símbolo chico sí va claro: vive arriba a la derecha, donde no
-     pasa ninguna cifra por encima. */
-  --glifo-op: 0.5;
-  --glass-bar-fallback: rgba(255, 255, 255, 0.985);
-  --glass-content-bg: rgba(255, 255, 255, 0.68);
-  --glass-content-blur: 7px;
-  --glass-content-fallback: rgba(255, 255, 255, 0.94);
-  --glass-in:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  /* Restos de la tarjeta de color de Vidrio Grafito. Se conservan
+     definidos porque `components.css` todavía nombra sus clases. */
+  --peso-sombra: rgba(0, 0, 0, 0.1);
+  --glifo-op: 0.42;
+
+  /* ---- el contenido hundido ----
+     `.cg` es todo lo que vive DENTRO de una pieza: el bloque de un
+     gráfico, un campo, un surco. Va hundido. */
+  --glass-content-bg: var(--surf-2);
+  --glass-content-blur: 0px;
+  --glass-content-fallback: var(--surf-2);
+
+  /* El brillo interior de una pieza levantada: una línea de luz en el
+     canto de arriba a la izquierda, de donde viene la luz del sistema.
+     No es un borde — es el material iluminado. */
+  --glass-in: inset 1px 1px 0 rgba(255, 253, 248, 0.75);
+
+  /* Las dos profundidades hundidas. `--hundido` para un bloque,
+     `--hundido-sm` para una pieza chica (un surco, un campo). */
+  --hundido:
+    inset 5px 5px 11px var(--sh-lo), inset -5px -5px 11px var(--sh-hi);
+  --hundido-sm: inset 3px 3px 7px var(--sh-lo), inset -3px -3px 7px var(--sh-hi);
+
+  /* El reflejo diagonal. Mucho más suave que el del vidrio: acá es un
+     material mate y lo que insinúa es la curva del canto, no un
+     reflejo. */
   --glass-sheen: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.55),
-    transparent 45%
+    135deg,
+    rgba(255, 253, 248, 0.36),
+    transparent 42%
   );
-  /* Reflejo de las superficies sólidas (la marca, los botones de acento),
-     más inclinado y más corto que el del vidrio. */
   --solid-sheen: linear-gradient(
-    125deg,
-    rgba(255, 255, 255, 0.55),
+    135deg,
+    rgba(255, 255, 255, 0.2),
     transparent 50%
   );
 
-  --accent-ring: rgba(47, 124, 180, 0.3);
+  --accent-ring: rgba(29, 107, 88, 0.32);
 
-  /* color-mix contra estos dos es lo que hace que píldoras, iconos y
-     marcas funcionen en ambos temas con una sola regla */
+  /* El ambiente: material plano. En Vidrio Grafito eran tres lavados
+     radiales de color sobre un degradado; acá es una sola superficie
+     con un degradado mínimo, porque el relieve necesita que el fondo
+     NO tenga dibujo propio: cualquier lavado detrás de las dos sombras
+     se lee como suciedad. La capa de ruido del sistema anterior
+     también se fue, por lo mismo.
 
-  /* El ambiente: tres lavados radiales sobre un degradado vertical.
      Está acá y no suelto en `body::after` porque lo usan dos capas: el
      fondo de la aplicación y la pantalla de inicio de sesión, que tapa
-     la aplicación y tiene que verse como la misma superficie. Copiado
-     en dos lados se desincroniza la primera vez que alguien lo toque.
-     Se redefine solo en oscuro, porque sus colores son tokens. */
-  --ambiente:
-    radial-gradient(
-      ellipse 52% 34% at 10% -6%,
-      var(--color-wash-a),
-      transparent 62%
-    ),
-    radial-gradient(
-      ellipse 42% 28% at 106% 6%,
-      var(--color-wash-b),
-      transparent 58%
-    ),
-    radial-gradient(
-      ellipse 38% 26% at 50% 104%,
-      var(--color-wash-a),
-      transparent 66%
-    ),
-    linear-gradient(180deg, var(--color-bg-1), var(--color-bg-2));
+     la aplicación y tiene que verse como la misma superficie. */
+  --ambiente: linear-gradient(
+    170deg,
+    var(--color-bg-1),
+    var(--color-bg-2) 72%
+  );
 
-  --mix-tint: #fff;
-  --mix-ink: #1c2024;
+  /* color-mix contra estos dos es lo que hace que píldoras, iconos y
+     marcas funcionen en ambos temas con una sola regla. `mix-tint` es
+     el material, no blanco: mezclar contra blanco sobre una superficie
+     cálida deja la píldora más clara que la pieza donde vive. */
+  --mix-tint: var(--surf);
+  --mix-ink: #2a2620;
 
-  --shadow-rgb: 20, 22, 25;
-  --sh-sm:
-    0 1px 2px rgba(var(--shadow-rgb), 0.06),
-    0 4px 12px -4px rgba(var(--shadow-rgb), 0.12);
-  --sh-md:
-    0 2px 6px rgba(var(--shadow-rgb), 0.07),
-    0 16px 34px -16px rgba(var(--shadow-rgb), 0.22);
-  --sh-lg:
-    0 4px 16px rgba(var(--shadow-rgb), 0.09),
-    0 34px 70px -26px rgba(var(--shadow-rgb), 0.32);
+  /* Se conserva definido: lo nombran las sombras del sistema anterior
+     que quedaron en algún componente. */
+  --shadow-rgb: 170, 158, 138;
 
-  /* Surco hundido: el fondo y la sombra interior del conmutador de
-     pestañas y, desde F01-T11, del conmutador de vistas. */
-  --groove-bg: rgba(20, 22, 25, 0.06);
-  --groove-in: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  /* ---- las tres sombras de pieza levantada ----
+     Chica (una fila, un chip), media (una tarjeta, un panel) y grande
+     (lo que flota: barras, hojas, una tarjeta en hover). Las tres son
+     el mismo gesto a tres distancias. */
+  --sh-sm: 4px 4px 9px var(--sh-lo), -4px -4px 9px var(--sh-hi);
+  --sh-md: 6px 6px 14px var(--sh-lo), -6px -6px 14px var(--sh-hi);
+  --sh-lg: 9px 9px 20px var(--sh-lo), -8px -8px 18px var(--sh-hi);
+
+  /* Surco hundido: el conmutador de pestañas y el de vistas. */
+  --groove-bg: var(--surf-2);
+  --groove-in: var(--hundido-sm);
 
   /* Velo del fondo cuando hay una hoja abierta. El transparente se
      declara con el mismo color que el opaco: animado desde
      `transparent`, Chrome interpola pasando por negro y se ve un
      parpadeo oscuro al abrir. */
-  --scrim-0: rgba(10, 12, 14, 0);
-  --scrim: rgba(10, 12, 14, 0.34);
+  --scrim-0: rgba(42, 38, 32, 0);
+  --scrim: rgba(42, 38, 32, 0.34);
 
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -271,149 +358,205 @@
 /* ============================================================
    TEMA OSCURO · las mismas variables, otros valores.
    Ningún componente conoce el tema: sólo usa tokens.
+
+   Raven Black 60 · Pewter Grey 30 · Molten Orange 10. El relieve
+   funciona igual, invertido: la sombra oscura es casi negra y la clara
+   es un gris frío con poca opacidad. La pieza es MÁS CLARA que la
+   mesa, al revés que en claro.
    ============================================================ */
 html[data-theme="dark"] {
-  --color-bg-1: #0a0d10;
-  --color-bg-2: #0c1014;
-  --color-wash-a: #15323f;
-  --color-wash-b: #322815;
+  --color-bg-1: #13151a;
+  --color-bg-2: #15181c;
+  --color-wash-a: #13151a;
+  --color-wash-b: #15181c;
 
-  --color-ink: #eef0f1;
-  --color-ink-2: #bcc0c4;
-  --color-ink-3: #868b91;
-  --color-ink-4: #5c6166;
+  --color-ink: #e7e9ec;
+  --color-ink-2: #b9bfc6;
+  --color-ink-3: #9aa1a9;
+  --color-ink-4: #767d85;
 
-  --color-navy: #040608;
-  --color-accent: #58b4ea;
-  --color-accent-2: #8ed0f7;
-  --color-accent-soft: #0e2531;
-  --color-on-accent: #0c0d0e;
+  --color-navy: #05070a;
+  --color-accent: #8d949d;
+  --color-accent-2: #a7aeb6;
+  --color-accent-soft: #242a30;
+  --color-on-accent: #14171b;
 
-  --color-avatar-1: #474f54;
-  --color-avatar-2: #2a2e32;
+  --color-card-inc: #8d949d;
+  --color-card-egr: #ff6a1f;
+  --color-card-dia: #7d848c;
+  --color-card-pat: #8d949d;
 
-  --color-inc: #2fd09a;
-  --color-egr: #f4677a;
-  --color-sav: #58b4ea;
+  --color-avatar-1: #4a5157;
+  --color-avatar-2: #2d3237;
 
-  --color-ok: #2fd09a;
-  --color-warn: #edbb3e;
-  --color-pend: #f0914f;
-  --color-crit: #f4677a;
+  --color-inc: #a7aeb6;
+  --color-egr: #ff6a1f;
+  --color-sav: #ff8a4c;
 
-  --line: rgba(238, 240, 241, 0.1);
-  --line-2: rgba(238, 240, 241, 0.06);
-  --line-strong: rgba(238, 240, 241, 0.16);
+  --color-ok: #a7aeb6;
+  --color-warn: #e8b454;
+  --color-pend: #ff8a4c;
+  --color-crit: #ff6a1f;
 
-  --glass-shell-bg: rgba(22, 25, 28, 0.5);
-  --glass-shell-fallback: rgba(13, 15, 17, 0.94);
-  --glass-bar-bg: rgb(16, 19, 22);
-  --glass-bar-fallback: rgba(14, 17, 20, 0.99);
-  --glass-content-bg: rgba(22, 25, 28, 0.72);
-  --glass-content-fallback: rgba(13, 15, 17, 0.96);
-  --glass-in:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --sh-lo: rgba(0, 0, 0, 0.7);
+  --sh-hi: rgba(86, 94, 104, 0.3);
+
+  --surf: #191c21;
+  --surf-2: #14171b;
+  --kpi-surf: #23272d;
+
+  --hero: #c4511a;
+  --on-hero: #fffaf6;
+  --hero-sh-lo: rgba(0, 0, 0, 0.6);
+  --hero-sh-hi: rgba(255, 150, 86, 0.38);
+
+  --acc-sh-lo: rgba(0, 0, 0, 0.6);
+  --acc-sh-hi: rgba(203, 209, 215, 0.22);
+
+  --sig-sh-lo: rgba(0, 0, 0, 0.62);
+  --sig-sh-hi: rgba(255, 176, 122, 0.42);
+
+  --line: rgba(231, 233, 236, 0.12);
+  --line-2: rgba(231, 233, 236, 0.07);
+  --line-strong: rgba(231, 233, 236, 0.2);
+  --borde-pieza: transparent;
+
+  --glass-in: inset 1px 1px 0 rgba(203, 209, 215, 0.14);
+
+  --hundido:
+    inset 5px 5px 11px var(--sh-lo), inset -5px -5px 11px var(--sh-hi);
+  --hundido-sm: inset 3px 3px 7px var(--sh-lo), inset -3px -3px 7px var(--sh-hi);
+
   --glass-sheen: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.07),
-    transparent 45%
+    135deg,
+    rgba(203, 209, 215, 0.07),
+    transparent 42%
   );
   --solid-sheen: linear-gradient(
-    125deg,
-    rgba(255, 255, 255, 0.34),
+    135deg,
+    rgba(255, 255, 255, 0.08),
     transparent 50%
   );
 
-  --accent-ring: rgba(88, 180, 234, 0.34);
+  --peso-sombra: rgba(0, 0, 0, 0.22);
 
-  --mix-tint: #181b1e;
-  --mix-ink: #f2f4f5;
+  --accent-ring: rgba(141, 148, 157, 0.36);
 
-  --groove-bg: rgba(0, 0, 0, 0.26);
-  --groove-in: inset 0 1px 3px rgba(0, 0, 0, 0.45);
-
-  --scrim-0: rgba(0, 0, 0, 0);
-  --scrim: rgba(0, 0, 0, 0.52);
+  --mix-tint: var(--surf);
+  --mix-ink: #e7e9ec;
 
   --shadow-rgb: 0, 0, 0;
-  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px -4px rgba(0, 0, 0, 0.5);
-  --sh-md: 0 2px 8px rgba(0, 0, 0, 0.35), 0 18px 38px -16px rgba(0, 0, 0, 0.55);
-  --sh-lg: 0 4px 18px rgba(0, 0, 0, 0.4), 0 40px 80px -28px rgba(0, 0, 0, 0.65);
+
+  --sh-sm: 4px 4px 9px var(--sh-lo), -4px -4px 9px var(--sh-hi);
+  --sh-md: 6px 6px 14px var(--sh-lo), -6px -6px 14px var(--sh-hi);
+  --sh-lg: 9px 9px 20px var(--sh-lo), -8px -8px 18px var(--sh-hi);
+
+  --groove-bg: var(--surf-2);
+  --groove-in: var(--hundido-sm);
+
+  --scrim-0: rgba(0, 0, 0, 0);
+  --scrim: rgba(0, 0, 0, 0.56);
 }
 
 /* Primera visita: seguir al sistema. Después manda data-theme, que
-   lo fija el botón de tema y se guarda en localStorage (F01-T04). */
+   lo fija el botón de tema y se guarda en localStorage (F01-T04).
+
+   Los mismos valores del bloque de arriba. Duplicado a propósito: un
+   `@media` no puede heredar de un selector de atributo, y una lista
+   `html[data-theme="dark"], @media…` no existe en CSS. */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
-    --color-bg-1: #0a0d10;
-    --color-bg-2: #0c1014;
-    --color-wash-a: #15323f;
-    --color-wash-b: #322815;
+    --color-bg-1: #13151a;
+    --color-bg-2: #15181c;
+    --color-wash-a: #13151a;
+    --color-wash-b: #15181c;
 
-    --color-ink: #eef0f1;
-    --color-ink-2: #bcc0c4;
-    --color-ink-3: #868b91;
-    --color-ink-4: #5c6166;
+    --color-ink: #e7e9ec;
+    --color-ink-2: #b9bfc6;
+    --color-ink-3: #9aa1a9;
+    --color-ink-4: #767d85;
 
-    --color-navy: #040608;
-    --color-accent: #58b4ea;
-    --color-accent-2: #8ed0f7;
-    --color-accent-soft: #0e2531;
-    --color-on-accent: #0c0d0e;
+    --color-navy: #05070a;
+    --color-accent: #8d949d;
+    --color-accent-2: #a7aeb6;
+    --color-accent-soft: #242a30;
+    --color-on-accent: #14171b;
 
-    --color-avatar-1: #474f54;
-    --color-avatar-2: #2a2e32;
+    --color-card-inc: #8d949d;
+    --color-card-egr: #ff6a1f;
+    --color-card-dia: #7d848c;
+    --color-card-pat: #8d949d;
 
-    --color-inc: #2fd09a;
-    --color-egr: #f4677a;
-    --color-sav: #58b4ea;
+    --color-avatar-1: #4a5157;
+    --color-avatar-2: #2d3237;
 
-    --color-ok: #2fd09a;
-    --color-warn: #edbb3e;
-    --color-pend: #f0914f;
-    --color-crit: #f4677a;
+    --color-inc: #a7aeb6;
+    --color-egr: #ff6a1f;
+    --color-sav: #ff8a4c;
 
-    --line: rgba(238, 240, 241, 0.1);
-    --line-2: rgba(238, 240, 241, 0.06);
-    --line-strong: rgba(238, 240, 241, 0.16);
+    --color-ok: #a7aeb6;
+    --color-warn: #e8b454;
+    --color-pend: #ff8a4c;
+    --color-crit: #ff6a1f;
 
-    --glass-shell-bg: rgba(22, 25, 28, 0.5);
-    --glass-shell-fallback: rgba(13, 15, 17, 0.94);
-    --glass-bar-bg: rgb(16, 19, 22);
-    --glass-bar-fallback: rgba(14, 17, 20, 0.99);
-    --glass-content-bg: rgba(22, 25, 28, 0.72);
-    --glass-content-fallback: rgba(13, 15, 17, 0.96);
-    --glass-in:
-      inset 0 1px 0 rgba(255, 255, 255, 0.07),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --sh-lo: rgba(0, 0, 0, 0.7);
+    --sh-hi: rgba(86, 94, 104, 0.3);
+
+    --surf: #191c21;
+    --surf-2: #14171b;
+    --kpi-surf: #23272d;
+
+    --hero: #c4511a;
+    --on-hero: #fffaf6;
+    --hero-sh-lo: rgba(0, 0, 0, 0.6);
+    --hero-sh-hi: rgba(255, 150, 86, 0.38);
+
+    --acc-sh-lo: rgba(0, 0, 0, 0.6);
+    --acc-sh-hi: rgba(203, 209, 215, 0.22);
+
+    --sig-sh-lo: rgba(0, 0, 0, 0.62);
+    --sig-sh-hi: rgba(255, 176, 122, 0.42);
+
+    --line: rgba(231, 233, 236, 0.12);
+    --line-2: rgba(231, 233, 236, 0.07);
+    --line-strong: rgba(231, 233, 236, 0.2);
+    --borde-pieza: transparent;
+
+    --glass-in: inset 1px 1px 0 rgba(203, 209, 215, 0.14);
+
+    --hundido:
+      inset 5px 5px 11px var(--sh-lo), inset -5px -5px 11px var(--sh-hi);
+    --hundido-sm:
+      inset 3px 3px 7px var(--sh-lo), inset -3px -3px 7px var(--sh-hi);
+
     --glass-sheen: linear-gradient(
-      120deg,
-      rgba(255, 255, 255, 0.07),
-      transparent 45%
+      135deg,
+      rgba(203, 209, 215, 0.07),
+      transparent 42%
     );
     --solid-sheen: linear-gradient(
-      125deg,
-      rgba(255, 255, 255, 0.34),
+      135deg,
+      rgba(255, 255, 255, 0.08),
       transparent 50%
     );
 
-    --accent-ring: rgba(88, 180, 234, 0.34);
+    --peso-sombra: rgba(0, 0, 0, 0.22);
 
-    --mix-tint: #181b1e;
-    --mix-ink: #f2f4f5;
+    --accent-ring: rgba(141, 148, 157, 0.36);
 
-    --groove-bg: rgba(0, 0, 0, 0.26);
-    --groove-in: inset 0 1px 3px rgba(0, 0, 0, 0.45);
-
-    --scrim-0: rgba(0, 0, 0, 0);
-    --scrim: rgba(0, 0, 0, 0.52);
+    --mix-tint: var(--surf);
+    --mix-ink: #e7e9ec;
 
     --shadow-rgb: 0, 0, 0;
-    --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px -4px rgba(0, 0, 0, 0.5);
-    --sh-md:
-      0 2px 8px rgba(0, 0, 0, 0.35), 0 18px 38px -16px rgba(0, 0, 0, 0.55);
-    --sh-lg:
-      0 4px 18px rgba(0, 0, 0, 0.4), 0 40px 80px -28px rgba(0, 0, 0, 0.65);
+
+    --sh-sm: 4px 4px 9px var(--sh-lo), -4px -4px 9px var(--sh-hi);
+    --sh-md: 6px 6px 14px var(--sh-lo), -6px -6px 14px var(--sh-hi);
+    --sh-lg: 9px 9px 20px var(--sh-lo), -8px -8px 18px var(--sh-hi);
+
+    --groove-bg: var(--surf-2);
+    --groove-in: var(--hundido-sm);
+
+    --scrim-0: rgba(0, 0, 0, 0);
+    --scrim: rgba(0, 0, 0, 0.56);
   }
 }

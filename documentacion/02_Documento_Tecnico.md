@@ -1226,85 +1226,128 @@ Cada vista implementa los cuatro estados. No se muestra una pantalla en blanco n
 
 ## 13. Sistema de estilo
 
-Esta sección es **normativa**: define el estilo aprobado a partir de `mockups/01_Mockup_V1_Grafito_Clasico.html`. Ningún componente nuevo introduce colores, sombras ni radios fuera de estos tokens.
+Esta sección es **normativa**. Ningún componente nuevo introduce colores, sombras ni radios fuera de estos tokens.
+
+> **F20-T01, 2026-11-27.** El sistema es **Neumorfismo**, aprobado por Gustavo sobre un mockup de prueba de cuatro pantallas. Reemplaza a **Vidrio Grafito**, que rigió desde la Fase 1 y está en el historial de Git junto con su mockup. Lo que sigue describe el sistema vigente; donde algo cambió de raíz, se dice qué había antes y por qué.
 
 ### 13.1 Identidad
 
-Vidrio sobre grafito. Superficies translúcidas con desenfoque y un brillo diagonal, sobre un fondo de lavados radiales fríos y cálidos, con una capa de ruido muy sutil que evita el aspecto plástico. **Sin neón, sin saturaciones altas, sin degradados estridentes.** El color se usa para significar (ingreso, egreso, ahorro, alerta), no para decorar.
+Una sola pieza de material. El relieve no es un borde ni una capa encima: son **dos sombras del mismo material** —una abajo-derecha oscura y una arriba-izquierda clara— sobre una superficie que es casi el mismo color que el fondo. De ahí sale toda la profundidad de la interfaz.
+
+**La gramática tiene dos palabras y hay que respetarlas:**
+
+| Forma | Qué significa | Dónde |
+|---|---|---|
+| **Levantado** | esto se toca | tarjetas, paneles, botones, píldoras, barras, hojas |
+| **Hundido** | esto está elegido, o es un contenedor de contenido | surco del conmutador, campo de texto, bloque de gráfico, fila, botón apretado |
+
+Un botón que se hunde al apretarlo y un filtro que queda hundido mientras está activo son la misma idea, y es lo que hace que el sistema se entienda sin explicarlo.
+
+**Las dos paletas, con su reparto:**
+
+| Tema | 60% material | 30% dato y acción | 10% señal |
+|---|---|---|---|
+| claro | Ivory Porcelain `#f1ece3` | Jade Lacquer `#1d6b58` | Scarlet Signal `#c62b36` |
+| oscuro | Raven Black `#191c21` | Pewter Grey `#8d949d` | Molten Orange `#ff6a1f` |
+
+**Sin neón, sin saturaciones altas, sin degradados estridentes.** El color se usa para significar (ingreso, egreso, ahorro, alerta), no para decorar. Y una regla que es propia de este sistema: **el fondo no tiene dibujo propio**. Los lavados radiales de color y la capa de ruido de Vidrio Grafito se fueron en F20-T01, porque cualquier textura detrás de las dos sombras de una pieza se lee como suciedad alrededor del borde.
 
 ### 13.2 Tokens
 
-Se declaran en `web/src/styles/tokens.css` y se registran en Tailwind con `@theme`, de modo que se puedan usar como `bg-shell` o `text-ink-3` además de como `var(--ink-3)`.
+Se declaran en `web/src/styles/tokens.css` y se registran en Tailwind con `@theme`, de modo que se puedan usar como `text-ink-3` además de como `var(--color-ink-3)`.
+
+**Los nombres de token no cambiaron con el sistema.** `--glass-shell-bg` sigue llamándose así y ahora vale un color sólido; `--sh-md` sigue siendo «la sombra de una pieza» y ahora son dos. Se conservaron a propósito: renombrar 4.700 líneas de CSS para cambiar de estilo es de donde salen los `var()` sin definir, que no avisan (§13.3.2).
 
 ```css
-@import "tailwindcss";
-
 @theme {
-  /* fondo y lavados */
-  --color-bg-1: #f1f2f3;  --color-bg-2: #e9ebec;
-  --color-wash-a: #d6dee3; --color-wash-b: #e6e2d8;
+  /* material */
+  --color-bg-1: #ebe5db;  --color-bg-2: #e7e0d5;
 
-  /* tinta: 4 niveles de jerarquía */
-  --color-ink:   #1c2024;  /* títulos y cifras */
-  --color-ink-2: #4b5157;  /* texto normal */
-  --color-ink-3: #7c828a;  /* secundario y etiquetas */
-  --color-ink-4: #a8adb3;  /* deshabilitado y ejes */
+  /* tinta: 4 niveles, calibrados sobre la pieza (#f1ece3) */
+  --color-ink:   #2a2620;  /* 12,8:1 · títulos y cifras */
+  --color-ink-2: #544d44;  /*  7,4:1 · texto normal */
+  --color-ink-3: #6d665b;  /*  4,9:1 · secundario y etiquetas */
+  --color-ink-4: #8c8373;  /*  3,1:1 · deshabilitado y ejes */
 
-  /* líneas */
-  --color-line:        rgba(28,32,36,.10);
-  --color-line-2:      rgba(28,32,36,.07);
-  --color-line-strong: rgba(28,32,36,.16);
-
-  /* acento */
-  --color-accent:   #57768c;
-  --color-accent-2: #3e5a6d;
-  --color-accent-soft: #e2e9ed;
+  /* acento: Jade Lacquer */
+  --color-accent: #1d6b58;  --color-accent-2: #14503f;
+  --color-on-accent: #f3efe6;
 
   /* semántica financiera */
-  --color-inc: #2e8067;   /* ingresos */
-  --color-egr: #b13c47;   /* egresos  */
-  --color-sav: #57768c;   /* ahorro   */
+  --color-inc: #1d6b58;  --color-egr: #c62b36;  --color-sav: #1d6b58;
+
+  /* las cuatro tarjetas teñidas del tablero */
+  --color-card-inc: #1d6b58;  --color-card-egr: #c62b36;
+  --color-card-dia: #5f7d72;  --color-card-pat: #1d6b58;
 
   /* severidad de alertas */
-  --color-ok: #2e8067; --color-warn: #ba8c1f;
-  --color-pend: #bd6c2c; --color-crit: #b13c47;
-
-  /* radios */
-  --radius-sm: 12px; --radius-card: 20px; --radius-lg: 24px;
-
-  /* tipografía */
-  --font-display: Outfit, sans-serif;
-  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
-
-  /* curva de animación */
-  --ease-glass: cubic-bezier(.32,.72,0,1);
+  --color-ok: #1d6b58; --color-warn: #9c7400;
+  --color-pend: #b35a16; --color-crit: #c62b36;
 }
 ```
 
-Tema oscuro: **las mismas variables redefinidas** bajo `html[data-theme="dark"]`. Ningún componente conoce el tema; sólo usa tokens. Cambiar de tema no toca una sola línea de componente.
+**La severidad dobla la paleta a propósito.** Con tres colores no se pueden representar cuatro severidades: `warn` y `pend` son un ámbar y un naranja quemado, dentro de la temperatura cálida del material. Siguen cumpliendo la regla que importa: el color nunca es el único portador — cada severidad lleva su icono y su nombre.
+
+Fuera de `@theme`, en `:root`, viven las superficies y el relieve:
 
 ```css
-html[data-theme="dark"] {
-  --color-bg-1: #0c0d0e; --color-bg-2: #0f1011;
-  --color-wash-a: #1c2529; --color-wash-b: #221f18;
-  --color-ink: #eef0f1; --color-ink-2: #bcc0c4;
-  --color-ink-3: #868b91; --color-ink-4: #54585d;
-  --color-accent: #7ea3ba; --color-accent-2: #9bc0d4;
-  --color-inc: #49a383; --color-egr: #cf6270; --color-sav: #7ea3ba;
+:root{
+  /* las dos sombras: todo lo demás se arma con éstas */
+  --sh-lo: rgba(170,158,138,.52);   /* el material en sombra */
+  --sh-hi: #fffdf8;                 /* el material iluminado */
+
+  /* las superficies */
+  --surf:   #f1ece3;   /* la pieza levantada */
+  --surf-2: #e7e0d5;   /* lo hundido */
+  --kpi-surf:#e8e1d4;  /* base de la tarjeta de indicador */
+
+  /* levantado, a tres distancias */
+  --sh-sm: 4px 4px  9px var(--sh-lo), -4px -4px  9px var(--sh-hi);
+  --sh-md: 6px 6px 14px var(--sh-lo), -6px -6px 14px var(--sh-hi);
+  --sh-lg: 9px 9px 20px var(--sh-lo), -8px -8px 18px var(--sh-hi);
+
+  /* hundido, a dos profundidades */
+  --hundido:    inset 5px 5px 11px var(--sh-lo), inset -5px -5px 11px var(--sh-hi);
+  --hundido-sm: inset 3px 3px  7px var(--sh-lo), inset -3px -3px  7px var(--sh-hi);
+
+  /* el canto iluminado de una pieza levantada: no es un borde */
+  --glass-in: inset 1px 1px 0 rgba(255,253,248,.75);
+  --borde-pieza: transparent;
+
+  /* la tarjeta héroe, única superficie maciza */
+  --hero: #1d6b58;  --on-hero: #fffaf6;
+}
+```
+
+Tema oscuro: **las mismas variables redefinidas** bajo `html[data-theme="dark"]` y bajo `@media (prefers-color-scheme: dark)`. Ningún componente conoce el tema; sólo usa tokens.
+
+```css
+html[data-theme="dark"]{
+  --color-bg-1:#13151a; --surf:#191c21; --surf-2:#14171b; --kpi-surf:#23272d;
+  --sh-lo: rgba(0,0,0,.70);  --sh-hi: rgba(86,94,104,.30);
+  --color-accent:#8d949d; --color-on-accent:#14171b;
+  --color-inc:#a7aeb6; --color-egr:#ff6a1f; --color-sav:#ff8a4c;
+  --hero:#c4511a; --on-hero:#fffaf6;   /* naranja profundo: el texto va en blanco */
   /* …más el resto */
 }
 ```
 
-### 13.3 Las dos capas de vidrio
+**Dos pares de sombras de color, no uno.** `--hero-sh-*` tiñe los dos lados y es sólo para la tarjeta héroe; `--acc-sh-*` tiñe el lado oscuro y deja el claro en la luz del material, y es para toda pieza chica de acento (el sello, el botón principal, la píldora sólida). En una pieza de 46 px el halo de color se lee como un aura verde —naranja en oscuro— alrededor del botón. Se vio en la primera captura de F20-T01.
+
+### 13.3 Las dos capas del material
 
 Toda la profundidad de la interfaz sale de dos clases. No se inventan variantes.
 
-| Clase | Uso | Desenfoque | Fondo (claro) |
+| Clase | Uso | Forma | Fondo (claro) |
 |---|---|---|---|
-| `.shell` | Contenedores: topbar, tarjetas de KPI, paneles, hojas, navegación | 22 px + saturación 1,15 | `rgba(255,255,255,.52)` |
-| `.cg` | Contenido dentro de un `.shell`: filas, fichas, campos | 7 px | `rgba(255,255,255,.68)` |
+| `.shell` | Contenedores: topbar, tarjetas, paneles, hojas, navegación | levantado: `--glass-in, --sh-md` | `#f1ece3` |
+| `.cg` | Contenido dentro de un `.shell`: filas, fichas, campos | hundido: `--hundido-sm` | `#e7e0d5` |
 
-`.shell` lleva además un brillo diagonal por `::before` y la sombra interior `--glass-in`. **Degradación obligatoria**: `@supports not (backdrop-filter: blur(1px))` reemplaza ambos fondos por versiones opacas, porque sin eso el texto queda ilegible en navegadores sin soporte.
+Ninguna de las dos lleva borde (`--borde-pieza` es transparente): con relieve, un borde alrededor de la pieza es justo lo que rompe la ilusión de que el material es uno solo. El píxel se conserva para no cambiarle la caja al CSS que ya lo cuenta.
+
+**Ninguna de las dos lleva `backdrop-filter`, y no es un olvido.** El sistema no tiene desenfoque en ninguna parte: ni las tarjetas, ni las barras, ni el velo de una hoja abierta. Dejarlo en `blur(0)` habría sido peor que sacarlo, porque el navegador crea igual la capa de respaldo y paga el costo de GPU para no desenfocar nada. Los bloques `@supports not (backdrop-filter)` se conservan como red y no hacen nada: los tokens de respaldo valen el mismo color sólido.
+
+Una consecuencia que se agradece: las dos reglas que apagaban el desenfoque durante una *view transition* —el círculo del cambio de tema y el deslizo entre vistas, que en el teléfono arrancaban trabados con una pantalla entera de vidrio— ya no hacen falta. El movimiento arranca liso por construcción.
 
 ### 13.4 Tipografía
 

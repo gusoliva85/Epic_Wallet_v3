@@ -24,13 +24,20 @@ body {
 }
 
 /* ---- el ambiente ----
-   Tres lavados radiales sobre un degradado vertical.
+   La mesa: una sola superficie de material, con un degradado mínimo.
 
    Va en una capa fija propia y no en `background-attachment: fixed`
    del body: Safari en iOS ignora ese valor y lo trata como `scroll`,
    con lo que el fondo se desplazaría con el contenido, y en algunos
    Android provoca repintados al hacer scroll. Una capa `fixed` con
-   z-index negativo se comporta igual en todos lados. */
+   z-index negativo se comporta igual en todos lados.
+
+   F20-T01: acá vivían tres lavados radiales de color y, encima de
+   TODA la aplicación, una capa de ruido en SVG que evitaba que el
+   vidrio se viera plástico. Las dos se fueron con el vidrio. El
+   relieve necesita exactamente lo contrario: un fondo sin dibujo
+   propio, porque cualquier textura detrás de las dos sombras de una
+   pieza se lee como suciedad alrededor del borde. */
 body::after {
   content: "";
   position: fixed;
@@ -38,19 +45,6 @@ body::after {
   z-index: -1;
   pointer-events: none;
   background: var(--ambiente);
-}
-
-/* Capa de ruido: una sola, en SVG embebido, nunca una imagen.
-   Es lo que evita que el vidrio se vea plástico. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  pointer-events: none;
-  opacity: 0.035;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
 /* ============================================================
@@ -273,29 +267,14 @@ a {
     animation: circulo-de-tema 0.9s ease-in-out forwards;
   }
 
-  /* El mismo respaldo sólido que usa el deslizo entre vistas, por el
-     mismo motivo y con los mismos tokens (ver el comentario de
-     `[data-transicion-vista] main .shell`, más abajo): mientras se
-     sacan las dos fotos de la pantalla, las tarjetas no llevan
-     desenfoque. Sin esto, el círculo arrancaba trabado en el teléfono
-     — una pantalla entera de `backdrop-filter` recalculada de golpe
-     en el peor momento (Gustavo, 2026-10-27). Acá va en TODA la
-     página, no sólo en `main`: la foto del cambio de tema es de la
-     pantalla completa.
-
-     Las dos barras quedan afuera a propósito: su vidrio ya es opaco y
-     sin desenfoque (skill §3.1), así que no hay nada que ahorrar y
-     cambiarles el fondo sí se vería. */
-  :root[data-transicion-tema] .shell:not(.topbar):not(.botnav) {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--glass-shell-fallback);
-  }
-  :root[data-transicion-tema] .cg {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--glass-content-fallback);
-  }
+  /* Acá vivían dos reglas que, mientras duraba la transición, le
+     sacaban el `backdrop-filter` a todas las tarjetas: una pantalla
+     entera de desenfoque recalculada de golpe trababa el círculo en
+     el teléfono (Gustavo, 2026-10-27). Con el sistema neumórfico no
+     hay desenfoque en ninguna superficie, así que no hay nada que
+     apagar: las dos reglas se fueron en F20-T01 y el círculo arranca
+     liso por construcción. Lo mismo valía para el deslizo entre
+     vistas, más abajo. */
 
   @keyframes circulo-de-tema {
     to {
@@ -320,29 +299,6 @@ a {
      de un efecto pegado encima en vez de parte del diseño. */
   :root[data-transicion-vista] main {
     view-transition-name: contenido-vista;
-  }
-
-  /* El trabado que reportó Gustavo ("aprieto y se traba todo") es casi
-     seguro esto: `main` tiene adentro una pantalla entera de tarjetas
-     `.shell`/`.cg`, cada una con su propio `backdrop-filter: blur(...)`
-     (skill §3) — capturar esa foto dos veces (vieja y nueva) para la
-     transición le pide al GPU del teléfono volver a calcular el
-     desenfoque de todo a la vez, en el peor momento posible. Mientras
-     dura el deslizo se usa el mismo respaldo sólido que ya existe para
-     cuando el navegador no tiene `backdrop-filter` (§3, el bloque
-     `@supports not`): no es un color nuevo, es el mismo token que ya
-     estaba pensado para "sin desenfoque". Dura menos que un parpadeo,
-     así que no se nota el cambio — lo que se nota es que deja de
-     trabarse. */
-  :root[data-transicion-vista] main .shell {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--glass-shell-fallback);
-  }
-  :root[data-transicion-vista] main .cg {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--glass-content-fallback);
   }
 
   /* SIN espacio antes de `::view-transition-*`: es un selector

@@ -1,0 +1,759 @@
+<title>Epic Wallet Neumorphism</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: una tira de prueba con cuatro teléfonos sobre una mesa de porcelana.
+   Todo relieve sale de dos sombras (una abajo-derecha, una arriba-izquierda)
+   sobre el MISMO color de la superficie: eso es neumorfismo. */
+:root{
+  /* --- 60% Ivory Porcelain --- */
+  --bg:#ebe5db;            /* la mesa */
+  --surf:#f1ece3;          /* la pieza levantada */
+  --surf-2:#e7e0d5;        /* hundido */
+  --kpi:#e8e1d4;           /* la tarjeta de indicador: material, nunca blanco */
+  --sh-lo:rgba(170,158,138,.52);
+  --sh-hi:#fffdf8;
+  /* la tarjeta héroe: jade en claro, molten orange en oscuro */
+  --hero:#1d6b58;
+  --on-hero:#f3efe6;
+  --hero-sh-lo:rgba(10,55,44,.55);
+  --hero-sh-hi:rgba(118,187,168,.45);
+  /* --- 30% Jade Lacquer --- */
+  --acc:#1d6b58;
+  --acc-soft:#2d8771;
+  --acc-ghost:rgba(29,107,88,.13);
+  --on-acc:#f3efe6;
+  --acc-sh-lo:rgba(10,55,44,.55);
+  --acc-sh-hi:rgba(118,187,168,.45);
+  /* --- 10% Scarlet Signal --- */
+  --sig:#c62b36;
+  --sig-ghost:rgba(198,43,54,.12);
+  --sig-sh-lo:rgba(92,16,21,.48);
+  --sig-sh-hi:rgba(231,145,150,.42);
+  /* --- texto --- */
+  --fg:#2a2620;
+  --fg-2:#6d665b;
+  --fg-3:#99907f;
+  --line:rgba(140,128,110,.22);
+  --font-d:"Outfit",system-ui,sans-serif;
+  --font-b:"Inter",system-ui,sans-serif;
+  --r:22px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  /* --- 60% Raven Black --- */
+  --bg:#13151a; --surf:#191c21; --surf-2:#14171b; --kpi:#23272d;
+  --sh-lo:rgba(0,0,0,.70); --sh-hi:rgba(86,94,104,.30);
+  /* Molten orange un paso más profundo: el texto del héroe va en blanco y así
+     se lee de verdad sobre el naranja. */
+  --hero:#c4511a; --on-hero:#fffaf6;
+  --hero-sh-lo:rgba(0,0,0,.60); --hero-sh-hi:rgba(255,150,86,.38);
+  /* --- 30% Pewter Grey --- */
+  --acc:#8d949d; --acc-soft:#a7aeb6; --acc-ghost:rgba(141,148,157,.16);
+  --on-acc:#14171b; --acc-sh-lo:rgba(0,0,0,.55); --acc-sh-hi:rgba(203,209,215,.40);
+  /* --- 10% Molten Orange --- */
+  --sig:#ff6a1f; --sig-ghost:rgba(255,106,31,.14);
+  --sig-sh-lo:rgba(0,0,0,.62); --sig-sh-hi:rgba(255,176,122,.42);
+  --fg:#e7e9ec; --fg-2:#9aa1a9; --fg-3:#6d747c;
+  --line:rgba(141,148,157,.20);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#13151a; --surf:#191c21; --surf-2:#14171b; --kpi:#23272d;
+  --sh-lo:rgba(0,0,0,.70); --sh-hi:rgba(86,94,104,.30);
+  --hero:#c4511a; --on-hero:#fffaf6;
+  --hero-sh-lo:rgba(0,0,0,.60); --hero-sh-hi:rgba(255,150,86,.38);
+  --acc:#8d949d; --acc-soft:#a7aeb6; --acc-ghost:rgba(141,148,157,.16);
+  --on-acc:#14171b; --acc-sh-lo:rgba(0,0,0,.55); --acc-sh-hi:rgba(203,209,215,.40);
+  --sig:#ff6a1f; --sig-ghost:rgba(255,106,31,.14);
+  --sig-sh-lo:rgba(0,0,0,.62); --sig-sh-hi:rgba(255,176,122,.42);
+  --fg:#e7e9ec; --fg-2:#9aa1a9; --fg-3:#6d747c;
+  --line:rgba(141,148,157,.20);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);
+  -webkit-font-smoothing:antialiased;margin:0}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:clamp(22px,5vw,46px);max-width:1340px;margin:0 auto}
+h1,h2,h3,h4,.cifra,.kpi-v{font-family:var(--font-d)}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ============ relieves ============ */
+.rel{background:var(--surf);box-shadow:7px 7px 16px var(--sh-lo),-7px -7px 16px var(--sh-hi)}
+.rel-s{background:var(--surf);box-shadow:4px 4px 9px var(--sh-lo),-4px -4px 9px var(--sh-hi)}
+.hun{background:var(--surf-2);box-shadow:inset 5px 5px 11px var(--sh-lo),inset -5px -5px 11px var(--sh-hi)}
+.hun-s{background:var(--surf-2);box-shadow:inset 3px 3px 7px var(--sh-lo),inset -3px -3px 7px var(--sh-hi)}
+
+/* ============ cabecera de la prueba ============ */
+.head{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between;margin-bottom:26px}
+.head h1{font-size:clamp(1.6rem,4.4vw,2.3rem);font-weight:800;letter-spacing:-.02em;margin:0 0 6px;text-wrap:balance}
+.head p{margin:0;color:var(--fg-2);font-size:.9rem;max-width:56ch;line-height:1.55}
+.head .eyebrow{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--acc);margin-bottom:10px}
+.tbtn{font:inherit;font-weight:600;font-size:.84rem;color:var(--fg);border:0;cursor:pointer;
+  padding:11px 17px;border-radius:14px;display:inline-flex;gap:9px;align-items:center;white-space:nowrap}
+.tbtn:active{background:var(--surf-2);box-shadow:inset 3px 3px 7px var(--sh-lo),inset -3px -3px 7px var(--sh-hi)}
+.tbtn svg{width:17px;height:17px;stroke:var(--acc);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ============ paleta ============ */
+.pal{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;
+  padding:16px;border-radius:var(--r);margin-bottom:30px}
+.pal-i{display:flex;gap:13px;align-items:center;padding:12px 14px;border-radius:16px}
+.pal-d{width:40px;height:40px;border-radius:12px;flex:0 0 auto;
+  box-shadow:inset 2px 2px 5px rgba(0,0,0,.28),inset -2px -2px 5px rgba(255,255,255,.22)}
+.pal-i b{display:block;font-family:var(--font-d);font-size:.92rem;font-weight:700}
+.pal-i span{font-size:.73rem;color:var(--fg-2)}
+.pal-i em{font-family:var(--font-d);font-style:normal;font-weight:800;font-size:1.05rem;margin-left:auto;color:var(--fg-3)}
+
+/* ============ la tira de teléfonos ============ */
+.tira{display:grid;grid-template-columns:repeat(auto-fit,minmax(318px,1fr));gap:clamp(20px,3vw,34px);align-items:start}
+.pantalla{min-width:0;margin:0}
+.pantalla>figcaption{display:flex;gap:10px;align-items:baseline;margin:0 4px 13px}
+.pantalla>figcaption b{font-family:var(--font-d);font-size:1rem;font-weight:700}
+.pantalla>figcaption span{font-size:.76rem;color:var(--fg-2)}
+.tel{border-radius:34px;padding:12px;min-width:0}
+.tel-in{background:var(--surf);border-radius:24px;padding:14px 10px 0;overflow:hidden;position:relative;
+  box-shadow:inset 2px 2px 6px var(--sh-lo),inset -2px -2px 6px var(--sh-hi)}
+
+/* --- barra superior --- */
+.topbar{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.sello{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;
+  background:var(--acc);color:var(--on-acc);
+  box-shadow:3px 3px 7px var(--acc-sh-lo),-2px -2px 6px var(--acc-sh-hi)}
+.sello svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.topbar .marca{font-family:var(--font-d);font-weight:700;font-size:.97rem;letter-spacing:-.01em}
+.topbar .sp{margin-left:auto;display:flex;gap:8px}
+.ic{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;position:relative;flex:0 0 auto}
+.ic svg{width:17px;height:17px;fill:none;stroke:var(--fg-2);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.badge{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:var(--sig);
+  color:#fff;font-size:.6rem;font-weight:700;display:grid;place-items:center;padding:0 4px;
+  box-shadow:0 2px 5px rgba(0,0,0,.3)}
+.avat{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;font-family:var(--font-d);
+  font-weight:700;font-size:.76rem;color:var(--fg-2)}
+
+/* --- barra de mes --- */
+.monthbar{display:flex;align-items:center;gap:8px;padding:7px;border-radius:17px;margin-bottom:14px}
+.mb-t{flex:1;text-align:center;line-height:1.25}
+.mb-t b{display:block;font-family:var(--font-d);font-size:.9rem;font-weight:700}
+.mb-t span{font-size:.66rem;color:var(--acc);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.chip{border:0;font:inherit;cursor:pointer;height:30px;min-width:30px;padding:0 10px;border-radius:11px;
+  display:grid;place-items:center;color:var(--fg-2);font-size:.74rem;font-weight:600}
+.chip svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* --- scroll de la vista --- */
+/* El recorte del "scroll" cortaba la sombra de lo que toca el borde (la
+   etiqueta "Todos", las tarjetas). Estos 9 px de aire, compensados con margen
+   negativo, le dan lugar a la sombra sin mover el contenido. */
+.vista{max-height:588px;overflow:hidden;position:relative;padding:0 9px 78px;margin:0 -9px}
+.vista::after{content:"";position:absolute;left:0;right:0;bottom:56px;height:34px;pointer-events:none;
+  background:linear-gradient(to bottom,transparent,var(--surf))}
+
+/* --- tarjeta héroe --- */
+.hero{border-radius:20px;padding:17px 18px 15px;background:var(--hero);color:var(--on-hero);margin-bottom:12px;
+  box-shadow:5px 5px 11px var(--hero-sh-lo),-4px -4px 9px var(--hero-sh-hi)}
+.hero .lab{font-size:.68rem;font-weight:600;letter-spacing:.11em;text-transform:uppercase;opacity:.78}
+.hero .cifra{font-size:2rem;font-weight:800;letter-spacing:-.025em;margin:5px 0 2px;line-height:1}
+.hero .sub{font-size:.72rem;opacity:.8;line-height:1.4}
+.aro{display:flex;align-items:center;gap:13px;margin-top:12px}
+.aro svg{width:52px;height:52px;flex:0 0 auto}
+.aro .g{flex:1;min-width:0}
+.barra{display:block;height:9px;border-radius:5px;background:rgba(0,0,0,.22);overflow:hidden;
+  box-shadow:inset 2px 2px 4px rgba(0,0,0,.35)}
+.barra i{display:block;height:100%;border-radius:5px;background:var(--on-hero);opacity:.92}
+.aro .g span{display:block;font-size:.66rem;opacity:.78;margin-top:6px}
+
+/* --- kpis --- */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px}
+/* Material, no papel: la tarjeta de indicador es un escalón del mismo material,
+   teñida por el color de su cifra. Sin rieles ni adornos: el tinte de la
+   superficie y el punto de la etiqueta alcanzan para distinguirlas. */
+.kpi{border-radius:17px;padding:13px 14px;background:var(--kpi);
+  box-shadow:5px 5px 11px var(--sh-lo),-5px -5px 11px var(--sh-hi)}
+.kpi.in,.kpi.pat{background:color-mix(in srgb,var(--kpi) 90%,var(--acc))}
+.kpi.eg{background:color-mix(in srgb,var(--kpi) 90%,var(--sig))}
+.kpi.dia{background:color-mix(in srgb,var(--kpi) 95%,var(--acc))}
+.kpi .lab{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-2)}
+.kpi.in .lab,.kpi.pat .lab{color:var(--acc)}
+.kpi.eg .lab{color:var(--sig)}
+.kpi .lab::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:currentColor;margin-right:6px;vertical-align:.5px}
+.kpi-v{font-size:1.07rem;font-weight:700;letter-spacing:-.02em;margin:5px 0 3px}
+.kpi .sub{font-size:.64rem;color:var(--fg-3);line-height:1.35}
+.v-in{color:var(--acc)} .v-eg{color:var(--sig)}
+
+/* --- bloques --- */
+.bloq{border-radius:19px;padding:15px;margin-bottom:13px}
+.bloq-h{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.bloq-h h4{margin:0;font-size:.86rem;font-weight:700;letter-spacing:-.01em}
+.bloq svg{display:block;width:100%;height:auto}
+.seg{display:flex;gap:3px;padding:3px;border-radius:11px}
+.bloq-h .seg{margin-left:auto}
+.seg button{border:0;font:inherit;cursor:pointer;font-size:.64rem;font-weight:600;padding:5px 9px;border-radius:8px;
+  color:var(--fg-3);background:none}
+.seg button.on{background:var(--surf);color:var(--acc);
+  box-shadow:2px 2px 5px var(--sh-lo),-2px -2px 5px var(--sh-hi)}
+.leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;font-size:.66rem;color:var(--fg-2)}
+.leg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* --- filas de categoría / movimientos --- */
+.fila{display:flex;align-items:center;gap:11px;padding:9px 0}
+.fila+.fila{border-top:1px solid var(--line)}
+.fico{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto}
+.fico svg{width:16px;height:16px;fill:none;stroke:var(--acc);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.fico.sig svg{stroke:var(--sig)}
+.fila .t{flex:1;min-width:0}
+.fila .t b{display:block;font-size:.81rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fila .t span{font-size:.67rem;color:var(--fg-2)}
+.fila .n{font-family:var(--font-d);font-weight:700;font-size:.86rem;text-align:right;white-space:nowrap}
+.fila .n em{display:block;font-style:normal;font-family:var(--font-b);font-weight:500;font-size:.64rem;color:var(--fg-3)}
+.pista{display:block;height:6px;border-radius:4px;margin-top:6px;overflow:hidden}
+.pista i{display:block;height:100%;border-radius:4px;background:var(--acc)}
+.pista.sig i{background:var(--sig)}
+
+/* --- barra inferior + fab --- */
+.bottom{position:absolute;left:0;right:0;bottom:0;display:flex;gap:4px;padding:8px 7px 10px;border-radius:19px 19px 0 0;
+  background:var(--surf);box-shadow:0 -7px 16px -8px var(--sh-lo)}
+.bottom button{flex:1;min-width:0;border:0;background:none;font:inherit;cursor:pointer;display:grid;gap:3px;justify-items:center;
+  padding:7px 2px;border-radius:13px;color:var(--fg-3);font-size:.58rem;font-weight:600}
+.bottom svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bottom button.on{color:var(--acc);background:var(--surf-2);
+  box-shadow:inset 3px 3px 6px var(--sh-lo),inset -3px -3px 6px var(--sh-hi)}
+.fab{position:absolute;right:19px;bottom:72px;width:52px;height:52px;border-radius:19px;border:0;cursor:pointer;
+  display:grid;place-items:center;background:var(--sig);color:#fff;
+  box-shadow:5px 5px 11px var(--sig-sh-lo),-3px -3px 9px var(--sig-sh-hi)}
+.fab svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+
+/* --- pastillas de estado --- */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.62rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;padding:4px 9px;border-radius:9px;background:var(--acc-ghost);color:var(--acc)}
+.pill.sig{background:var(--sig-ghost);color:var(--sig)}
+.pill i{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* --- aviso de vencimiento --- */
+.aviso{display:flex;gap:11px;align-items:flex-start;padding:13px;border-radius:17px;margin-bottom:13px;
+  border-left:3px solid var(--sig)}
+.aviso svg{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:var(--sig);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.aviso b{display:block;font-size:.79rem;font-weight:700;margin-bottom:2px}
+.aviso span{font-size:.68rem;color:var(--fg-2);line-height:1.4}
+.aviso .tx{min-width:0}
+
+/* --- buscador / etiquetas --- */
+.busca{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:14px;margin-bottom:12px}
+.busca svg{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:var(--fg-3);stroke-width:1.9;stroke-linecap:round}
+.busca span{font-size:.79rem;color:var(--fg-3)}
+.tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+.tag{font-size:.68rem;font-weight:600;padding:7px 12px;border-radius:11px;color:var(--fg-2);border:0;font-family:inherit;cursor:pointer}
+.tag.on{background:var(--acc);color:var(--on-acc);box-shadow:3px 3px 8px var(--acc-sh-lo),-2px -2px 6px var(--acc-sh-hi)}
+.dia-sep{font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);
+  margin:14px 0 4px;display:flex;align-items:center;gap:9px}
+.dia-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* --- composición de cartera --- */
+.dona{display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.dona svg{width:118px;height:118px;flex:0 0 auto}
+.dona ul{list-style:none;margin:0;padding:0;flex:1;min-width:130px;display:grid;gap:8px}
+.dona li{display:flex;align-items:center;gap:8px;font-size:.72rem}
+.dona li i{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+.dona li b{font-family:var(--font-d);margin-left:auto;font-weight:700;font-size:.74rem}
+.nota{font-size:.66rem;color:var(--fg-3);line-height:1.45;margin:11px 2px 0}
+
+/* --- piezas del sistema --- */
+.piezas{margin-top:34px;padding:20px;border-radius:var(--r)}
+.piezas h2{margin:0 0 4px;font-size:1.05rem;font-weight:700}
+.piezas>p{margin:0 0 18px;font-size:.8rem;color:var(--fg-2)}
+.pz{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:18px}
+.pz>div{padding:15px;border-radius:17px;min-width:0}
+.pz h5{margin:0 0 12px;font-size:.64rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-3)}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.btn-pri{border:0;font:inherit;font-weight:600;font-size:.78rem;cursor:pointer;padding:10px 16px;border-radius:14px;
+  background:var(--acc);color:var(--on-acc);box-shadow:4px 4px 10px var(--acc-sh-lo),-3px -3px 8px var(--acc-sh-hi)}
+.btn-sec{border:0;font:inherit;font-weight:600;font-size:.78rem;cursor:pointer;padding:10px 16px;border-radius:14px;color:var(--fg-2)}
+.btn-dan{border:0;font:inherit;font-weight:600;font-size:.78rem;cursor:pointer;padding:10px 16px;border-radius:14px;
+  background:var(--sig);color:#fff;box-shadow:4px 4px 10px var(--sig-sh-lo),-3px -3px 8px var(--sig-sh-hi)}
+.sw{width:52px;height:29px;border-radius:15px;padding:3px;display:flex;align-items:center;cursor:pointer;border:0}
+.sw i{width:23px;height:23px;border-radius:50%;background:var(--surf);
+  box-shadow:2px 2px 5px var(--sh-lo),-2px -2px 5px var(--sh-hi);transition:transform .25s}
+.sw.on{background:var(--acc);box-shadow:inset 3px 3px 7px var(--acc-sh-lo),inset -2px -2px 6px var(--acc-sh-hi)}
+.sw.on i{transform:translateX(23px)}
+.inp{padding:11px 14px;border-radius:14px;font-size:.78rem;color:var(--fg-3)}
+.foot{margin-top:26px;font-size:.73rem;color:var(--fg-3);line-height:1.6;text-align:center}
+button:focus-visible,.tag:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <span class="eyebrow">Prueba de estilo · no es la interfaz aprobada</span>
+      <h1>Epic Wallet en neumorfismo</h1>
+      <p>Las mismas vistas, los mismos datos y las mismas reglas, con relieve en lugar de vidrio. Cifras de ejemplo de octubre 2026: ninguna es un dato real de la cuenta.</p>
+    </div>
+    <button class="tbtn rel-s" id="btn-tema" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></svg>
+      <span id="txt-tema">Ver en oscuro</span>
+    </button>
+  </div>
+
+  <div class="pal hun" id="paleta"></div>
+
+  <div class="tira">
+
+    <!-- ============================ INICIO ============================ -->
+    <figure class="pantalla">
+      <figcaption><b>Inicio</b> <span>el tablero del mes</span></figcaption>
+      <div class="tel rel">
+        <div class="tel-in">
+          <div class="topbar">
+            <span class="sello"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5A2.5 2.5 0 015.5 6H19a2 2 0 012 2v9a2 2 0 01-2 2H5.5A2.5 2.5 0 013 16.5v-8z"/><path d="M3 9.5h13.5a1.5 1.5 0 011.5 1.5v3a1.5 1.5 0 01-1.5 1.5H3"/><circle cx="7" cy="12.5" r="1.1"/></svg></span>
+            <span class="marca">Epic Wallet</span>
+            <span class="sp">
+              <span class="ic rel-s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 004 0"/></svg><span class="badge">2</span></span>
+              <span class="avat rel-s">GO</span>
+            </span>
+          </div>
+
+          <div class="monthbar hun">
+            <button class="chip rel-s" type="button" aria-label="Mes anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+            <span class="mb-t"><b>Octubre 2026</b><span>Mes abierto</span></span>
+            <button class="chip rel-s" type="button">Hoy</button>
+            <button class="chip rel-s" type="button" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+
+          <div class="vista">
+            <div class="hero">
+              <div class="lab">Ahorro del mes</div>
+              <div class="cifra tnum">$612.480</div>
+              <div class="sub">Ingresos menos egresos</div>
+              <div class="aro">
+                <svg viewBox="0 0 40 40" role="img" aria-label="Tasa de ahorro 24,4 por ciento">
+                  <circle cx="20" cy="20" r="15.9" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="5"/>
+                  <circle cx="20" cy="20" r="15.9" fill="none" stroke="var(--on-hero)" stroke-width="5" stroke-linecap="round"
+                    stroke-dasharray="24.4 75.6" pathLength="100" transform="rotate(-90 20 20)"/>
+                  <text x="20" y="22.6" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" font-weight="700" fill="var(--on-hero)">24%</text>
+                </svg>
+                <span class="g">
+                  <span class="barra"><i style="width:24.4%"></i></span>
+                  <span>Tasa de ahorro 24,4% · meta propia 20%</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="kpis">
+              <div class="kpi in"><div class="lab">Ingresos</div><div class="kpi-v tnum v-in">$2.510.000</div><div class="sub">+3,1% vs. septiembre</div></div>
+              <div class="kpi eg"><div class="lab">Egresos</div><div class="kpi-v tnum v-eg">$1.897.520</div><div class="sub">+8,7% vs. septiembre</div></div>
+              <div class="kpi dia"><div class="lab">Gasto de hoy</div><div class="kpi-v tnum">$43.900</div><div class="sub">Total gastado hoy</div></div>
+              <div class="kpi pat"><div class="lab">Total de ahorros</div><div class="kpi-v tnum">$5.184.300</div><div class="sub">Acumulado de 6 meses</div></div>
+            </div>
+
+            <div class="bloq hun">
+              <div class="bloq-h">
+                <h4>Día por día</h4>
+                <span class="seg hun-s"><button class="on" type="button">Ambos</button><button type="button">Egreso</button></span>
+              </div>
+              <svg id="g-diario" viewBox="0 0 300 126" role="img" aria-label="Ingresos y egresos de cada día de octubre"></svg>
+              <div class="leg">
+                <span><i style="background:var(--acc)"></i>Egresos</span>
+                <span><i style="background:var(--acc-soft);opacity:.5"></i>Ingresos</span>
+                <span><i style="background:var(--sig)"></i>Día más alto</span>
+              </div>
+            </div>
+
+            <div class="bloq hun">
+              <div class="bloq-h"><h4>Gastos por categoría</h4><span class="pill">7 rubros</span></div>
+              <div id="cats"></div>
+            </div>
+          </div>
+
+          <button class="fab" type="button" aria-label="Nuevo movimiento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <nav class="bottom" aria-label="Secciones">
+            <button class="on" type="button" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg><span>Inicio</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>Movim.</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"/><path d="M8 19v-7M13 19V8M18 19v-5"/></svg><span>Historial</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span>Vencim.</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Más</span></button>
+          </nav>
+        </div>
+      </div>
+    </figure>
+
+    <!-- ========================= MOVIMIENTOS ========================= -->
+    <figure class="pantalla">
+      <figcaption><b>Movimientos</b> <span>alta, búsqueda y baja</span></figcaption>
+      <div class="tel rel">
+        <div class="tel-in">
+          <div class="topbar">
+            <span class="sello"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>
+            <span class="marca">Movimientos</span>
+            <span class="sp"><span class="ic rel-s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg></span></span>
+          </div>
+
+          <div class="monthbar hun">
+            <button class="chip rel-s" type="button" aria-label="Mes anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+            <span class="mb-t"><b>Octubre 2026</b><span>86 movimientos</span></span>
+            <button class="chip rel-s" type="button" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+
+          <div class="vista">
+            <div class="busca hun"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20"/></svg><span>Buscar por detalle o categoría</span></div>
+            <div class="tags">
+              <button class="tag on" type="button">Todos</button>
+              <button class="tag rel-s" type="button">Egresos</button>
+              <button class="tag rel-s" type="button">Ingresos</button>
+              <button class="tag rel-s" type="button">Tarjeta</button>
+            </div>
+
+            <div class="dia-sep">Hoy · martes 27</div>
+            <div class="fila"><span class="fico hun-s sig"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1 12H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg></span><span class="t"><b>Supermercado Día</b><span>Supermercado · débito</span></span><span class="n tnum v-eg">−$28.400<em>14:20</em></span></div>
+            <div class="fila"><span class="fico hun-s sig"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17h14"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/><path d="M6 14l2-7h8l2 7"/></svg></span><span class="t"><b>Nafta YPF</b><span>Transporte · tarjeta</span></span><span class="n tnum v-eg">−$15.500<em>09:05</em></span></div>
+
+            <div class="dia-sep">Lunes 26</div>
+            <div class="fila"><span class="fico hun-s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M8 9h6a2.5 2.5 0 010 5H9a2.5 2.5 0 000 5h7"/></svg></span><span class="t"><b>Sueldo octubre</b><span>Sueldo · transferencia</span></span><span class="n tnum v-in">+$1.980.000<em>08:00</em></span></div>
+            <div class="fila"><span class="fico hun-s sig"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-6 9 6v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9z"/></svg></span><span class="t"><b>Alquiler</b><span>Vivienda · transferencia</span></span><span class="n tnum v-eg">−$380.000<em>07:40</em></span></div>
+            <div class="fila"><span class="fico hun-s sig"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L5 14h6l-1 8 8-12h-6l1-8z"/></svg></span><span class="t"><b>Edenor</b><span>Servicios · débito automático</span></span><span class="n tnum v-eg">−$62.180<em>07:40</em></span></div>
+
+            <div class="dia-sep">Domingo 25</div>
+            <div class="fila"><span class="fico hun-s sig"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v8a3 3 0 006 0V3M9 11v10"/><path d="M17 3c-1.5 2-2 4-2 7h4c0-3-.5-5-2-7zM17 10v11"/></svg></span><span class="t"><b>Cena con Ana</b><span>Restaurantes · tarjeta</span></span><span class="n tnum v-eg">−$46.900<em>21:35</em></span></div>
+            <div class="fila"><span class="fico hun-s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V9M10 18V5M16 18v-6M20 18h-2"/></svg></span><span class="t"><b>Venta FCI Balanz</b><span>Inversiones · acreditación</span></span><span class="n tnum v-in">+$124.600<em>11:00</em></span></div>
+          </div>
+
+          <button class="fab" type="button" aria-label="Nuevo movimiento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <nav class="bottom" aria-label="Secciones">
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg><span>Inicio</span></button>
+            <button class="on" type="button" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>Movim.</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"/><path d="M8 19v-7M13 19V8M18 19v-5"/></svg><span>Historial</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span>Vencim.</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Más</span></button>
+          </nav>
+        </div>
+      </div>
+    </figure>
+
+    <!-- ========================== HISTORIAL ========================== -->
+    <figure class="pantalla">
+      <figcaption><b>Historial</b> <span>seis meses y la tasa de ahorro</span></figcaption>
+      <div class="tel rel">
+        <div class="tel-in">
+          <div class="topbar">
+            <span class="sello"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"/><path d="M8 19v-7M13 19V8M18 19v-5"/></svg></span>
+            <span class="marca">Historial</span>
+            <span class="sp"><span class="ic rel-s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M5 20h14"/></svg></span></span>
+          </div>
+
+          <div class="monthbar hun">
+            <span class="mb-t"><b>Mayo — Octubre 2026</b><span>6 meses cargados</span></span>
+            <button class="chip rel-s" type="button">Año</button>
+          </div>
+
+          <div class="vista">
+            <div class="bloq hun">
+              <div class="bloq-h"><h4>Ingresos y egresos</h4><span class="pill">Barras</span></div>
+              <svg id="g-seis" viewBox="0 0 300 140" role="img" aria-label="Ingresos y egresos de los últimos seis meses"></svg>
+              <div class="leg">
+                <span><i style="background:var(--acc)"></i>Ingresos</span>
+                <span><i style="background:var(--sig)"></i>Egresos</span>
+              </div>
+            </div>
+
+            <div class="bloq hun">
+              <div class="bloq-h"><h4>Tasa de ahorro</h4><span class="pill sig"><i></i>Bajando</span></div>
+              <svg id="g-tasa" viewBox="0 0 300 104" role="img" aria-label="Tasa de ahorro mes a mes"></svg>
+            </div>
+
+            <div class="bloq hun">
+              <div class="bloq-h"><h4>Mes a mes</h4></div>
+              <div class="fila"><span class="t"><b>Octubre 2026</b><span>Abierto · 86 movimientos</span></span><span class="n tnum v-in">+$612.480<em>24,4%</em></span></div>
+              <div class="fila"><span class="t"><b>Septiembre 2026</b><span>Cerrado</span></span><span class="n tnum v-in">+$688.900<em>28,3%</em></span></div>
+              <div class="fila"><span class="t"><b>Agosto 2026</b><span>Cerrado</span></span><span class="n tnum v-in">+$741.200<em>31,0%</em></span></div>
+              <div class="fila"><span class="t"><b>Julio 2026</b><span>Histórico · sin movimientos</span></span><span class="n tnum v-in">+$520.000<em>23,6%</em></span></div>
+              <div class="fila"><span class="t"><b>Junio 2026</b><span>Histórico · sin movimientos</span></span><span class="n tnum v-eg">−$84.300<em>−4,4%</em></span></div>
+            </div>
+          </div>
+
+          <nav class="bottom" aria-label="Secciones">
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg><span>Inicio</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>Movim.</span></button>
+            <button class="on" type="button" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"/><path d="M8 19v-7M13 19V8M18 19v-5"/></svg><span>Historial</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span>Vencim.</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Más</span></button>
+          </nav>
+        </div>
+      </div>
+    </figure>
+
+    <!-- ===================== CARTERA / VENCIMIENTOS ===================== -->
+    <figure class="pantalla">
+      <figcaption><b>Cartera</b> <span>patrimonio y vencimientos</span></figcaption>
+      <div class="tel rel">
+        <div class="tel-in">
+          <div class="topbar">
+            <span class="sello"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V9M10 18V5M16 18v-6"/><path d="M4 21h16"/></svg></span>
+            <span class="marca">Cartera</span>
+            <span class="sp"><span class="ic rel-s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 004 0"/></svg><span class="badge">2</span></span></span>
+          </div>
+
+          <div class="monthbar hun">
+            <span class="mb-t"><b>Patrimonio neto</b><span>Al 27 de octubre</span></span>
+            <button class="chip rel-s" type="button">Detalle</button>
+          </div>
+
+          <div class="vista">
+            <div class="hero">
+              <div class="lab">Patrimonio neto</div>
+              <div class="cifra tnum">$9.436.800</div>
+              <div class="sub">Ahorros $5.184.300 + inversiones $4.252.500</div>
+              <div class="aro">
+                <span class="g">
+                  <span class="barra"><i style="width:54.9%"></i></span>
+                  <span>55% en ahorros · 45% invertido</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="aviso rel-s">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3l9-16z"/><path d="M12 10v4M12 17h.01"/></svg>
+              <span class="tx"><b>Plazo fijo: vence en 3 días</b><span>$1.450.000 el 30 de octubre. Si no lo renovás, cae a la caja de ahorro.</span></span>
+            </div>
+
+            <div class="bloq hun">
+              <div class="bloq-h"><h4>Composición</h4></div>
+              <div class="dona">
+                <svg id="g-dona" viewBox="0 0 42 42" role="img" aria-label="Composición de la cartera"></svg>
+                <ul id="dona-leg"></ul>
+              </div>
+              <p class="nota">Comprar una inversión no es un gasto: mueve la composición, no el patrimonio.</p>
+            </div>
+
+            <div class="bloq hun">
+              <div class="bloq-h"><h4>Próximos vencimientos</h4><span class="pill sig"><i></i>2 cerca</span></div>
+              <div class="fila"><span class="fico hun-s sig"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span><span class="t"><b>Plazo fijo Nación</b><span>30 oct · en 3 días</span></span><span class="n tnum">$1.450.000<em>TNA 41%</em></span></div>
+              <div class="fila"><span class="fico hun-s sig"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg></span><span class="t"><b>Visa · cierre</b><span>2 nov · en 6 días</span></span><span class="n tnum">$214.700<em>Vence 12 nov</em></span></div>
+              <div class="fila"><span class="fico hun-s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V9M10 18V5M16 18v-6"/></svg></span><span class="t"><b>FCI money market</b><span>Rescate en 24 h</span></span><span class="n tnum">$902.500<em>+2,1% mes</em></span></div>
+            </div>
+          </div>
+
+          <nav class="bottom" aria-label="Secciones">
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg><span>Inicio</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>Movim.</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"/><path d="M8 19v-7M13 19V8M18 19v-5"/></svg><span>Historial</span></button>
+            <button type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span>Vencim.</span></button>
+            <button class="on" type="button" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Más</span></button>
+          </nav>
+        </div>
+      </div>
+    </figure>
+
+  </div>
+
+  <!-- ======================= piezas ======================= -->
+  <section class="piezas rel">
+    <h2>Las piezas, de cerca</h2>
+    <p>Cada control tiene dos estados: levantado cuando se puede tocar, hundido cuando está elegido o activo. Tocalos.</p>
+    <div class="pz">
+      <div class="hun">
+        <h5>Acciones</h5>
+        <div class="row">
+          <button class="btn-pri" type="button">Guardar</button>
+          <button class="btn-sec rel-s" type="button">Cancelar</button>
+          <button class="btn-dan" type="button">Borrar</button>
+        </div>
+      </div>
+      <div class="hun">
+        <h5>Interruptores</h5>
+        <div class="row">
+          <button class="sw on hun-s" type="button" aria-pressed="true" aria-label="Avisos de vencimiento"><i></i></button>
+          <button class="sw hun-s" type="button" aria-pressed="false" aria-label="Resumen semanal"><i></i></button>
+        </div>
+      </div>
+      <div class="hun">
+        <h5>Campo de importe</h5>
+        <div class="inp hun-s tnum">$ 0,00</div>
+      </div>
+      <div class="hun">
+        <h5>Estados</h5>
+        <div class="row">
+          <span class="pill"><i></i>Mes abierto</span>
+          <span class="pill sig"><i></i>Vence hoy</span>
+        </div>
+      </div>
+      <div class="hun">
+        <h5>Segmentos</h5>
+        <div class="seg hun-s" style="display:inline-flex"><button class="on" type="button">Mes</button><button type="button">Año</button><button type="button">Todo</button></div>
+      </div>
+      <div class="hun">
+        <h5>Cifra</h5>
+        <div class="kpi-v tnum" style="font-size:1.5rem;margin:0">$1.980.000</div>
+        <div style="font-size:.66rem;color:var(--fg-2);margin-top:4px">Outfit 700 · tabular-nums</div>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Mockup de exploración. Cifras inventadas de octubre 2026, no datos de la cuenta.<br>El estilo aprobado del proyecto sigue siendo «Vidrio Grafito».</p>
+</div>
+
+<script>
+/* ---------- paleta ---------- */
+const PAL={
+  claro:[["Ivory Porcelain","#f1ece3","Material: fondo, tarjetas y relieve","60%"],
+         ["Jade Lacquer","#1d6b58","Héroe, ingreso, acción, dato","30%"],
+         ["Scarlet Signal","#c62b36","Egreso, alerta, borrar","10%"]],
+  oscuro:[["Raven Black","#191c21","Material: fondo, tarjetas y relieve","60%"],
+          ["Pewter Grey","#8d949d","Ingreso, acción, dato, riel","30%"],
+          ["Molten Orange","#ff6a1f","Héroe, egreso, alerta, borrar","10%"]]
+};
+function esOscuro(){
+  const t=document.documentElement.dataset.theme;
+  if(t) return t==="dark";
+  return matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function pintarPaleta(){
+  document.getElementById("paleta").innerHTML=(esOscuro()?PAL.oscuro:PAL.claro)
+    .map(([n,hex,uso,pc])=>'<div class="pal-i rel-s"><span class="pal-d" style="background:'+hex+'"></span>'
+      +'<span><b>'+n+'</b><span>'+uso+'</span></span><em>'+pc+'</em></div>').join("");
+}
+const btn=document.getElementById("btn-tema"),txt=document.getElementById("txt-tema");
+function sincronizar(){
+  txt.textContent=esOscuro()?"Ver en claro":"Ver en oscuro";
+  pintarPaleta();
+}
+btn.addEventListener("click",()=>{
+  document.documentElement.dataset.theme=esOscuro()?"light":"dark";
+  sincronizar();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",sincronizar);
+sincronizar();
+
+/* ---------- formato ---------- */
+const money=n=>"$"+Math.round(n).toLocaleString("es-AR");
+
+/* ---------- gráfico diario (31 días) ---------- */
+const EG=[18400,0,42100,9800,26500,71200,15300,0,33800,12900,58400,21700,8600,44200,0,
+          19500,97300,27800,11400,35600,0,23100,48700,16200,62800,9300,442180,29400,15500,0,0];
+const IN=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,124600,0,1980000,0,0,0,0];
+(function diario(){
+  const W=300,H=126,L=6,R=6,T=14,B=22,dias=EG.length;
+  const max=Math.max.apply(null,EG);
+  const paso=(W-L-R)/dias, ancho=Math.max(3.4,paso*0.56);
+  const esc=v=>(H-T-B)*Math.min(v,max)/max;
+  let s="";
+  for(let i=1;i<=3;i++){const y=T+(H-T-B)*i/4;
+    s+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="var(--line)" stroke-width="1"/>';}
+  const topIdx=EG.indexOf(max);
+  EG.forEach((v,i)=>{
+    const x=L+paso*i+(paso-ancho)/2, h=esc(v), y=H-B-h;
+    const ing=esc(IN[i]);
+    if(IN[i]>0) s+='<rect x="'+(x-1.2)+'" y="'+(H-B-ing)+'" width="'+(ancho+2.4)+'" height="'+ing+'" rx="1.6" fill="var(--acc-soft)" opacity="0.38"/>';
+    if(v>0) s+='<rect x="'+x+'" y="'+y+'" width="'+ancho+'" height="'+Math.max(h,1.6)+'" rx="1.6" fill="'+(i===topIdx?"var(--sig)":"var(--acc)")+'"/>';
+  });
+  s+='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="var(--line)" stroke-width="1"/>';
+  [1,8,15,22,31].forEach(d=>{
+    const x=L+paso*(d-1)+paso/2;
+    s+='<text x="'+x+'" y="'+(H-9)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="7.5" fill="var(--fg-3)">'+d+'</text>';});
+  s+='<text x="'+(L+paso*topIdx+paso/2+2)+'" y="'+(H-B-esc(max)-4)+'" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" font-weight="700" fill="var(--sig)">$442k</text>';
+  document.getElementById("g-diario").innerHTML=s;
+})();
+
+/* ---------- categorías ---------- */
+const CATS=[
+  ["Supermercado",412300,"M6 7h12l-1 12H7L6 7z M9 7V5a3 3 0 016 0v2",true],
+  ["Vivienda",380000,"M3 10l9-6 9 6v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z",false],
+  ["Otros",240070,"M5 12h.01M12 12h.01M19 12h.01",false],
+  ["Servicios",196400,"M13 2L5 14h6l-1 8 8-12h-6l1-8z",false],
+  ["Transporte",148900,"M5 17h14 M6 14l2-7h8l2 7",false],
+  ["Salud",121600,"M12 6v12M6 12h12",false],
+  ["Restaurantes",98250,"M6 3v8a3 3 0 006 0V3M9 11v10",false]
+];
+(function cats(){
+  const total=CATS.reduce((a,c)=>a+c[1],0), max=CATS[0][1];
+  document.getElementById("cats").innerHTML=CATS.map(c=>{
+    const n=c[0],v=c[1],d=c[2],alto=c[3];
+    return '<div class="fila"><span class="fico hun-s'+(alto?" sig":"")+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></svg></span>'
+    +'<span class="t"><b>'+n+'</b><span>'+(v/total*100).toFixed(1).replace(".",",")+'% del gasto</span>'
+    +'<span class="pista hun-s'+(alto?" sig":"")+'"><i style="width:'+(v/max*100)+'%"></i></span></span>'
+    +'<span class="n tnum">'+money(v)+'</span></div>';
+  }).join("");
+})();
+
+/* ---------- seis meses ---------- */
+const MESES=[["May",1890000,1620000],["Jun",1920000,2004300],["Jul",2200000,1680000],
+             ["Ago",2390000,1648800],["Sep",2435000,1746100],["Oct",2510000,1897520]];
+(function seis(){
+  const W=300,H=140,L=6,R=6,T=16,B=24;
+  const max=Math.max.apply(null,MESES.map(m=>Math.max(m[1],m[2])));
+  const paso=(W-L-R)/MESES.length, w=paso*0.29;
+  const esc=v=>(H-T-B)*v/max;
+  let s="";
+  for(let i=1;i<=3;i++){const y=T+(H-T-B)*i/4;
+    s+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="var(--line)" stroke-width="1"/>';}
+  MESES.forEach((m,i)=>{
+    const n=m[0],ing=m[1],eg=m[2];
+    const c=L+paso*i+paso/2, hi=esc(ing), he=esc(eg);
+    s+='<rect x="'+(c-w-2)+'" y="'+(H-B-hi)+'" width="'+w+'" height="'+hi+'" rx="3" fill="var(--acc)"/>';
+    s+='<rect x="'+(c+2)+'" y="'+(H-B-he)+'" width="'+w+'" height="'+he+'" rx="3" fill="var(--sig)"/>';
+    s+='<text x="'+c+'" y="'+(H-10)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" fill="var(--fg-3)">'+n+'</text>';
+    if(eg>ing) s+='<text x="'+c+'" y="'+(H-B-he-5)+'" text-anchor="middle" font-family="Outfit,sans-serif" font-size="7.5" font-weight="700" fill="var(--sig)">en rojo</text>';
+  });
+  s+='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="var(--line)" stroke-width="1"/>';
+  s+='<text x="'+L+'" y="'+(T-5)+'" font-family="Inter,sans-serif" font-size="8" fill="var(--fg-3)">'+money(max)+'</text>';
+  document.getElementById("g-seis").innerHTML=s;
+})();
+
+/* ---------- tasa de ahorro ---------- */
+const TASA=[14.3,-4.4,23.6,31.0,28.3,24.4];
+(function tasa(){
+  const W=300,H=104,L=28,R=12,T=14,B=22,max=35,min=-12;
+  const x=i=>L+(W-L-R)*i/(TASA.length-1);
+  const y=v=>T+(H-T-B)*(max-v)/(max-min);
+  let s="";
+  [30,20,10,0,-10].forEach(v=>{
+    s+='<line x1="'+L+'" y1="'+y(v)+'" x2="'+(W-R)+'" y2="'+y(v)+'" stroke="var(--line)" stroke-width="'+(v===0?1.5:1)+'"/>';
+    s+='<text x="'+(L-5)+'" y="'+(y(v)+3)+'" text-anchor="end" font-family="Inter,sans-serif" font-size="7.5" fill="var(--fg-3)">'+v+'%</text>';});
+  const pts=TASA.map((v,i)=>x(i)+","+y(v)).join(" ");
+  s+='<polyline points="'+pts+' '+x(TASA.length-1)+','+y(min)+' '+L+','+y(min)+'" fill="var(--acc-ghost)" stroke="none"/>';
+  s+='<polyline points="'+pts+'" fill="none" stroke="var(--acc)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+  TASA.forEach((v,i)=>{
+    const ult=i===TASA.length-1, neg=v<0;
+    s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(ult?4:2.6)+'" fill="'+(neg?"var(--sig)":ult?"var(--acc)":"var(--acc-soft)")+'" stroke="var(--surf-2)" stroke-width="'+(ult?2:0)+'"/>';
+    if(neg) s+='<text x="'+x(i)+'" y="'+(y(v)+13)+'" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8.5" font-weight="700" fill="var(--sig)">−4,4%</text>';
+    if(ult) s+='<text x="'+(x(i)-5)+'" y="'+(y(v)-8)+'" text-anchor="end" font-family="Outfit,sans-serif" font-size="8.5" font-weight="700" fill="var(--acc)">24,4%</text>';
+  });
+  MESES.forEach((m,i)=>{
+    s+='<text x="'+x(i)+'" y="'+(H-7)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="7.5" fill="var(--fg-3)">'+m[0]+'</text>';});
+  document.getElementById("g-tasa").innerHTML=s;
+})();
+
+/* ---------- dona de cartera ---------- */
+const CART=[["Caja de ahorro",5184300,"var(--acc)"],["Plazo fijo",1450000,"var(--acc-soft)"],
+            ["Dólar MEP",1900000,"var(--sig)"],["FCI money market",902500,"var(--acc-ghost)"]];
+(function dona(){
+  const total=CART.reduce((a,c)=>a+c[1],0);
+  const r=15.9155, circ=2*Math.PI*r;
+  let off=0,s='<circle cx="21" cy="21" r="'+r+'" fill="none" stroke="var(--surf)" stroke-width="7"/>';
+  CART.forEach(c=>{
+    const len=circ*c[1]/total;
+    s+='<circle cx="21" cy="21" r="'+r+'" fill="none" stroke="'+c[2]+'" stroke-width="7"'
+      +' stroke-dasharray="'+(len-0.8)+' '+(circ-len+0.8)+'" stroke-dashoffset="'+(-off)+'"'
+      +' transform="rotate(-90 21 21)"/>';
+    off+=len;
+  });
+  s+='<text x="21" y="20.2" text-anchor="middle" font-family="Inter,sans-serif" font-size="2.7" letter-spacing="0.3" fill="var(--fg-3)">TOTAL</text>';
+  s+='<text x="21" y="24.6" text-anchor="middle" font-family="Outfit,sans-serif" font-size="4.4" font-weight="700" fill="var(--fg)">$9,4 M</text>';
+  document.getElementById("g-dona").innerHTML=s;
+  document.getElementById("dona-leg").innerHTML=CART.map(c=>
+    '<li><i style="background:'+c[2]+';'+(c[2]==="var(--acc-ghost)"?"outline:1px solid var(--acc)":"")+'"></i>'+c[0]
+    +'<b class="tnum">'+Math.round(c[1]/total*100)+'%</b></li>').join("");
+})();
+
+/* ---------- controles de muestra ---------- */
+document.querySelectorAll(".sw").forEach(b=>b.addEventListener("click",()=>{
+  const on=b.classList.toggle("on"); b.setAttribute("aria-pressed",String(on));}));
+document.querySelectorAll(".seg").forEach(g=>g.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));}));
+document.querySelectorAll(".tags").forEach(g=>g.addEventListener("click",e=>{
+  const b=e.target.closest(".tag"); if(!b) return;
+  g.querySelectorAll(".tag").forEach(x=>{const on=x===b;x.classList.toggle("on",on);x.classList.toggle("rel-s",!on);});}));
+</script>
